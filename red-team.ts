@@ -86,6 +86,7 @@ import { analyzeCodebase } from "./lib/codebase-analyzer.js";
 import { planAttacks, refinePartialAttacks } from "./lib/attack-planner.js";
 import {
   preAuthenticate,
+  runPreSetup,
   executeAttack,
   executeMultiTurn,
   executeAdaptiveMultiTurn,
@@ -531,6 +532,12 @@ async function main() {
     console.log(
       `\n  ── Round ${round}/${config.attackConfig.adaptiveRounds} ──`,
     );
+
+    // Refresh tokens + session before each round (if configured)
+    if (config.target.refreshPerRound && round > 1) {
+      console.log("  Refreshing pre-auth tokens and session...");
+      await runPreSetup(config);
+    }
 
     // Plan attacks for this round (with defense profiles from prior rounds)
     const skipBuiltinPlanner =

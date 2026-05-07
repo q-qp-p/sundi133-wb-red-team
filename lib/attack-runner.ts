@@ -1,4 +1,6 @@
 import * as jose from "jose";
+import { randomUUID } from "node:crypto";
+import { execSync } from "node:child_process";
 import type { Config, Attack, Credential, McpExecutionTrace } from "./types.js";
 import { getTargetAdapter } from "./target-adapter.js";
 import { getLlmProvider } from "./llm-provider.js";
@@ -8,12 +10,129 @@ import { formatErrorDetails } from "./error-utils.js";
 // Cache JWT tokens per role
 const tokenCache = new Map<string, string>();
 
+// Session variables from preAuthCommand + setupSteps — used as {{var:name}} in templates
+const sessionVars = new Map<string, string>();
+
+/**
+ * Replace {{uuid}} and {{var:name}} placeholders in a string.
+ */
+export function interpolateVars(text: string): string {
+  return text
+    .replace(/\{\{uuid\}\}/g, () => randomUUID())
+    .replace(/\{\{var:(\w+)\}\}/g, (_, name) => sessionVars.get(name) ?? "");
+}
+
+/** Recursively interpolate all string values in an object. */
+function interpolateObject(obj: unknown): unknown {
+  if (typeof obj === "string") return interpolateVars(obj);
+  if (Array.isArray(obj)) return obj.map(interpolateObject);
+  if (obj && typeof obj === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[k] = interpolateObject(v);
+    }
+    return result;
+  }
+  return obj;
+}
+
+/** Extract a value from an object using a dot-path (e.g., "data.token"). */
+function extractPath(obj: unknown, path: string): unknown {
+  const parts = path.split(".");
+  let current: unknown = obj;
+  for (const part of parts) {
+    if (current == null || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+}
+
+/** Run preAuthCommand (shell script) and store output as a session variable. */
+function runPreAuthCommand(config: Config): void {
+  const cmd = config.target.preAuthCommand;
+  if (!cmd) return;
+
+  console.log(`  Running pre-auth command: ${cmd.command}`);
+  try {
+    const output = execSync(cmd.command, {
+      encoding: "utf-8",
+      timeout: 30000,
+    }).trim();
+    sessionVars.set(cmd.outputVar, output);
+    console.log(`    [OK] ${cmd.outputVar} = ${output.substring(0, 60)}${output.length > 60 ? "..." : ""}`);
+  } catch (err) {
+    console.error(`    [FAIL] Pre-auth command failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/** Run HTTP setup steps and populate sessionVars. */
+async function runSetupSteps(config: Config): Promise<void> {
+  const steps = config.target.setupSteps;
+  if (!steps || steps.length === 0) return;
+
+  console.log("  Running setup steps...");
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    const label = step.name || `Step ${i + 1}`;
+
+    let url = interpolateVars(step.url);
+    if (!url.startsWith("http")) {
+      url = `${config.target.baseUrl}${url}`;
+    }
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (step.headers) {
+      for (const [k, v] of Object.entries(step.headers)) {
+        headers[k] = interpolateVars(v);
+      }
+    }
+
+    const body = step.body ? JSON.stringify(interpolateObject(step.body)) : undefined;
+    const method = step.method ?? "POST";
+
+    try {
+      const res = await fetch(url, { method, headers, body });
+      if (!res.ok) {
+        console.error(`    [FAIL] ${label}: HTTP ${res.status} ${res.statusText}`);
+        continue;
+      }
+
+      const data = await res.json();
+
+      if (step.extract) {
+        for (const [varName, jsonPath] of Object.entries(step.extract)) {
+          const value = extractPath(data, jsonPath);
+          if (value !== undefined && value !== null) {
+            sessionVars.set(varName, String(value));
+            console.log(`    [OK] ${label}: ${varName} = ${String(value).substring(0, 60)}${String(value).length > 60 ? "..." : ""}`);
+          } else {
+            console.warn(`    [WARN] ${label}: could not extract "${jsonPath}" from response`);
+          }
+        }
+      } else {
+        console.log(`    [OK] ${label}: ${res.status}`);
+      }
+    } catch (err) {
+      console.error(`    [FAIL] ${label}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+}
+
+/** Run the full pre-setup pipeline: preAuthCommand → setupSteps. */
+export async function runPreSetup(config: Config): Promise<void> {
+  runPreAuthCommand(config);
+  await runSetupSteps(config);
+}
+
 export async function preAuthenticate(config: Config): Promise<void> {
   const adapter = getTargetAdapter(config);
   if (adapter) {
     await adapter.preAuthenticate(config);
     return;
   }
+
+  // Run pre-setup pipeline (shell command + HTTP setup steps)
+  await runPreSetup(config);
 
   if (!config.auth.methods.includes("jwt")) return;
 
@@ -164,12 +283,17 @@ export async function executeAttack(
 
   // Use custom API template if provided
   const apiTemplate = config.target.customApiTemplate;
-  const url = `${config.target.baseUrl}${config.target.agentEndpoint}`;
-  const headers: Record<string, string> = {
+  const url = interpolateVars(`${config.target.baseUrl}${config.target.agentEndpoint}`);
+  const rawHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     ...(apiTemplate?.headers ?? {}),
     ...(attack.headers ?? {}),
   };
+  // Interpolate {{var:name}} and {{uuid}} in header values
+  const headers: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawHeaders)) {
+    headers[k] = interpolateVars(v);
+  }
   const method = apiTemplate?.method ?? "POST";
 
   // Set up auth
@@ -235,8 +359,10 @@ export async function executeAttack(
     // Build JSON object directly instead of string manipulation to avoid escaping issues
     try {
       // Parse the template to understand its structure
+      // Interpolate session variables and UUIDs first, then handle {{message}}
+      const interpolatedTemplate = interpolateVars(apiTemplate.bodyTemplate);
       const templateObj = JSON.parse(
-        apiTemplate.bodyTemplate.replace(/\{\{message\}\}/g, "PLACEHOLDER"),
+        interpolatedTemplate.replace(/\{\{message\}\}/g, "PLACEHOLDER"),
       );
 
       // Recursively find and replace PLACEHOLDER with actual message
