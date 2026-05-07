@@ -1,0 +1,49 @@
+{
+  "target": {
+    "type": "http_agent",
+    "baseUrl": "https://apig03-np.example.com/ut1/customerassistant",
+    "agentEndpoint": "/process/conversation",
+    "applicationDetails": "Insurance customer assistant chatbot. Handles policy inquiries, claims, billing. Uses conversationId-scoped sessions with SSO token and service key authentication.",
+    "customApiTemplate": {
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "X-Service-Key": "YOUR_SERVICE_KEY",
+        "e-sso-token": "YOUR_SSO_TOKEN"
+      },
+      "bodyTemplate": "{\"conversationId\": \"YOUR_CONVERSATION_ID\", \"requestId\": \"{{uuid}}\", \"schemaVersion\": \"1.0.0\", \"calling_app_id\": \"customer_assistant_v2.0\", \"inputType\": \"query\", \"quickLink\": \"\", \"message\": {\"messageId\": \"{{uuid}}\", \"direction\": \"inbound\", \"producer\": \"customer\", \"parts\": [{\"partKind\": \"text\", \"textMarkdown\": \"{{message}}\"}]}}",
+      "responsePath": "message.parts[0].textMarkdown"
+    }
+  },
+  "codebasePath": null,
+  "codebaseGlob": "**/*.{ts,js,py}",
+  "auth": {
+    "methods": ["none"],
+    "jwtSecret": "",
+    "credentials": [],
+    "apiKeys": {}
+  },
+  "attackConfig": {
+    "adaptiveRounds": 1,
+    "attacksPerCategory": 5,
+    "concurrency": 3,
+    "delayBetweenRequestsMs": 1000,
+    "llmProvider": "custom",
+    "llmModel": "AISolutions6GVASAAPTUs",
+    "judgeProvider": "custom",
+    "judgeModel": "AISolutions6GVASAAPTUs",
+    "enableLlmGeneration": true,
+    "enableMultiTurnGeneration": true,
+    "enableAdaptiveMultiTurn": true,
+    "requireReviewConfirmation": false,
+    "enabledCategories": [
+      "prompt_injection",
+      "data_exfiltration",
+      "pii_disclosure",
+      "social_engineering",
+      "insurance_compliance",
+      "sensitive_data",
+      "regulatory_violation"
+    ]
+  }
+}

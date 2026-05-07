@@ -429,6 +429,33 @@ export interface Config {
       /** JSONPath to extract response from API response (e.g., "choices[0].message.content" for OpenAI) */
       responsePath?: string;
     };
+    /**
+     * Shell command to run before setup steps (e.g., generate an SSO token).
+     * stdout is captured and stored as a session variable.
+     */
+    preAuthCommand?: {
+      /** Shell command to execute (e.g., "python3 scripts/get_token.py 9245099016") */
+      command: string;
+      /** Session variable name to store the command's stdout (trimmed) */
+      outputVar: string;
+    };
+    /**
+     * HTTP setup steps executed before attacks (e.g., create a conversation session).
+     * Each step can extract values from the response into session variables.
+     * Supports {{uuid}}, {{var:name}} in urls, headers, and body.
+     * Re-runs before each round if refreshPerRound is true.
+     */
+    setupSteps?: Array<{
+      name?: string;
+      url: string;
+      method?: "GET" | "POST" | "PUT" | "PATCH";
+      headers?: Record<string, string>;
+      body?: Record<string, unknown>;
+      /** Key = variable name, Value = dot-path to extract from response JSON */
+      extract?: Record<string, string>;
+    }>;
+    /** Re-run preAuthCommand + setupSteps before each round (for expiring tokens). Default: false. */
+    refreshPerRound?: boolean;
     /** WebSocket chat settings when target.type is "websocket_agent". */
     websocket?: WebSocketTargetConfig;
     /** Optional infrastructure descriptor for the Attack Path visualization. */
