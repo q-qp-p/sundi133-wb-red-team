@@ -248,7 +248,7 @@ async function runSetupSteps(config: Config): Promise<void> {
           }
         }
       } else {
-        console.log(`    [OK] ${label}: ${res.status}`);
+        console.log(`    [OK] ${label}: ${statusCode}`);
       }
     } catch (err: any) {
       const detail = err?.cause ? ` | cause: ${err.cause?.message || err.cause}` : "";
