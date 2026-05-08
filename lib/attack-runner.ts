@@ -77,13 +77,11 @@ function runPreAuthCommand(config: Config): void {
       shell: "/bin/bash",
     });
     const output = rawOutput.trim();
-    if (showDebug) {
-      console.log(`\n🔍 PRE-AUTH DEBUG: ${cmd.outputVar}`);
-      console.log(`  Raw stdout length: ${rawOutput.length}`);
-      console.log(`  Trimmed length: ${output.length}`);
-      console.log(`  Raw stdout JSON: ${JSON.stringify(rawOutput)}`);
-      console.log(`  Trimmed JSON: ${JSON.stringify(output)}`);
-    }
+    console.log(`\n🔍 PRE-AUTH DEBUG: ${cmd.outputVar}`);
+    console.log(`  Raw stdout length: ${rawOutput.length}`);
+    console.log(`  Trimmed length: ${output.length}`);
+    console.log(`  Raw stdout JSON: ${JSON.stringify(rawOutput)}`);
+    console.log(`  Trimmed JSON: ${JSON.stringify(output)}`);
     sessionVars.set(cmd.outputVar, output);
     console.log(`    [OK] ${cmd.outputVar} = ${output}`);
   } catch (err) {
