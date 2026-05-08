@@ -1,6 +1,6 @@
 import * as jose from "jose";
 import { randomUUID } from "node:crypto";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import type { Config, Attack, Credential, McpExecutionTrace } from "./types.js";
 import { getTargetAdapter } from "./target-adapter.js";
 import { getLlmProvider } from "./llm-provider.js";
@@ -26,6 +26,71 @@ function applyTargetTlsOverrides(): void {
       "  [WARN] TARGET_SKIP_TLS_VERIFY enabled — TLS certificate verification is disabled for target requests.",
     );
   }
+}
+
+function shouldUseCurlForTarget(): boolean {
+  return (
+    process.env.TARGET_USE_CURL === "true" ||
+    process.env.TARGET_USE_CURL === "1"
+  );
+}
+
+function shouldSkipTargetTlsVerify(): boolean {
+  return (
+    process.env.TARGET_SKIP_TLS_VERIFY === "true" ||
+    process.env.TARGET_SKIP_TLS_VERIFY === "1"
+  );
+}
+
+function isTlsCertificateError(err: unknown): boolean {
+  const text = err instanceof Error
+    ? `${err.message} ${(err as any)?.cause?.message ?? ""}`
+    : String(err);
+  return /self-signed certificate|certificate chain|unable to verify|UNABLE_TO_VERIFY_LEAF_SIGNATURE|DEPTH_ZERO_SELF_SIGNED_CERT/i.test(text);
+}
+
+function execCurlJson(
+  method: string,
+  url: string,
+  headers: Record<string, string>,
+  body?: string,
+  insecure = false,
+): { statusCode: number; statusText: string; data: unknown } {
+  const marker = "__REDTEAM_HTTP_CODE__:";
+  const args = ["-sS", "-X", method];
+  if (insecure) {
+    args.push("-k");
+  }
+  for (const [k, v] of Object.entries(headers)) {
+    args.push("--header", `${k}: ${v}`);
+  }
+  if (body) {
+    args.push("--data", body);
+  }
+  args.push("-w", `\n${marker}%{http_code}`, url);
+
+  const rawResponse = execFileSync("curl", args, {
+    encoding: "utf-8",
+    timeout: 30000,
+    env: { ...process.env },
+  });
+  const idx = rawResponse.lastIndexOf(marker);
+  if (idx === -1) {
+    throw new Error("curl response missing HTTP status marker");
+  }
+  const responseBodyText = rawResponse.slice(0, idx).trim();
+  const statusCode = parseInt(rawResponse.slice(idx + marker.length).trim(), 10);
+  let data: unknown;
+  try {
+    data = responseBodyText ? JSON.parse(responseBodyText) : {};
+  } catch {
+    data = responseBodyText;
+  }
+  return {
+    statusCode,
+    statusText: Number.isFinite(statusCode) ? String(statusCode) : "",
+    data,
+  };
 }
 
 /**
@@ -68,7 +133,6 @@ function runPreAuthCommand(config: Config): void {
   if (!cmd) return;
 
   console.log(`  Running pre-auth command: ${cmd.command}`);
-  const showDebug = process.env.DEBUG_ATTACKS === "true";
   try {
     const rawOutput = execSync(cmd.command, {
       encoding: "utf-8",
@@ -96,7 +160,6 @@ async function runSetupSteps(config: Config): Promise<void> {
 
   applyTargetTlsOverrides();
   console.log("  Running setup steps...");
-  const showDebug = process.env.DEBUG_ATTACKS === "true";
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     const label = step.name || `Step ${i + 1}`;
@@ -122,19 +185,57 @@ async function runSetupSteps(config: Config): Promise<void> {
     if (body) {
       console.log(`  Body: ${body}`);
     }
-    
+
     try {
-      const res = await fetch(url, { method, headers, body });
-      if (!res.ok) {
-        console.error(`    [FAIL] ${label}: HTTP ${res.status} ${res.statusText}`);
+      let data: unknown;
+      let statusCode = 0;
+      let statusText = "";
+
+      if (shouldUseCurlForTarget()) {
+        console.log(`  Transport: curl ${shouldSkipTargetTlsVerify() ? "(-k)" : ""}`);
+        ({ statusCode, statusText, data } = execCurlJson(
+          method,
+          url,
+          headers,
+          body,
+          shouldSkipTargetTlsVerify(),
+        ));
+      } else {
+        try {
+          const res = await fetch(url, { method, headers, body });
+          statusCode = res.status;
+          statusText = res.statusText;
+          if (!res.ok) {
+            console.error(`    [FAIL] ${label}: HTTP ${res.status} ${res.statusText}`);
+            continue;
+          }
+          data = await res.json();
+        } catch (fetchErr) {
+          if (isTlsCertificateError(fetchErr)) {
+            console.warn(`  [WARN] ${label}: TLS verification failed in fetch — retrying with curl -k`);
+            console.log("  Transport: curl (-k) [automatic TLS fallback]");
+            ({ statusCode, statusText, data } = execCurlJson(
+              method,
+              url,
+              headers,
+              body,
+              true,
+            ));
+          } else {
+            throw fetchErr;
+          }
+        }
+      }
+
+      if (statusCode < 200 || statusCode >= 300) {
+        console.error(`    [FAIL] ${label}: HTTP ${statusCode} ${statusText}`);
+        console.log(`  Response: ${statusCode} ${statusText}`);
+        console.log(`  Response Body: ${typeof data === "string" ? data : JSON.stringify(data, null, 2)}`);
         continue;
       }
 
-      const data = await res.json();
-
-      console.log(`  Response: ${res.status} ${res.statusText}`);
+      console.log(`  Response: ${statusCode} ${statusText}`);
       console.log(`  Response Body: ${JSON.stringify(data, null, 2)}`);
-      
 
       if (step.extract) {
         for (const [varName, jsonPath] of Object.entries(step.extract)) {
@@ -147,7 +248,7 @@ async function runSetupSteps(config: Config): Promise<void> {
           }
         }
       } else {
-        console.log(`    [OK] ${label}: ${res.status}`);
+        console.log(`    [OK] ${label}: ${statusCode}`);
       }
     } catch (err: any) {
       const detail = err?.cause ? ` | cause: ${err.cause?.message || err.cause}` : "";
