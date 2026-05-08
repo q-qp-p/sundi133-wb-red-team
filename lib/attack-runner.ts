@@ -85,7 +85,7 @@ function runPreAuthCommand(config: Config): void {
       console.log(`  Trimmed JSON: ${JSON.stringify(output)}`);
     }
     sessionVars.set(cmd.outputVar, output);
-    console.log(`    [OK] ${cmd.outputVar} = ${output.substring(0, 60)}${output.length > 60 ? "..." : ""}`);
+    console.log(`    [OK] ${cmd.outputVar} = ${output}`);
   } catch (err) {
     console.error(`    [FAIL] Pre-auth command failed: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -146,7 +146,7 @@ async function runSetupSteps(config: Config): Promise<void> {
           const value = extractPath(data, jsonPath);
           if (value !== undefined && value !== null) {
             sessionVars.set(varName, String(value));
-            console.log(`    [OK] ${label}: ${varName} = ${String(value).substring(0, 60)}${String(value).length > 60 ? "..." : ""}`);
+            console.log(`    [OK] ${label}: ${varName} = ${String(value)}`);
           } else {
             console.warn(`    [WARN] ${label}: could not extract "${jsonPath}" from response`);
           }
