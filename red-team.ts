@@ -682,6 +682,40 @@ async function main() {
               return { verdict: r.verdict, findings: r.findings };
             },
           );
+
+          const lastStep = stepResults[stepResults.length - 1];
+          const result = await analyzeResponse(
+            config,
+            attack,
+            lastStep.statusCode,
+            lastStep.body,
+            lastStep.timeMs,
+            appContext,
+            lastStep.executionTrace,
+          );
+          result.stepIndex = lastStep.stepIndex;
+          result.totalSteps = stepResults.length;
+          result.conversation = stepResults.map((sr) => ({
+            stepIndex: sr.stepIndex,
+            payload:
+              sr.stepIndex === 0
+                ? attack.payload
+                : (attack.steps?.[sr.stepIndex - 1]?.payload ?? {}),
+            statusCode: sr.statusCode,
+            responseBody: sr.body,
+            responseTimeMs: sr.timeMs,
+          }));
+
+          const icon = getColoredIcon(result.verdict);
+          const earlyTag = stoppedEarly
+            ? ` (stopped at step ${lastStep.stepIndex + 1})`
+            : "";
+          console.log(
+            ` ${icon}${result.verdict} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${earlyTag}`,
+          );
+          logFindings(result);
+          await maybeGenerateIdealResponse(config, result);
+          roundResults.push(result);
         } else if (
           config.attackConfig.enableAdaptiveMultiTurn &&
           config.attackConfig.enableMultiTurnGeneration
@@ -849,6 +883,40 @@ async function main() {
                       return { verdict: r.verdict, findings: r.findings };
                     },
                   );
+
+                const lastStep = stepResults[stepResults.length - 1];
+                const result = await analyzeResponse(
+                  config,
+                  attack,
+                  lastStep.statusCode,
+                  lastStep.body,
+                  lastStep.timeMs,
+                  appContext,
+                  lastStep.executionTrace,
+                );
+                result.stepIndex = lastStep.stepIndex;
+                result.totalSteps = stepResults.length;
+                result.conversation = stepResults.map((sr) => ({
+                  stepIndex: sr.stepIndex,
+                  payload:
+                    sr.stepIndex === 0
+                      ? attack.payload
+                      : (attack.steps?.[sr.stepIndex - 1]?.payload ?? {}),
+                  statusCode: sr.statusCode,
+                  responseBody: sr.body,
+                  responseTimeMs: sr.timeMs,
+                }));
+
+                const icon = getColoredIcon(result.verdict);
+                const earlyTag = stoppedEarly
+                  ? ` (stopped at step ${lastStep.stepIndex + 1})`
+                  : "";
+                console.log(
+                  ` ${icon}${result.verdict} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${earlyTag}`,
+                );
+                logFindings(result);
+                await maybeGenerateIdealResponse(config, result);
+                roundResults.push(result);
               } else if (
                 config.attackConfig.enableAdaptiveMultiTurn &&
                 config.attackConfig.enableMultiTurnGeneration
