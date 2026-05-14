@@ -421,6 +421,7 @@ IMPORTANT RULES:
 ${realismFooter}`;
 
   try {
+    console.log("Prompt: \n", prompt);
     const text = await llm.chat({
       model: config.attackConfig.llmModel,
       messages: [
@@ -434,6 +435,13 @@ ${realismFooter}`;
       temperature: 0.9,
       maxTokens: 2048,
     });
+
+    // Log full LLM response for debugging generation issues
+    if (text) {
+      console.error(`      [GEN DEBUG] Full response (${text.length} chars): ${text.replace(/\s+/g, " ").slice(0, 2000)}`);
+    } else {
+      console.error(`      [GEN DEBUG] No text present — LLM returned empty/null content`);
+    }
 
     const parsed = parseJsonArrayFromLlmResponse<Attack>(text);
     const a = parsed[0];
