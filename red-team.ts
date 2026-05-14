@@ -84,6 +84,8 @@ import { loadConfig } from "./lib/config-loader.js";
 import { describeTarget, getTargetAdapter } from "./lib/target-adapter.js";
 import { analyzeCodebase } from "./lib/codebase-analyzer.js";
 import { planAttacks, refinePartialAttacks } from "./lib/attack-planner.js";
+import { estimatePreRun, estimateRun, formatEstimate } from "./lib/run-estimator.js";
+import { getAllStrategies } from "./lib/attack-strategies.js";
 import {
   preAuthenticate,
   prepareConversation,
@@ -546,6 +548,23 @@ async function main() {
       config.attackConfig.customAttacksOnly === true &&
       customAttacks.length > 0;
 
+    // Pre-run estimate — print BEFORE planning so the user sees expected
+    // attack count and wall time before the LLM starts churning.
+    if (!skipBuiltinPlanner) {
+      const totalStrategies = getAllStrategies(
+        config.attackConfig.customStrategiesFile,
+      ).length;
+      const est = estimatePreRun(config, relevantModules.length, totalStrategies);
+      const concurrency = Math.max(1, config.attackConfig.concurrency || 1);
+      console.log("");
+      console.log("  Pre-run estimate");
+      console.log("  ────────────────");
+      for (const line of formatEstimate(est, concurrency)) {
+        console.log(`    ${line}`);
+      }
+      console.log("");
+    }
+
     console.log(
       skipBuiltinPlanner
         ? "  Skipping built-in planner (customAttacksOnly)."
@@ -569,6 +588,13 @@ async function main() {
     );
     knownTotalAttacks += attacks.length;
     console.log(`  Planned ${attacks.length} attacks`);
+    {
+      const est = estimateRun(attacks, config);
+      const concurrency = Math.max(1, config.attackConfig.concurrency || 1);
+      for (const line of formatEstimate(est, concurrency)) {
+        console.log(`    ${line}`);
+      }
+    }
     printPlannedAttackReview(round, attacks, analysis, "initial");
     const approved = await confirmAttackExecution(
       "  Proceed with these planned attacks?",

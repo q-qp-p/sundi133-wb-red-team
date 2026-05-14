@@ -6,6 +6,8 @@ import { loadConfigFromObject } from "./config-loader.js";
 import { describeTarget, getTargetAdapter } from "./target-adapter.js";
 import { analyzeCodebase } from "./codebase-analyzer.js";
 import { planAttacks, refinePartialAttacks } from "./attack-planner.js";
+import { estimatePreRun, estimateRun, formatEstimate } from "./run-estimator.js";
+import { getAllStrategies } from "./attack-strategies.js";
 import {
   preAuthenticate,
   executeAttack,
@@ -682,6 +684,20 @@ export async function runRedTeam(
       config.attackConfig.customAttacksOnly === true &&
       customAttacks.length > 0;
 
+    // Pre-run estimate — print BEFORE planning so dashboards/API clients
+    // see expected attack count and wall time immediately on round start.
+    if (!skipBuiltinPlanner) {
+      const totalStrategies = getAllStrategies(
+        config.attackConfig.customStrategiesFile,
+      ).length;
+      const est = estimatePreRun(config, relevantModules.length, totalStrategies);
+      const concurrency = Math.max(1, config.attackConfig.concurrency || 1);
+      log("attacks", "Pre-run estimate", { round });
+      for (const line of formatEstimate(est, concurrency)) {
+        log("attacks", line, { round });
+      }
+    }
+
     const planned = skipBuiltinPlanner
       ? []
       : await planAttacks(
@@ -698,6 +714,13 @@ export async function runRedTeam(
       totalRounds: config.attackConfig.adaptiveRounds,
       totalAttacks: attacks.length,
     });
+    {
+      const est = estimateRun(attacks, config);
+      const concurrency = Math.max(1, config.attackConfig.concurrency || 1);
+      for (const line of formatEstimate(est, concurrency)) {
+        log("attacks", line, { round });
+      }
+    }
 
     const roundResults: AttackResult[] = [];
 
