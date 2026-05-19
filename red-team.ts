@@ -450,7 +450,9 @@ async function main() {
 
   // -- Checkpoint helpers (CLI) --
   const CHECKPOINT_DIR = resolve("report", ".checkpoints");
+  const checkpointConfigPath = resolve(configPath ?? "config.json");
   const cpConfigKey = JSON.stringify({
+    configPath: checkpointConfigPath,
     url: config.target.baseUrl || config.target.agentEndpoint || "",
     model: config.attackConfig.llmModel,
     rounds: config.attackConfig.adaptiveRounds,
