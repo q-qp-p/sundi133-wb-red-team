@@ -258,3 +258,29 @@ describe("nim provider", () => {
     ).rejects.toThrow(/rate limit exceeded/);
   });
 });
+
+describe("formatErrorDetails HTML sanitization", () => {
+  it("reduces nginx-style HTML error pages to the <title> text", async () => {
+    const { formatErrorDetails } = await import("../lib/error-utils.js");
+
+    const htmlError = `502 <html>
+<head><title>502 Bad Gateway</title></head>
+<body><center><h1>502 Bad Gateway</h1></center></body>
+</html>`;
+    const out = formatErrorDetails(
+      Object.assign(new Error(htmlError), { status: 502 }),
+    );
+
+    expect(out).toContain("502 Bad Gateway");
+    expect(out).not.toContain("<html>");
+    expect(out).not.toContain("<head>");
+    expect(out).not.toContain("</body>");
+  });
+
+  it("leaves non-HTML messages unchanged", async () => {
+    const { formatErrorDetails } = await import("../lib/error-utils.js");
+
+    const out = formatErrorDetails(new Error("rate limit exceeded for model"));
+    expect(out).toContain("rate limit exceeded for model");
+  });
+});
