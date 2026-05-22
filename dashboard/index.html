@@ -3800,23 +3800,23 @@
           var html = '<div style="max-width:100%;">';
 
           // Header with context
-          html += '<div style="margin-bottom:24px;display:flex;align-items:flex-start;gap:16px;">' +
-            '<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(88,166,255,0.15),rgba(63,185,80,0.15));display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>' +
+          html += '<div class="u-flex u-items-start u-gap-4 u-mb-6">' +
+            '<div class="c-section-icon" style="background:linear-gradient(135deg,var(--accent-bg),var(--green-bg));"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>' +
             '<div>' +
-            '<h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">Compliance Analysis</h2>' +
-            '<div style="font-size:13px;color:var(--text2);">Map security scan results against industry compliance frameworks using AI-powered analysis.</div>' +
+            '<h2 class="u-text-3xl u-font-bold u-mb-1">Compliance Analysis</h2>' +
+            '<div class="u-text-md u-text-muted">Map security scan results against industry compliance frameworks using AI-powered analysis.</div>' +
             '</div></div>';
 
           // Step 1: Select Report
-          html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:0;overflow:hidden;">' +
-            '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">' +
-            '<div style="width:28px;height:28px;border-radius:50%;background:' + (selReport ? 'var(--green)' : 'var(--accent)') + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 0 0 3px ' + (selReport ? 'rgba(63,185,80,0.15)' : 'rgba(88,166,255,0.15)') + ';">' + (selReport ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '1') + '</div>' +
-            '<div style="font-size:14px;font-weight:600;">Select Report</div>' +
-            (selReport ? '<div style="font-size:12px;color:var(--text2);margin-left:auto;">' + esc(new Date(selReport.timestamp).toLocaleDateString()) + ' &middot; ' + esc(selReport.targetUrl || "") + ' &middot; Score: <span style="font-weight:700;color:' + scoreColor(selReport.score) + ';">' + selReport.score + '</span></div>' : '') +
+          html += '<div class="c-card-flush" style="margin-bottom:0;">' +
+            '<div class="u-flex u-items-center u-gap-3 u-p-4 u-border-b">' +
+            '<div class="c-step ' + (selReport ? 'c-step-done' : 'c-step-active') + '">' + (selReport ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '1') + '</div>' +
+            '<div class="u-text-lg u-font-semibold">Select Report</div>' +
+            (selReport ? '<div class="u-text-base u-text-muted u-ml-auto">' + esc(new Date(selReport.timestamp).toLocaleDateString()) + ' &middot; ' + esc(selReport.targetUrl || "") + ' &middot; Score: <span class="c-score" data-c="' + scoreColorName(selReport.score) + '">' + selReport.score + '</span></div>' : '') +
             '</div>';
 
           if (reports.length === 0) {
-            html += '<div style="padding:30px;text-align:center;color:var(--text2);font-size:12px;">No reports available. Run a security scan first.</div>';
+            html += '<div class="c-empty u-p-6 u-text-base">No reports available. Run a security scan first.</div>';
           } else if (selReport) {
             // Collapsed — show selected report summary + change link
             html += '<div style="padding:8px 20px;border-top:1px solid var(--border);">' +
@@ -3829,39 +3829,39 @@
           // Step 2: Configure & Run (only if report selected)
           if (selReport) {
             // Connecting line between steps
-            html += '<div style="display:flex;justify-content:flex-start;padding-left:34px;"><div style="width:2px;height:16px;background:var(--border);"></div></div>';
+            html += '<div class="c-step-line"></div>';
 
-            html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:0;overflow:hidden;">' +
-              '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">' +
-              '<div style="width:28px;height:28px;border-radius:50%;background:' + (complianceResults.length > 0 ? 'var(--green)' : 'var(--accent)') + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 0 0 3px ' + (complianceResults.length > 0 ? 'rgba(63,185,80,0.15)' : 'rgba(88,166,255,0.15)') + ';">' + (complianceResults.length > 0 ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '2') + '</div>' +
-              '<div style="font-size:14px;font-weight:600;">Configure & Run</div>' +
-              '<div style="margin-left:auto;display:flex;align-items:center;gap:10px;">' +
-              '<span id="compProgressText" style="font-size:12px;color:var(--text2);"></span>' +
-              '<button id="compRunBtn" onclick="runComplianceInline()" style="background:linear-gradient(135deg,var(--accent) 0%,#7c6cff 100%);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;white-space:nowrap;box-shadow:0 2px 8px rgba(88,166,255,0.25);" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.boxShadow=\'0 4px 16px rgba(88,166,255,0.35)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'0 2px 8px rgba(88,166,255,0.25)\'">Start Compliance Mapping</button>' +
+            html += '<div class="c-card-flush" style="margin-bottom:0;">' +
+              '<div class="u-flex u-items-center u-gap-3 u-p-4 u-border-b">' +
+              '<div class="c-step ' + (complianceResults.length > 0 ? 'c-step-done' : 'c-step-active') + '">' + (complianceResults.length > 0 ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '2') + '</div>' +
+              '<div class="u-text-lg u-font-semibold">Configure & Run</div>' +
+              '<div class="u-ml-auto u-flex u-items-center u-gap-3">' +
+              '<span id="compProgressText" class="u-text-base u-text-muted"></span>' +
+              '<button id="compRunBtn" class="c-btn c-btn-gradient" onclick="runComplianceInline()">Start Compliance Mapping</button>' +
               '</div>' +
               '</div>' +
-              '<div style="padding:20px;">' +
+              '<div class="u-p-5">' +
 
               // Provider + Model row — grouped in a card
-              '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">' +
-              '<div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>LLM Configuration</div>' +
-              '<div style="display:flex;gap:16px;align-items:flex-end;">' +
-              '<div style="flex:0 0 auto;"><div style="font-size:10px;color:var(--text2);font-weight:500;margin-bottom:4px;">Provider</div>' +
-              '<select id="compProvider" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor=\'var(--accent)\'" onblur="this.style.borderColor=\'var(--border)\'">' +
+              '<div class="c-card-bg u-mb-4">' +
+              '<div class="c-label u-flex u-items-center u-gap-2 u-mb-3"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>LLM Configuration</div>' +
+              '<div class="u-flex u-gap-4 u-items-start" style="align-items:flex-end;">' +
+              '<div class="u-flex-shrink-0"><div class="u-text-xs u-text-muted u-font-medium u-mb-1">Provider</div>' +
+              '<select id="compProvider" class="c-input">' +
               '<option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="openrouter">OpenRouter</option></select></div>' +
-              '<div style="flex:1;"><div style="font-size:10px;color:var(--text2);font-weight:500;margin-bottom:4px;">Model</div>' +
-              '<input id="compModel" type="text" value="claude-sonnet-4-20250514" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;width:100%;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor=\'var(--accent)\'" onblur="this.style.borderColor=\'var(--border)\'" /></div>' +
+              '<div class="u-flex-1"><div class="u-text-xs u-text-muted u-font-medium u-mb-1">Model</div>' +
+              '<input id="compModel" type="text" value="claude-sonnet-4-20250514" class="c-input u-w-full" /></div>' +
               '</div></div>' +
 
               // Frameworks — with select all/none
-              '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;">' +
-              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
-              '<div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Frameworks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text2);">(' + frameworks.length + ' available)</span></div>' +
-              '<div style="display:flex;gap:8px;">' +
-              '<button onclick="document.querySelectorAll(\'.comp-fw-checkbox\').forEach(function(c){c.checked=true;c.dispatchEvent(new Event(\'change\',{bubbles:true}))})" style="background:none;border:1px solid var(--border);color:var(--accent);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:inherit;">Select All</button>' +
-              '<button onclick="document.querySelectorAll(\'.comp-fw-checkbox\').forEach(function(c){c.checked=false;c.dispatchEvent(new Event(\'change\',{bubbles:true}))})" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:inherit;">None</button>' +
+              '<div class="c-card-bg">' +
+              '<div class="u-flex u-items-center u-mb-3" style="justify-content:space-between;">' +
+              '<div class="c-label u-flex u-items-center u-gap-2"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Frameworks <span class="u-text-muted" style="font-weight:400;text-transform:none;letter-spacing:0;">(' + frameworks.length + ' available)</span></div>' +
+              '<div class="u-flex u-gap-2">' +
+              '<button class="c-btn c-btn-xs" style="background:none;border:1px solid var(--border);color:var(--accent);" onclick="document.querySelectorAll(\'.comp-fw-checkbox\').forEach(function(c){c.checked=true;c.dispatchEvent(new Event(\'change\',{bubbles:true}))})">Select All</button>' +
+              '<button class="c-btn c-btn-xs" style="background:none;border:1px solid var(--border);color:var(--text2);" onclick="document.querySelectorAll(\'.comp-fw-checkbox\').forEach(function(c){c.checked=false;c.dispatchEvent(new Event(\'change\',{bubbles:true}))})">None</button>' +
               '</div></div>' +
-              '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+              '<div class="u-flex u-flex-wrap u-gap-2">';
             frameworks.forEach(function(fw) {
               html += '<label class="fw-chip"><input type="checkbox" class="comp-fw-checkbox" value="' + esc(fw.id) + '" checked />' + esc(fw.name) + ' <span class="fw-count">' + fw.controlCount + '</span></label>';
             });
@@ -3870,18 +3870,17 @@
 
             // Step 3: Results
             if (complianceResults.length > 0) {
-              // Connecting line between steps
-              html += '<div style="display:flex;justify-content:flex-start;padding-left:34px;"><div style="width:2px;height:16px;background:var(--border);"></div></div>';
+              html += '<div class="c-step-line"></div>';
 
-              html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;">' +
-                '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">' +
-                '<div style="width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 0 0 3px rgba(63,185,80,0.15);"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>' +
-                '<div style="font-size:14px;font-weight:600;">Results</div>' +
-                '<div style="margin-left:auto;display:flex;gap:8px;">' +
-                '<button onclick="downloadComplianceCsv()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;">Export CSV</button>' +
-                '<button onclick="downloadComplianceJson()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;">Export JSON</button>' +
+              html += '<div class="c-card-flush u-mb-4">' +
+                '<div class="u-flex u-items-center u-gap-3 u-p-4 u-border-b">' +
+                '<div class="c-step c-step-done"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>' +
+                '<div class="u-text-lg u-font-semibold">Results</div>' +
+                '<div class="u-ml-auto u-flex u-gap-2">' +
+                '<button class="c-btn c-btn-ghost c-btn-sm" onclick="downloadComplianceCsv()">Export CSV</button>' +
+                '<button class="c-btn c-btn-ghost c-btn-sm" onclick="downloadComplianceJson()">Export JSON</button>' +
                 '</div></div>' +
-                '<div style="padding:20px;" id="compResultsArea">' + buildComplianceResultsHtml(complianceResults) + '</div>' +
+                '<div class="u-p-5" id="compResultsArea">' + buildComplianceResultsHtml(complianceResults) + '</div>' +
                 '</div>';
             } else {
               html += '<div id="compResultsArea"></div>';
