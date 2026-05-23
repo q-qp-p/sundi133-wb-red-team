@@ -6,7 +6,11 @@ import { loadConfigFromObject } from "./config-loader.js";
 import { describeTarget, getTargetAdapter } from "./target-adapter.js";
 import { analyzeCodebase } from "./codebase-analyzer.js";
 import { planAttacks, refinePartialAttacks } from "./attack-planner.js";
-import { estimatePreRun, estimateRun, formatEstimate } from "./run-estimator.js";
+import {
+  estimatePreRun,
+  estimateRun,
+  formatEstimate,
+} from "./run-estimator.js";
 import { getAllStrategies } from "./attack-strategies.js";
 import {
   preAuthenticate,
@@ -17,11 +21,14 @@ import {
   sleep,
 } from "./attack-runner.js";
 import { analyzeResponse, type AppContext } from "./response-analyzer.js";
+import { generateReport, writeReport } from "./report-generator.js";
 import {
-  generateReport,
-  writeReport,
-} from "./report-generator.js";
-import { mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync } from "fs";
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  unlinkSync,
+} from "fs";
 import { resolve } from "path";
 import { runStaticAnalysis } from "./static-analyzer.js";
 import { analyzeRound } from "./round-analyzer.js";
@@ -31,13 +38,8 @@ import {
   mergeCustomAttacksForRound,
 } from "./custom-attacks-loader.js";
 import { generateAppTailoredCustomAttacks } from "./app-tailored-custom-prompts.js";
-import {
-  runDiscoveryRound,
-  applyDiscoveryIntel,
-} from "./discovery-round.js";
-import {
-  isAttackCategory,
-} from "./types.js";
+import { runDiscoveryRound, applyDiscoveryIntel } from "./discovery-round.js";
+import { isAttackCategory } from "./types.js";
 import type {
   AttackModule,
   Attack,
@@ -216,75 +218,172 @@ import { multiTurnPrivilegeEscalationModule } from "../attacks/multi-turn-privil
 import { stagedExfiltrationModule } from "../attacks/staged-exfiltration.js";
 
 export const ALL_MODULES: AttackModule[] = [
-  authBypassModule, rbacBypassModule, promptInjectionModule, outputEvasionModule,
-  dataExfiltrationModule, rateLimitModule, sensitiveDataModule,
-  indirectPromptInjectionModule, steganographicExfiltrationModule,
-  outOfBandExfiltrationModule, trainingDataExtractionModule,
-  sideChannelInferenceModule, toolMisuseModule, rogueAgentModule,
-  goalHijackModule, identityPrivilegeModule, unexpectedCodeExecModule,
-  cascadingFailureModule, multiAgentDelegationModule, memoryPoisoningModule,
-  toolOutputManipulationModule, guardrailTimingModule, multiTurnEscalationModule,
-  conversationManipulationModule, contextWindowAttackModule,
-  slowBurnExfiltrationModule, brandReputationModule, competitorEndorsementModule,
-  toxicContentModule, misinformationModule, piiDisclosureModule,
-  regulatoryViolationModule, copyrightInfringementModule, consentBypassModule,
-  sessionHijackingModule, crossTenantAccessModule, apiAbuseModule,
-  supplyChainModule, socialEngineeringModule, harmfulAdviceModule,
-  biasExploitationModule, contentFilterBypassModule, agenticWorkflowBypassModule,
-  toolChainHijackModule, agentReflectionExploitModule, crossSessionInjectionModule,
-  drugSynthesisModule, weaponsViolenceModule, financialCrimeModule,
-  cyberCrimeModule, csamMinorSafetyModule, fakeQuotesMisinfoModule,
-  competitorSabotageModule, defamationHarassmentModule, brandImpersonationModule,
-  hateSpeechDogwhistleModule, radicalizationContentModule,
-  targetedHarassmentModule, influenceOperationsModule,
-  psychologicalManipulationModule, deceptiveMisinfoModule, hallucinationModule,
-  overrelianceModule, overRefusalModule, ragPoisoningModule, ragAttributionModule,
-  modelExtractionModule, membershipInferenceModule, backdoorTriggerModule,
-  dataPoisoningModule, gradientLeakageModule, modelInversionModule,
-  ragCorpusPoisoningModule, retrievalRankingAttackModule,
-  vectorStoreManipulationModule, chunkBoundaryInjectionModule,
-  embeddingInversionModule, structuredOutputInjectionModule,
-  generatedCodeRceModule, markdownLinkInjectionModule,
-  sycophancyExploitationModule, hallucinationInducementModule,
-  formatConfusionAttackModule, modelDosModule, tokenFloodingDosModule,
-  infiniteLoopAgentModule, quotaExhaustionAttackModule, inferenceAttackModule,
-  reIdentificationModule, linkageAttackModule, differentialPrivacyViolationModule,
-  logicBombConditionalModule, agenticLegalCommitmentModule,
-  contextualIntegrityViolationModule, financialFraudFacilitationModule,
-  gdprErasureBypassModule, mcpServerCompromiseModule,
-  pluginManifestSpoofingModule, sdkDependencyAttackModule,
-  fineTuningDataInjectionModule, promptTemplateInjectionModule, debugAccessModule,
-  shellInjectionModule, sqlInjectionModule, unauthorizedCommitmentsModule,
-  offTopicModule, divergentRepetitionModule, modelFingerprintingModule,
-  specialTokenInjectionModule, crossLingualAttackModule, medicalSafetyModule,
-  financialComplianceModule, pharmacySafetyModule, insuranceComplianceModule,
-  ecommerceSecurityModule, telecomComplianceModule, housingDiscriminationModule,
-  ssrfModule, pathTraversalModule, insecureOutputHandlingModule,
-  multimodalGhostInjectionModule, graphConsensusPoisoningModule,
-  interAgentProtocolAbuseModule, mcpToolNamespaceCollisionModule,
-  computerUseInjectionModule, streamingVoiceInjectionModule,
-  crossModalConflictModule, llmJudgeManipulationModule,
+  authBypassModule,
+  rbacBypassModule,
+  promptInjectionModule,
+  outputEvasionModule,
+  dataExfiltrationModule,
+  rateLimitModule,
+  sensitiveDataModule,
+  indirectPromptInjectionModule,
+  steganographicExfiltrationModule,
+  outOfBandExfiltrationModule,
+  trainingDataExtractionModule,
+  sideChannelInferenceModule,
+  toolMisuseModule,
+  rogueAgentModule,
+  goalHijackModule,
+  identityPrivilegeModule,
+  unexpectedCodeExecModule,
+  cascadingFailureModule,
+  multiAgentDelegationModule,
+  memoryPoisoningModule,
+  toolOutputManipulationModule,
+  guardrailTimingModule,
+  multiTurnEscalationModule,
+  conversationManipulationModule,
+  contextWindowAttackModule,
+  slowBurnExfiltrationModule,
+  brandReputationModule,
+  competitorEndorsementModule,
+  toxicContentModule,
+  misinformationModule,
+  piiDisclosureModule,
+  regulatoryViolationModule,
+  copyrightInfringementModule,
+  consentBypassModule,
+  sessionHijackingModule,
+  crossTenantAccessModule,
+  apiAbuseModule,
+  supplyChainModule,
+  socialEngineeringModule,
+  harmfulAdviceModule,
+  biasExploitationModule,
+  contentFilterBypassModule,
+  agenticWorkflowBypassModule,
+  toolChainHijackModule,
+  agentReflectionExploitModule,
+  crossSessionInjectionModule,
+  drugSynthesisModule,
+  weaponsViolenceModule,
+  financialCrimeModule,
+  cyberCrimeModule,
+  csamMinorSafetyModule,
+  fakeQuotesMisinfoModule,
+  competitorSabotageModule,
+  defamationHarassmentModule,
+  brandImpersonationModule,
+  hateSpeechDogwhistleModule,
+  radicalizationContentModule,
+  targetedHarassmentModule,
+  influenceOperationsModule,
+  psychologicalManipulationModule,
+  deceptiveMisinfoModule,
+  hallucinationModule,
+  overrelianceModule,
+  overRefusalModule,
+  ragPoisoningModule,
+  ragAttributionModule,
+  modelExtractionModule,
+  membershipInferenceModule,
+  backdoorTriggerModule,
+  dataPoisoningModule,
+  gradientLeakageModule,
+  modelInversionModule,
+  ragCorpusPoisoningModule,
+  retrievalRankingAttackModule,
+  vectorStoreManipulationModule,
+  chunkBoundaryInjectionModule,
+  embeddingInversionModule,
+  structuredOutputInjectionModule,
+  generatedCodeRceModule,
+  markdownLinkInjectionModule,
+  sycophancyExploitationModule,
+  hallucinationInducementModule,
+  formatConfusionAttackModule,
+  modelDosModule,
+  tokenFloodingDosModule,
+  infiniteLoopAgentModule,
+  quotaExhaustionAttackModule,
+  inferenceAttackModule,
+  reIdentificationModule,
+  linkageAttackModule,
+  differentialPrivacyViolationModule,
+  logicBombConditionalModule,
+  agenticLegalCommitmentModule,
+  contextualIntegrityViolationModule,
+  financialFraudFacilitationModule,
+  gdprErasureBypassModule,
+  mcpServerCompromiseModule,
+  pluginManifestSpoofingModule,
+  sdkDependencyAttackModule,
+  fineTuningDataInjectionModule,
+  promptTemplateInjectionModule,
+  debugAccessModule,
+  shellInjectionModule,
+  sqlInjectionModule,
+  unauthorizedCommitmentsModule,
+  offTopicModule,
+  divergentRepetitionModule,
+  modelFingerprintingModule,
+  specialTokenInjectionModule,
+  crossLingualAttackModule,
+  medicalSafetyModule,
+  financialComplianceModule,
+  pharmacySafetyModule,
+  insuranceComplianceModule,
+  ecommerceSecurityModule,
+  telecomComplianceModule,
+  housingDiscriminationModule,
+  ssrfModule,
+  pathTraversalModule,
+  insecureOutputHandlingModule,
+  multimodalGhostInjectionModule,
+  graphConsensusPoisoningModule,
+  interAgentProtocolAbuseModule,
+  mcpToolNamespaceCollisionModule,
+  computerUseInjectionModule,
+  streamingVoiceInjectionModule,
+  crossModalConflictModule,
+  llmJudgeManipulationModule,
   retrievalTenantBleedModule,
   apiSpecificAttackModule,
-  sandboxEscapeModule, toolPermissionEscalationModule, alignmentFakingModule,
-  capabilityElicitationModule, instructionHierarchyViolationModule,
-  agenticScopeCreepModule, statePersistenceAttackModule,
-  encodingSerializationAttackModule, multiHopReasoningExploitModule,
+  sandboxEscapeModule,
+  toolPermissionEscalationModule,
+  alignmentFakingModule,
+  capabilityElicitationModule,
+  instructionHierarchyViolationModule,
+  agenticScopeCreepModule,
+  statePersistenceAttackModule,
+  encodingSerializationAttackModule,
+  multiHopReasoningExploitModule,
   emotionalManipulationModule,
-  rewardHackingModule, universalAdversarialTriggerModule,
-  toolResultInjectionModule, toolArgumentInjectionModule,
-  reasoningTraceLeakageModule, guardrailModeConfusionModule,
-  inboxPromptInjectionModule, repoPromptInjectionModule,
-  crossToolDataExfiltrationModule, emailSlackExfiltrationModule,
-  databaseExfiltrationModule, fileSystemExfiltrationModule,
-  auditLogEvasionModule, provenanceForgeryModule,
-  multiTurnPrivilegeEscalationModule, stagedExfiltrationModule,
+  rewardHackingModule,
+  universalAdversarialTriggerModule,
+  toolResultInjectionModule,
+  toolArgumentInjectionModule,
+  reasoningTraceLeakageModule,
+  guardrailModeConfusionModule,
+  inboxPromptInjectionModule,
+  repoPromptInjectionModule,
+  crossToolDataExfiltrationModule,
+  emailSlackExfiltrationModule,
+  databaseExfiltrationModule,
+  fileSystemExfiltrationModule,
+  auditLogEvasionModule,
+  provenanceForgeryModule,
+  multiTurnPrivilegeEscalationModule,
+  stagedExfiltrationModule,
 ];
 
 export const MCP_MODULES: AttackModule[] = [
-  mcpToolMisuseModule, mcpDataExfiltrationModule,
-  mcpIndirectPromptInjectionModule, mcpPathTraversalModule, mcpSsrfModule,
-  mcpCrossTenantAccessModule, mcpDebugAccessModule,
+  mcpToolMisuseModule,
+  mcpDataExfiltrationModule,
+  mcpIndirectPromptInjectionModule,
+  mcpPathTraversalModule,
+  mcpSsrfModule,
+  mcpCrossTenantAccessModule,
+  mcpDebugAccessModule,
 ];
 
 /**
@@ -376,11 +475,16 @@ export async function enrichAnalysisWithTargetSurface(
     };
 
     const notes: string[] = [];
-    if (surface.serverName) notes.push(`MCP server name: ${surface.serverName}`);
-    if (surface.protocolVersion) notes.push(`MCP protocol version: ${surface.protocolVersion}`);
-    if (surface.capabilities?.length) notes.push(`MCP capabilities: ${surface.capabilities.join(", ")}`);
-    if (surface.prompts?.length) notes.push(`MCP prompts exposed: ${surface.prompts.join(", ")}`);
-    if (surface.resources?.length) notes.push(`MCP resources exposed: ${surface.resources.join(", ")}`);
+    if (surface.serverName)
+      notes.push(`MCP server name: ${surface.serverName}`);
+    if (surface.protocolVersion)
+      notes.push(`MCP protocol version: ${surface.protocolVersion}`);
+    if (surface.capabilities?.length)
+      notes.push(`MCP capabilities: ${surface.capabilities.join(", ")}`);
+    if (surface.prompts?.length)
+      notes.push(`MCP prompts exposed: ${surface.prompts.join(", ")}`);
+    if (surface.resources?.length)
+      notes.push(`MCP resources exposed: ${surface.resources.join(", ")}`);
 
     for (const note of notes) {
       if (!analysis.knownWeaknesses.includes(note)) {
@@ -388,7 +492,9 @@ export async function enrichAnalysisWithTargetSurface(
       }
     }
   } catch (error) {
-    log(`Warning: failed to discover target surface: ${(error as Error).message}`);
+    log(
+      `Warning: failed to discover target surface: ${(error as Error).message}`,
+    );
   }
 }
 
@@ -410,10 +516,14 @@ async function maybeGenerateIdealResponse(
 
 function getVerdictLabel(verdict: string): string {
   switch (verdict) {
-    case "PASS": return "[!!] PASS";
-    case "FAIL": return "[OK] FAIL";
-    case "PARTIAL": return "[~] PARTIAL";
-    default: return "[??] ERROR";
+    case "PASS":
+      return "[!!] PASS";
+    case "FAIL":
+      return "[OK] FAIL";
+    case "PARTIAL":
+      return "[~] PARTIAL";
+    default:
+      return "[??] ERROR";
   }
 }
 
@@ -447,7 +557,13 @@ export interface RunProgress {
     responsePreview?: string;
     authMethod?: string;
     role?: string;
-    conversation?: { stepIndex: number; payload: unknown; statusCode: number; responseBody: unknown; responseTimeMs: number }[];
+    conversation?: {
+      stepIndex: number;
+      payload: unknown;
+      statusCode: number;
+      responseBody: unknown;
+      responseTimeMs: number;
+    }[];
   };
 }
 
@@ -496,7 +612,11 @@ function configToHash(config: Config): string {
   return Math.abs(hash).toString(36);
 }
 
-function saveCheckpoint(config: Config, rounds: RoundResult[], round: number): void {
+function saveCheckpoint(
+  config: Config,
+  rounds: RoundResult[],
+  round: number,
+): void {
   mkdirSync(CHECKPOINT_DIR, { recursive: true });
   const cp: Checkpoint = {
     timestamp: new Date().toISOString(),
@@ -523,7 +643,11 @@ function clearCheckpoint(config: Config): void {
   const hash = configToHash(config);
   const path = checkpointPath(hash);
   if (existsSync(path)) {
-    try { unlinkSync(path); } catch { /* ignore */ }
+    try {
+      unlinkSync(path);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -533,7 +657,11 @@ export async function runRedTeam(
   configDir?: string,
   signal?: AbortSignal,
 ): Promise<RunResult> {
-  const log = (phase: string, message: string, extra?: Partial<RunProgress>) => {
+  const log = (
+    phase: string,
+    message: string,
+    extra?: Partial<RunProgress>,
+  ) => {
     onProgress?.({ phase, message, ...extra });
   };
 
@@ -543,9 +671,11 @@ export async function runRedTeam(
 
   const emitResult = (result: AttackResult, extra?: Partial<RunProgress>) => {
     // Extract payload message
-    const payload = typeof (result.attack.payload as Record<string, unknown>)?.message === "string"
-      ? (result.attack.payload as Record<string, unknown>).message as string
-      : JSON.stringify(result.attack.payload);
+    const payload =
+      typeof (result.attack.payload as Record<string, unknown>)?.message ===
+      "string"
+        ? ((result.attack.payload as Record<string, unknown>).message as string)
+        : JSON.stringify(result.attack.payload);
 
     // Extract response preview (truncate to 2000 chars)
     let responsePreview = "";
@@ -553,9 +683,10 @@ export async function runRedTeam(
       responsePreview = result.responseBody.slice(0, 2000);
     } else if (result.responseBody) {
       const rb = result.responseBody as Record<string, unknown>;
-      responsePreview = typeof rb.response === "string"
-        ? (rb.response as string).slice(0, 2000)
-        : JSON.stringify(result.responseBody).slice(0, 2000);
+      responsePreview =
+        typeof rb.response === "string"
+          ? (rb.response as string).slice(0, 2000)
+          : JSON.stringify(result.responseBody).slice(0, 2000);
     }
 
     onProgress?.({
@@ -577,10 +708,15 @@ export async function runRedTeam(
         judgeConfidence: result.judgeConfidence,
         llmEvidenceFor: result.llmEvidenceFor,
         llmEvidenceAgainst: result.llmEvidenceAgainst,
-        idealResponse: result.idealResponse ? {
-          response: result.idealResponse.response?.slice(0, 500),
-          remediationHints: result.idealResponse.remediationHints?.slice(0, 3),
-        } : undefined,
+        idealResponse: result.idealResponse
+          ? {
+              response: result.idealResponse.response?.slice(0, 500),
+              remediationHints: result.idealResponse.remediationHints?.slice(
+                0,
+                3,
+              ),
+            }
+          : undefined,
         payload,
         responsePreview,
         authMethod: result.attack.authMethod,
@@ -621,17 +757,21 @@ export async function runRedTeam(
   // Create dynamic modules for enabled categories that have no hardcoded module
   if (enabledSet?.length) {
     const coveredCategories = new Set(activeModules.map((m) => m.category));
-    const uncovered = enabledSet.filter(
-      (cat) => !coveredCategories.has(cat),
-    );
+    const uncovered = enabledSet.filter((cat) => !coveredCategories.has(cat));
     if (uncovered.length > 0) {
       const known = uncovered.filter((cat) => isAttackCategory(cat));
       const custom = uncovered.filter((cat) => !isAttackCategory(cat));
       if (known.length > 0) {
-        log("config", `Dynamic modules for ${known.length} categories (no hardcoded attacks): ${known.join(", ")}`);
+        log(
+          "config",
+          `Dynamic modules for ${known.length} categories (no hardcoded attacks): ${known.join(", ")}`,
+        );
       }
       if (custom.length > 0) {
-        log("config", `Dynamic modules for ${custom.length} custom categories: ${custom.join(", ")}`);
+        log(
+          "config",
+          `Dynamic modules for ${custom.length} custom categories: ${custom.join(", ")}`,
+        );
       }
       const dynamicModules = uncovered.map((cat) => createDynamicModule(cat));
       activeModules = [...activeModules, ...dynamicModules];
@@ -642,8 +782,13 @@ export async function runRedTeam(
   checkAbort();
   log("analyze", "Analyzing target codebase...");
   const analysis = await analyzeCodebase(config);
-  await enrichAnalysisWithTargetSurface(config, analysis, (msg) => log("analyze", msg));
-  log("analyze", `Found ${analysis.tools.length} tools, ${analysis.roles.length} roles`);
+  await enrichAnalysisWithTargetSurface(config, analysis, (msg) =>
+    log("analyze", msg),
+  );
+  log(
+    "analyze",
+    `Found ${analysis.tools.length} tools, ${analysis.roles.length} roles`,
+  );
 
   if (Math.max(0, config.attackConfig.appTailoredCustomPromptCount ?? 0) > 0) {
     log("analyze", "Generating app-tailored custom prompts from analysis...");
@@ -672,7 +817,10 @@ export async function runRedTeam(
     });
     const skipped = before - relevantModules.length;
     if (skipped > 0) {
-      log("analyze", `Applicability gating: skipped ${skipped} categories with no relevant source files`);
+      log(
+        "analyze",
+        `Applicability gating: skipped ${skipped} categories with no relevant source files`,
+      );
     }
   }
 
@@ -687,7 +835,10 @@ export async function runRedTeam(
   if (config.codebasePath) {
     log("static", "Running static analysis...");
     staticResult = await runStaticAnalysis(config);
-    log("static", `Checked ${staticResult.checkedFiles} files, found ${staticResult.findings.length} issues (score: ${staticResult.score}/100)`);
+    log(
+      "static",
+      `Checked ${staticResult.checkedFiles} files, found ${staticResult.findings.length} issues (score: ${staticResult.score}/100)`,
+    );
   }
 
   // 3. Pre-authenticate
@@ -739,7 +890,10 @@ export async function runRedTeam(
       summary: intel.summary,
       probeCount: intel.probeResults.length,
     };
-    log("discovery", `Discovery complete: ${intel.discoveredTools.length} tools, ${intel.discoveredDataStores.length} data stores, ${intel.weaknesses.length} weaknesses`);
+    log(
+      "discovery",
+      `Discovery complete: ${intel.discoveredTools.length} tools, ${intel.discoveredDataStores.length} data stores, ${intel.weaknesses.length} weaknesses`,
+    );
   }
 
   // 4. Run adaptive attack rounds
@@ -748,20 +902,29 @@ export async function runRedTeam(
 
   // Resume from checkpoint if available
   const checkpoint = loadCheckpoint(config);
-  const rounds: RoundResult[] = checkpoint ? [...checkpoint.completedRounds] : [];
+  const rounds: RoundResult[] = checkpoint
+    ? [...checkpoint.completedRounds]
+    : [];
   let allPreviousResults: AttackResult[] = rounds.flatMap((r) => r.results);
   let defenseProfiles: Map<AttackCategory, CategoryDefenseProfile> | undefined;
   const startRound = checkpoint ? checkpoint.lastCompletedRound + 1 : 1;
 
   if (checkpoint && startRound > 1) {
-    log("attacks", `Resuming from checkpoint — ${checkpoint.completedRounds.length} rounds recovered (${allPreviousResults.length} results)`);
+    log(
+      "attacks",
+      `Resuming from checkpoint — ${checkpoint.completedRounds.length} rounds recovered (${allPreviousResults.length} results)`,
+    );
     // Rebuild defense profiles from recovered rounds
     for (const r of rounds) {
       defenseProfiles = analyzeRound(r.results, config, defenseProfiles);
     }
   }
 
-  for (let round = startRound; round <= config.attackConfig.adaptiveRounds; round++) {
+  for (
+    let round = startRound;
+    round <= config.attackConfig.adaptiveRounds;
+    round++
+  ) {
     log("attacks", `Round ${round}/${config.attackConfig.adaptiveRounds}`, {
       round,
       totalRounds: config.attackConfig.adaptiveRounds,
@@ -778,7 +941,11 @@ export async function runRedTeam(
       const totalStrategies = getAllStrategies(
         config.attackConfig.customStrategiesFile,
       ).length;
-      const est = estimatePreRun(config, relevantModules.length, totalStrategies);
+      const est = estimatePreRun(
+        config,
+        relevantModules.length,
+        totalStrategies,
+      );
       const concurrency = Math.max(1, config.attackConfig.concurrency || 1);
       log("attacks", "Pre-run estimate", { round });
       for (const line of formatEstimate(est, concurrency)) {
@@ -796,7 +963,12 @@ export async function runRedTeam(
           round,
           defenseProfiles,
         );
-    const attacks = mergeCustomAttacksForRound(config, round, planned, customAttacks);
+    const attacks = mergeCustomAttacksForRound(
+      config,
+      round,
+      planned,
+      customAttacks,
+    );
     log("attacks", `Round ${round}: planned ${attacks.length} attacks`, {
       round,
       totalRounds: config.attackConfig.adaptiveRounds,
@@ -823,28 +995,42 @@ export async function runRedTeam(
       };
 
       // Rate-limit rapid-fire attacks (payload may be missing on malformed LLM output)
-      const rapidFire = (
-        attack.payload as Record<string, unknown> | undefined
-      )?._rapidFire as number | undefined;
+      const rapidFire = (attack.payload as Record<string, unknown> | undefined)
+        ?._rapidFire as number | undefined;
       if (rapidFire && attack.category === "rate_limit") {
-        log("attacks", `[${i + 1}/${attacks.length}] ${attack.name} (${rapidFire}x rapid-fire)...`, progressExtra);
+        log(
+          "attacks",
+          `[${i + 1}/${attacks.length}] ${attack.name} (${rapidFire}x rapid-fire)...`,
+          progressExtra,
+        );
         const cleanPayload = { ...attack.payload };
         delete (cleanPayload as Record<string, unknown>)._rapidFire;
         const cleanAttack = { ...attack, payload: cleanPayload };
 
-        const responses = await executeRapidFire(config, cleanAttack, rapidFire);
+        const responses = await executeRapidFire(
+          config,
+          cleanAttack,
+          rapidFire,
+        );
         const got429 = responses.some((r) => r.statusCode === 429);
         const allOk = responses.every((r) => r.statusCode === 200);
         const lastResponse = responses[responses.length - 1];
 
         const result = await analyzeResponse(
-          config, attack, lastResponse.statusCode, lastResponse.body,
-          lastResponse.timeMs, appContext, lastResponse.executionTrace,
+          config,
+          attack,
+          lastResponse.statusCode,
+          lastResponse.body,
+          lastResponse.timeMs,
+          appContext,
+          lastResponse.executionTrace,
         );
 
         if (!got429 && allOk) {
           result.verdict = "PASS";
-          result.findings.push(`All ${rapidFire} requests succeeded — rate limit not enforced`);
+          result.findings.push(
+            `All ${rapidFire} requests succeeded — rate limit not enforced`,
+          );
         } else if (got429) {
           result.verdict = "FAIL";
           result.findings.push(
@@ -852,7 +1038,11 @@ export async function runRedTeam(
           );
         }
 
-        log("attacks", `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`, progressExtra);
+        log(
+          "attacks",
+          `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+          progressExtra,
+        );
         await maybeGenerateIdealResponse(config, result);
         roundResults.push(result);
         emitResult(result, progressExtra);
@@ -862,10 +1052,15 @@ export async function runRedTeam(
       try {
         if (attack.steps && attack.steps.length > 0) {
           // Multi-turn attack (predefined steps)
-          log("attacks", `[${i + 1}/${attacks.length}] ${attack.name} (${1 + attack.steps.length} steps)...`, progressExtra);
+          log(
+            "attacks",
+            `[${i + 1}/${attacks.length}] ${attack.name} (${1 + attack.steps.length} steps)...`,
+            progressExtra,
+          );
 
           const { results: stepResults, stoppedEarly } = await executeMultiTurn(
-            config, attack,
+            config,
+            attack,
             async (cfg, atk, sc, b, t) => {
               const r = await analyzeResponse(cfg, atk, sc, b, t, appContext);
               return { verdict: r.verdict, findings: r.findings };
@@ -874,22 +1069,32 @@ export async function runRedTeam(
 
           const lastStep = stepResults[stepResults.length - 1];
           const result = await analyzeResponse(
-            config, attack, lastStep.statusCode, lastStep.body,
-            lastStep.timeMs, appContext, lastStep.executionTrace,
+            config,
+            attack,
+            lastStep.statusCode,
+            lastStep.body,
+            lastStep.timeMs,
+            appContext,
+            lastStep.executionTrace,
           );
           result.stepIndex = lastStep.stepIndex;
           result.totalSteps = stepResults.length;
           result.conversation = stepResults.map((sr) => ({
             stepIndex: sr.stepIndex,
-            payload: sr.stepIndex === 0
-              ? attack.payload
-              : (attack.steps?.[sr.stepIndex - 1]?.payload ?? {}),
+            payload:
+              sr.stepIndex === 0
+                ? attack.payload
+                : (attack.steps?.[sr.stepIndex - 1]?.payload ?? {}),
             statusCode: sr.statusCode,
             responseBody: sr.body,
             responseTimeMs: sr.timeMs,
           }));
 
-          log("attacks", `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`, progressExtra);
+          log(
+            "attacks",
+            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+            progressExtra,
+          );
           await maybeGenerateIdealResponse(config, result);
           roundResults.push(result);
           emitResult(result, progressExtra);
@@ -899,14 +1104,19 @@ export async function runRedTeam(
         ) {
           // Adaptive multi-turn attack
           const maxTurns = config.attackConfig.maxAdaptiveTurns ?? 15;
-          log("attacks", `[${i + 1}/${attacks.length}] ${attack.name} (adaptive, max ${maxTurns} turns)...`, progressExtra);
+          log(
+            "attacks",
+            `[${i + 1}/${attacks.length}] ${attack.name} (adaptive, max ${maxTurns} turns)...`,
+            progressExtra,
+          );
 
           const {
             results: stepResults,
             stoppedEarly,
             conversationHistory,
           } = await executeAdaptiveMultiTurn(
-            config, attack,
+            config,
+            attack,
             async (cfg, atk, sc, b, t) => {
               const r = await analyzeResponse(cfg, atk, sc, b, t, appContext);
               return { verdict: r.verdict, findings: r.findings };
@@ -915,8 +1125,13 @@ export async function runRedTeam(
 
           const lastStep = stepResults[stepResults.length - 1];
           const result = await analyzeResponse(
-            config, attack, lastStep.statusCode, lastStep.body,
-            lastStep.timeMs, appContext, lastStep.executionTrace,
+            config,
+            attack,
+            lastStep.statusCode,
+            lastStep.body,
+            lastStep.timeMs,
+            appContext,
+            lastStep.executionTrace,
           );
           result.stepIndex = lastStep.stepIndex;
           result.totalSteps = stepResults.length;
@@ -929,26 +1144,48 @@ export async function runRedTeam(
             responseTimeMs: stepResults[ch.stepIndex]?.timeMs ?? 0,
           }));
 
-          log("attacks", `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`, progressExtra);
+          log(
+            "attacks",
+            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+            progressExtra,
+          );
           await maybeGenerateIdealResponse(config, result);
           roundResults.push(result);
           emitResult(result, progressExtra);
         } else {
           // Single-turn attack
-          log("attacks", `[${i + 1}/${attacks.length}] ${attack.name}...`, progressExtra);
+          log(
+            "attacks",
+            `[${i + 1}/${attacks.length}] ${attack.name}...`,
+            progressExtra,
+          );
           const { statusCode, body, timeMs, executionTrace } =
             await executeAttack(config, attack);
           const result = await analyzeResponse(
-            config, attack, statusCode, body, timeMs, appContext, executionTrace,
+            config,
+            attack,
+            statusCode,
+            body,
+            timeMs,
+            appContext,
+            executionTrace,
           );
 
-          log("attacks", `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${statusCode}, ${timeMs}ms)`, progressExtra);
+          log(
+            "attacks",
+            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${statusCode}, ${timeMs}ms)`,
+            progressExtra,
+          );
           await maybeGenerateIdealResponse(config, result);
           roundResults.push(result);
           emitResult(result, progressExtra);
         }
       } catch (attackErr) {
-        log("attacks", `[${i + 1}/${attacks.length}] ${attack.name} → ERROR: ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`, progressExtra);
+        log(
+          "attacks",
+          `[${i + 1}/${attacks.length}] ${attack.name} → ERROR: ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
+          progressExtra,
+        );
         const errResult: AttackResult = {
           attack,
           statusCode: 0,
@@ -971,44 +1208,76 @@ export async function runRedTeam(
     // Refinement pass
     const roundPartials = roundResults.filter((r) => r.verdict === "PARTIAL");
     if (roundPartials.length > 0 && config.attackConfig.enableLlmGeneration) {
-      log("refine", `Refining ${roundPartials.length} PARTIAL results...`, { round });
-      const refinedAttacks = await refinePartialAttacks(config, analysis, roundResults, round);
+      log("refine", `Refining ${roundPartials.length} PARTIAL results...`, {
+        round,
+      });
+      const refinedAttacks = await refinePartialAttacks(
+        config,
+        analysis,
+        roundResults,
+        round,
+      );
 
       if (refinedAttacks.length > 0) {
-        log("refine", `Executing ${refinedAttacks.length} refined attacks`, { round });
+        log("refine", `Executing ${refinedAttacks.length} refined attacks`, {
+          round,
+        });
 
         for (let i = 0; i < refinedAttacks.length; i++) {
           const attack = refinedAttacks[i];
-          const progressExtra = { round, attackIndex: i + 1, totalAttacks: refinedAttacks.length };
+          const progressExtra = {
+            round,
+            attackIndex: i + 1,
+            totalAttacks: refinedAttacks.length,
+          };
 
           try {
             if (attack.steps && attack.steps.length > 0) {
-              const { results: stepResults, stoppedEarly } = await executeMultiTurn(
-                config, attack,
-                async (cfg, atk, sc, b, t) => {
-                  const r = await analyzeResponse(cfg, atk, sc, b, t, appContext);
-                  return { verdict: r.verdict, findings: r.findings };
-                },
-              );
+              const { results: stepResults, stoppedEarly } =
+                await executeMultiTurn(
+                  config,
+                  attack,
+                  async (cfg, atk, sc, b, t) => {
+                    const r = await analyzeResponse(
+                      cfg,
+                      atk,
+                      sc,
+                      b,
+                      t,
+                      appContext,
+                    );
+                    return { verdict: r.verdict, findings: r.findings };
+                  },
+                );
 
               const lastStep = stepResults[stepResults.length - 1];
               const result = await analyzeResponse(
-                config, attack, lastStep.statusCode, lastStep.body,
-                lastStep.timeMs, appContext, lastStep.executionTrace,
+                config,
+                attack,
+                lastStep.statusCode,
+                lastStep.body,
+                lastStep.timeMs,
+                appContext,
+                lastStep.executionTrace,
               );
               result.stepIndex = lastStep.stepIndex;
               result.totalSteps = stepResults.length;
               result.conversation = stepResults.map((sr) => ({
                 stepIndex: sr.stepIndex,
-                payload: sr.stepIndex === 0
-                  ? attack.payload
-                  : (attack.steps?.[sr.stepIndex - 1]?.payload ?? {}),
+                payload:
+                  sr.stepIndex === 0
+                    ? attack.payload
+                    : (attack.steps?.[sr.stepIndex - 1]?.payload ?? {}),
                 statusCode: sr.statusCode,
                 responseBody: sr.body,
                 responseTimeMs: sr.timeMs,
               }));
 
-              log("refine", `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`, progressExtra);
+              log(
+                "refine",
+                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+                progressExtra,
+              );
               await maybeGenerateIdealResponse(config, result);
               roundResults.push(result);
               emitResult(result, progressExtra);
@@ -1022,17 +1291,30 @@ export async function runRedTeam(
                 stoppedEarly,
                 conversationHistory,
               } = await executeAdaptiveMultiTurn(
-                config, attack,
+                config,
+                attack,
                 async (cfg, atk, sc, b, t) => {
-                  const r = await analyzeResponse(cfg, atk, sc, b, t, appContext);
+                  const r = await analyzeResponse(
+                    cfg,
+                    atk,
+                    sc,
+                    b,
+                    t,
+                    appContext,
+                  );
                   return { verdict: r.verdict, findings: r.findings };
                 },
               );
 
               const lastStep = stepResults[stepResults.length - 1];
               const result = await analyzeResponse(
-                config, attack, lastStep.statusCode, lastStep.body,
-                lastStep.timeMs, appContext, lastStep.executionTrace,
+                config,
+                attack,
+                lastStep.statusCode,
+                lastStep.body,
+                lastStep.timeMs,
+                appContext,
+                lastStep.executionTrace,
               );
               result.stepIndex = lastStep.stepIndex;
               result.totalSteps = stepResults.length;
@@ -1040,9 +1322,10 @@ export async function runRedTeam(
               if (attack.steps && attack.steps.length > 0) {
                 result.conversation = stepResults.map((sr) => ({
                   stepIndex: sr.stepIndex,
-                  payload: sr.stepIndex === 0
-                    ? attack.payload
-                    : (attack.steps?.[sr.stepIndex - 1]?.payload ?? {}),
+                  payload:
+                    sr.stepIndex === 0
+                      ? attack.payload
+                      : (attack.steps?.[sr.stepIndex - 1]?.payload ?? {}),
                   statusCode: sr.statusCode,
                   responseBody: sr.body,
                   responseTimeMs: sr.timeMs,
@@ -1057,7 +1340,11 @@ export async function runRedTeam(
                 }));
               }
 
-              log("refine", `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`, progressExtra);
+              log(
+                "refine",
+                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+                progressExtra,
+              );
               await maybeGenerateIdealResponse(config, result);
               roundResults.push(result);
               emitResult(result, progressExtra);
@@ -1065,16 +1352,30 @@ export async function runRedTeam(
               const { statusCode, body, timeMs, executionTrace } =
                 await executeAttack(config, attack);
               const result = await analyzeResponse(
-                config, attack, statusCode, body, timeMs, appContext, executionTrace,
+                config,
+                attack,
+                statusCode,
+                body,
+                timeMs,
+                appContext,
+                executionTrace,
               );
 
-              log("refine", `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`, progressExtra);
+              log(
+                "refine",
+                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+                progressExtra,
+              );
               await maybeGenerateIdealResponse(config, result);
               roundResults.push(result);
               emitResult(result, progressExtra);
             }
           } catch (refineErr) {
-            log("refine", `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ERROR: ${refineErr instanceof Error ? refineErr.message : String(refineErr)}`, progressExtra);
+            log(
+              "refine",
+              `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ERROR: ${refineErr instanceof Error ? refineErr.message : String(refineErr)}`,
+              progressExtra,
+            );
             const errResult: AttackResult = {
               attack,
               statusCode: 0,
@@ -1102,14 +1403,24 @@ export async function runRedTeam(
     // Save checkpoint after each completed round
     try {
       saveCheckpoint(config, rounds, round);
-      log("checkpoint", `Round ${round} checkpoint saved (${allPreviousResults.length} total results)`);
+      log(
+        "checkpoint",
+        `Round ${round} checkpoint saved (${allPreviousResults.length} total results)`,
+      );
     } catch (cpErr) {
-      log("checkpoint", `Warning: failed to save checkpoint: ${cpErr instanceof Error ? cpErr.message : String(cpErr)}`);
+      log(
+        "checkpoint",
+        `Warning: failed to save checkpoint: ${cpErr instanceof Error ? cpErr.message : String(cpErr)}`,
+      );
     }
 
     const passCount = roundResults.filter((r) => r.verdict === "PASS").length;
     const failCount = roundResults.filter((r) => r.verdict === "FAIL").length;
-    log("attacks", `Round ${round}: ${passCount} vulns found, ${failCount} blocked`, { round });
+    log(
+      "attacks",
+      `Round ${round}: ${passCount} vulns found, ${failCount} blocked`,
+      { round },
+    );
 
     if (round < config.attackConfig.adaptiveRounds) {
       defenseProfiles = analyzeRound(roundResults, config, defenseProfiles);
@@ -1140,9 +1451,11 @@ export async function runRedTeam(
         ? { path: config.target.websocket.path }
         : undefined,
       infra: config.target.infra,
-      llmModel: config.target.infra?.aiModel?.name ?? config.attackConfig.llmModel,
+      llmModel:
+        config.target.infra?.aiModel?.name ?? config.attackConfig.llmModel,
       llmProvider:
-        config.target.infra?.aiModel?.provider ?? config.attackConfig.llmProvider,
+        config.target.infra?.aiModel?.provider ??
+        config.attackConfig.llmProvider,
     },
   );
   // Skip file write when DB is configured (server stores to DB instead)

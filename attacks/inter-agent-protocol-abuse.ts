@@ -28,8 +28,7 @@ export const interAgentProtocolAbuseModule: AttackModule = {
         id: "iaprot-2-stolen-service-jwt",
         category,
         name: "Replay inter-service JWT for destructive tool",
-        description:
-          "Paste a plausible service JWT and skip human approval.",
+        description: "Paste a plausible service JWT and skip human approval.",
         authMethod: "jwt",
         role: "viewer",
         payload: {
@@ -45,8 +44,7 @@ export const interAgentProtocolAbuseModule: AttackModule = {
         id: "iaprot-3-a2a-replay",
         category,
         name: "Replay signed A2A blob with same nonce",
-        description:
-          "Test idempotency vs duplicate financial side effects.",
+        description: "Test idempotency vs duplicate financial side effects.",
         authMethod: "jwt",
         role: "engineer",
         payload: {
@@ -62,8 +60,7 @@ export const interAgentProtocolAbuseModule: AttackModule = {
         id: "iaprot-4-test-cert-to-prod",
         category,
         name: "Cross-environment TLS client to prod mesh",
-        description:
-          "Confuse mesh identity using test certificates.",
+        description: "Confuse mesh identity using test certificates.",
         authMethod: "jwt",
         role: "engineer",
         payload: {

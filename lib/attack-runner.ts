@@ -65,10 +65,13 @@ function shouldSkipTargetTlsVerify(): boolean {
 }
 
 function isTlsCertificateError(err: unknown): boolean {
-  const text = err instanceof Error
-    ? `${err.message} ${(err as any)?.cause?.message ?? ""}`
-    : String(err);
-  return /self-signed certificate|certificate chain|unable to verify|UNABLE_TO_VERIFY_LEAF_SIGNATURE|DEPTH_ZERO_SELF_SIGNED_CERT/i.test(text);
+  const text =
+    err instanceof Error
+      ? `${err.message} ${(err as any)?.cause?.message ?? ""}`
+      : String(err);
+  return /self-signed certificate|certificate chain|unable to verify|UNABLE_TO_VERIFY_LEAF_SIGNATURE|DEPTH_ZERO_SELF_SIGNED_CERT/i.test(
+    text,
+  );
 }
 
 function execCurlJson(
@@ -101,7 +104,10 @@ function execCurlJson(
     throw new Error("curl response missing HTTP status marker");
   }
   const responseBodyText = rawResponse.slice(0, idx).trim();
-  const statusCode = parseInt(rawResponse.slice(idx + marker.length).trim(), 10);
+  const statusCode = parseInt(
+    rawResponse.slice(idx + marker.length).trim(),
+    10,
+  );
   let data: unknown;
   try {
     data = responseBodyText ? JSON.parse(responseBodyText) : {};
@@ -121,7 +127,10 @@ function execCurlJson(
 export function interpolateVars(text: string): string {
   return text
     .replace(/\{\{uuid\}\}/g, () => randomUUID())
-    .replace(/\{\{var:(\w+)\}\}/g, (_, name) => getSessionVars().get(name) ?? process.env[name] ?? "");
+    .replace(
+      /\{\{var:(\w+)\}\}/g,
+      (_, name) => getSessionVars().get(name) ?? process.env[name] ?? "",
+    );
 }
 
 /** Recursively interpolate all string values in an object. */
@@ -171,7 +180,9 @@ function runPreAuthCommand(config: Config): void {
     getSessionVars().set(cmd.outputVar, output);
     console.log(`    [OK] ${cmd.outputVar} = ${output}`);
   } catch (err) {
-    console.error(`    [FAIL] Pre-auth command failed: ${err instanceof Error ? err.message : String(err)}`);
+    console.error(
+      `    [FAIL] Pre-auth command failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -191,14 +202,18 @@ async function runSetupSteps(config: Config): Promise<void> {
       url = `${config.target.baseUrl}${url}`;
     }
 
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
     if (step.headers) {
       for (const [k, v] of Object.entries(step.headers)) {
         headers[k] = interpolateVars(v);
       }
     }
 
-    const body = step.body ? JSON.stringify(interpolateObject(step.body)) : undefined;
+    const body = step.body
+      ? JSON.stringify(interpolateObject(step.body))
+      : undefined;
     const method = step.method ?? "POST";
 
     console.log(`\n🔍 SETUP STEP DEBUG: ${label}`);
@@ -214,7 +229,9 @@ async function runSetupSteps(config: Config): Promise<void> {
       let statusText = "";
 
       if (shouldUseCurlForTarget()) {
-        console.log(`  Transport: curl ${shouldSkipTargetTlsVerify() ? "(-k)" : ""}`);
+        console.log(
+          `  Transport: curl ${shouldSkipTargetTlsVerify() ? "(-k)" : ""}`,
+        );
         ({ statusCode, statusText, data } = execCurlJson(
           method,
           url,
@@ -228,13 +245,17 @@ async function runSetupSteps(config: Config): Promise<void> {
           statusCode = res.status;
           statusText = res.statusText;
           if (!res.ok) {
-            console.error(`    [FAIL] ${label}: HTTP ${res.status} ${res.statusText}`);
+            console.error(
+              `    [FAIL] ${label}: HTTP ${res.status} ${res.statusText}`,
+            );
             continue;
           }
           data = await res.json();
         } catch (fetchErr) {
           if (isTlsCertificateError(fetchErr)) {
-            console.warn(`  [WARN] ${label}: TLS verification failed in fetch — retrying with curl -k`);
+            console.warn(
+              `  [WARN] ${label}: TLS verification failed in fetch — retrying with curl -k`,
+            );
             console.log("  Transport: curl (-k) [automatic TLS fallback]");
             ({ statusCode, statusText, data } = execCurlJson(
               method,
@@ -252,7 +273,9 @@ async function runSetupSteps(config: Config): Promise<void> {
       if (statusCode < 200 || statusCode >= 300) {
         console.error(`    [FAIL] ${label}: HTTP ${statusCode} ${statusText}`);
         console.log(`  Response: ${statusCode} ${statusText}`);
-        console.log(`  Response Body: ${typeof data === "string" ? data : JSON.stringify(data, null, 2)}`);
+        console.log(
+          `  Response Body: ${typeof data === "string" ? data : JSON.stringify(data, null, 2)}`,
+        );
         continue;
       }
 
@@ -266,15 +289,21 @@ async function runSetupSteps(config: Config): Promise<void> {
             getSessionVars().set(varName, String(value));
             console.log(`    [OK] ${label}: ${varName} = ${String(value)}`);
           } else {
-            console.warn(`    [WARN] ${label}: could not extract "${jsonPath}" from response`);
+            console.warn(
+              `    [WARN] ${label}: could not extract "${jsonPath}" from response`,
+            );
           }
         }
       } else {
         console.log(`    [OK] ${label}: ${statusCode}`);
       }
     } catch (err: any) {
-      const detail = err?.cause ? ` | cause: ${err.cause?.message || err.cause}` : "";
-      console.error(`    [FAIL] ${label}: ${err instanceof Error ? err.message : String(err)}${detail}`);
+      const detail = err?.cause
+        ? ` | cause: ${err.cause?.message || err.cause}`
+        : "";
+      console.error(
+        `    [FAIL] ${label}: ${err instanceof Error ? err.message : String(err)}${detail}`,
+      );
       console.error(`    [DEBUG] URL: ${method} ${url}`);
     }
   }
@@ -289,7 +318,9 @@ export async function runPreSetup(config: Config): Promise<void> {
 /** Refresh token/session state at the start of each new conversation when configured. */
 export async function prepareConversation(config: Config): Promise<void> {
   if (!config.target.refreshPerConversation) return;
-  console.log("  Refreshing pre-auth tokens and session for new conversation...");
+  console.log(
+    "  Refreshing pre-auth tokens and session for new conversation...",
+  );
   await runPreSetup(config);
 }
 
@@ -453,7 +484,9 @@ export async function executeAttack(
   applyTargetTlsOverrides();
   // Use custom API template if provided
   const apiTemplate = config.target.customApiTemplate;
-  const url = interpolateVars(`${config.target.baseUrl}${config.target.agentEndpoint}`);
+  const url = interpolateVars(
+    `${config.target.baseUrl}${config.target.agentEndpoint}`,
+  );
   const rawHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     ...(apiTemplate?.headers ?? {}),
@@ -634,8 +667,13 @@ export async function executeAttack(
     });
 
     // On 401, refresh token + conversationId and retry once
-    if (res.status === 401 && (config.target.preAuthCommand || config.target.setupSteps)) {
-      console.log(`  ⚠ Got 401 — refreshing token, creating new conversation, retrying...`);
+    if (
+      res.status === 401 &&
+      (config.target.preAuthCommand || config.target.setupSteps)
+    ) {
+      console.log(
+        `  ⚠ Got 401 — refreshing token, creating new conversation, retrying...`,
+      );
       await runPreSetup(config);
       // Re-interpolate headers with fresh token
       for (const [k, v] of Object.entries(rawHeaders)) {
@@ -644,12 +682,16 @@ export async function executeAttack(
       // Re-interpolate body template with fresh conversationId + new UUIDs
       let retryBody = requestBody;
       if (apiTemplate?.bodyTemplate) {
-        const msg = (attack.payload as Record<string, unknown>).message as string;
+        const msg = (attack.payload as Record<string, unknown>)
+          .message as string;
         const retryTemplate = interpolateVars(apiTemplate.bodyTemplate);
         try {
-          const tObj = JSON.parse(retryTemplate.replace(/\{\{message\}\}/g, "PLACEHOLDER"));
+          const tObj = JSON.parse(
+            retryTemplate.replace(/\{\{message\}\}/g, "PLACEHOLDER"),
+          );
           const replace = (o: any): any => {
-            if (typeof o === "string") return o === "PLACEHOLDER" ? msg || "" : o;
+            if (typeof o === "string")
+              return o === "PLACEHOLDER" ? msg || "" : o;
             if (Array.isArray(o)) return o.map(replace);
             if (o && typeof o === "object") {
               const r: any = {};
@@ -659,7 +701,9 @@ export async function executeAttack(
             return o;
           };
           retryBody = JSON.stringify(replace(tObj));
-        } catch { /* use original body */ }
+        } catch {
+          /* use original body */
+        }
       }
       res = await fetch(url, {
         method,
@@ -705,8 +749,10 @@ export async function executeAttack(
       responseBody
     ) {
       try {
-        const pathParts = apiTemplate.responsePath
-          .match(/[^.\[\]]+|\[\-?\d+\]|\[\{[^}]+\}]/g) || [];
+        const pathParts =
+          apiTemplate.responsePath.match(
+            /[^.\[\]]+|\[\-?\d+\]|\[\{[^}]+\}]/g,
+          ) || [];
         let extracted: unknown = responseBody;
         for (const rawPart of pathParts) {
           if (extracted == null) break;
@@ -722,8 +768,11 @@ export async function executeAttack(
             const m = part.match(/^\{(\w+)=(\w+)\}$/);
             if (m) {
               const [, key, val] = m;
-              const matches = extracted.filter((item: any) => item?.[key] === val);
-              extracted = matches.length > 0 ? matches[matches.length - 1] : undefined;
+              const matches = extracted.filter(
+                (item: any) => item?.[key] === val,
+              );
+              extracted =
+                matches.length > 0 ? matches[matches.length - 1] : undefined;
             }
           }
           // Normal property or numeric index

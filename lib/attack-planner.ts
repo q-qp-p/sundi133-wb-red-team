@@ -8,7 +8,11 @@ import type {
   AttackCategory,
   CategoryDefenseProfile,
 } from "./types.js";
-import { ALL_STRATEGIES, sampleStrategies, getAllStrategies } from "./attack-strategies.js";
+import {
+  ALL_STRATEGIES,
+  sampleStrategies,
+  getAllStrategies,
+} from "./attack-strategies.js";
 import {
   orderStrategiesForCategory,
   selectStrategiesForCategory,
@@ -126,10 +130,14 @@ export async function planAttacks(
   const allAttacks: Attack[] = [];
   const totalModules = modules.length;
   // Merge built-in + custom strategies
-  const mergedStrategies = getAllStrategies(config.attackConfig.customStrategiesFile);
+  const mergedStrategies = getAllStrategies(
+    config.attackConfig.customStrategiesFile,
+  );
 
   const categoryParallelism = config.attackConfig.categoryParallelism ?? 1;
-  console.log(`  📋 Planning attacks for ${totalModules} categories (${mergedStrategies.length} strategies)${categoryParallelism > 1 ? ` [parallelism=${categoryParallelism}]` : ""}...`);
+  console.log(
+    `  📋 Planning attacks for ${totalModules} categories (${mergedStrategies.length} strategies)${categoryParallelism > 1 ? ` [parallelism=${categoryParallelism}]` : ""}...`,
+  );
 
   const sharedPlanIndex = { value: 0 };
 
@@ -189,7 +197,10 @@ export async function planAttacks(
   });
 
   // Run planning tasks with concurrency pool
-  const planResults = await runPlanWithConcurrency(planTasks, categoryParallelism);
+  const planResults = await runPlanWithConcurrency(
+    planTasks,
+    categoryParallelism,
+  );
   for (const categoryAttacks of planResults) {
     allAttacks.push(...categoryAttacks);
   }
@@ -368,7 +379,9 @@ Return a JSON array of objects with "idx" (number) and "message" (rewritten stri
         }
       }
     } catch (e) {
-      console.error(`  ❌ Realism rewrite failed for batch ${i}: ${formatErrorDetails(e)}`);
+      console.error(
+        `  ❌ Realism rewrite failed for batch ${i}: ${formatErrorDetails(e)}`,
+      );
       // Fall through with original payloads — seed attacks still work, just less subtle
     }
   }
@@ -477,7 +490,9 @@ ${realismFooter}`;
     if (text) {
       console.error(`      [GEN DEBUG] Full response (${text.length} chars)`);
     } else {
-      console.error(`      [GEN DEBUG] No text present — LLM returned empty/null content`);
+      console.error(
+        `      [GEN DEBUG] No text present — LLM returned empty/null content`,
+      );
     }
 
     const parsed = parseJsonArrayFromLlmResponse<Attack>(text);
@@ -540,7 +555,9 @@ async function generateAttacksForStrategies(
         round,
         adaptiveContext,
         llm,
-        attacksPerStrategy > 1 ? `(variant ${j + 1}/${attacksPerStrategy})` : undefined,
+        attacksPerStrategy > 1
+          ? `(variant ${j + 1}/${attacksPerStrategy})`
+          : undefined,
       );
       if (attack) results.push(attack);
     }
@@ -598,12 +615,11 @@ TACTICAL GUIDANCE: The target's primary defense for this category is "${profile.
     config.attackConfig.strategyCategoryAffinityFile,
   );
   const poolLen = strategyPool.length;
-  const affinityEnabled =
-    strategyPool.some(
-      (strategy) =>
-        getStrategyAffinityScore(mod.category, strategy.slug, affinityLookup) !=
-        null,
-    );
+  const affinityEnabled = strategyPool.some(
+    (strategy) =>
+      getStrategyAffinityScore(mod.category, strategy.slug, affinityLookup) !=
+      null,
+  );
 
   // Full-pool mode: when strategiesPerRound >= 100 or >= the pool size,
   // iterate through every eligible strategy with a dedicated LLM call each.
@@ -630,7 +646,10 @@ TACTICAL GUIDANCE: The target's primary defense for this category is "${profile.
           affinityLookup,
         );
 
-    const attacksPerStrategy = Math.max(1, config.attackConfig.attacksPerStrategy ?? 1);
+    const attacksPerStrategy = Math.max(
+      1,
+      config.attackConfig.attacksPerStrategy ?? 1,
+    );
     console.log(
       `      📋 Full-pool mode: iterating ${orderedStrategies.length} strategies × ${attacksPerStrategy} attacks each`,
     );
@@ -660,7 +679,10 @@ TACTICAL GUIDANCE: The target's primary defense for this category is "${profile.
   }
 
   // Normal batch mode: sample a subset of strategies, one LLM call produces N attacks.
-  const effectiveCount = Math.min(strategiesPerRoundRaw, poolLen || strategiesPerRoundRaw);
+  const effectiveCount = Math.min(
+    strategiesPerRoundRaw,
+    poolLen || strategiesPerRoundRaw,
+  );
   const sampledStrategies = profile
     ? selectStrategiesForCategory(
         profile,
@@ -803,7 +825,9 @@ Return ONLY the JSON array, no markdown fences.`;
         });
       }
     } catch (e) {
-      console.error(`  ❌ Failed to refine ${category} attacks: ${formatErrorDetails(e)}`);
+      console.error(
+        `  ❌ Failed to refine ${category} attacks: ${formatErrorDetails(e)}`,
+      );
     }
   }
 

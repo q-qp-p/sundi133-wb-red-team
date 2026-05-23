@@ -84,7 +84,9 @@ async function handleRequest(
     try {
       if (authMode === "dev") {
         // Dev mode: auto-authenticate all requests as admin
-        authCtx = await validateDevToken("Bearer " + (process.env.DEV_API_KEY || "dev-key"));
+        authCtx = await validateDevToken(
+          "Bearer " + (process.env.DEV_API_KEY || "dev-key"),
+        );
       } else if (authMode === "simple") {
         authCtx = await validateSimpleSession(req.headers.cookie);
       } else if (req.headers["x-api-key"]) {

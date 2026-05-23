@@ -84,13 +84,21 @@ ${result.llmReasoning ? `\nJUDGE REASONING:\n${result.llmReasoning}` : ""}`;
 
     const judgeModel =
       config.attackConfig.judgeModel ?? config.attackConfig.llmModel;
-    const judgeProviderName = config.attackConfig.judgeProvider ?? config.attackConfig.llmProvider;
-    const useJsonMode = judgeProviderName !== "custom" && judgeProviderName !== "together";
+    const judgeProviderName =
+      config.attackConfig.judgeProvider ?? config.attackConfig.llmProvider;
+    const useJsonMode =
+      judgeProviderName !== "custom" && judgeProviderName !== "together";
     const llm = getJudgeProvider(config);
     const text = await llm.chat({
       model: judgeModel,
       messages: [
-        { role: "system", content: useJsonMode ? systemPrompt : systemPrompt + "\n\nIMPORTANT: Respond with valid JSON only, no other text." },
+        {
+          role: "system",
+          content: useJsonMode
+            ? systemPrompt
+            : systemPrompt +
+              "\n\nIMPORTANT: Respond with valid JSON only, no other text.",
+        },
         { role: "user", content: userPrompt },
       ],
       temperature: 0.3,
