@@ -122,7 +122,11 @@ import {
   ALL_MODULES,
   MCP_MODULES,
   enrichAnalysisWithTargetSurface,
+  createDynamicModule,
 } from "./lib/run.js";
+import {
+  isAttackCategory,
+} from "./lib/types.js";
 import type {
   Attack,
   AttackResult,
@@ -312,10 +316,28 @@ async function main() {
   const moduleSet =
     (config.target.type ?? "http_agent") === "mcp" ? MCP_MODULES : ALL_MODULES;
   const enabledSet = config.attackConfig.enabledCategories;
-  const activeModules = enabledSet?.length
+  let activeModules = enabledSet?.length
     ? moduleSet.filter((m) => enabledSet.includes(m.category))
     : moduleSet;
+
+  // Create dynamic modules for enabled categories that have no hardcoded module
   if (enabledSet?.length) {
+    const coveredCategories = new Set(activeModules.map((m) => m.category));
+    const uncovered = enabledSet.filter(
+      (cat) => !coveredCategories.has(cat),
+    );
+    if (uncovered.length > 0) {
+      const known = uncovered.filter((cat) => isAttackCategory(cat));
+      const custom = uncovered.filter((cat) => !isAttackCategory(cat));
+      if (known.length > 0) {
+        console.log(`  Dynamic modules for ${known.length} categories (no hardcoded attacks): ${known.join(", ")}`);
+      }
+      if (custom.length > 0) {
+        console.log(`  Dynamic modules for ${custom.length} custom categories: ${custom.join(", ")}`);
+      }
+      const dynamicModules = uncovered.map((cat) => createDynamicModule(cat));
+      activeModules = [...activeModules, ...dynamicModules];
+    }
     console.log(
       `  Active categories (${activeModules.length}): ${enabledSet.join(", ")}`,
     );
