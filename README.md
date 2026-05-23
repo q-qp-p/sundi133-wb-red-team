@@ -15,7 +15,68 @@ Red-Team AI is built for that gap. It reads your application's source code first
 
 ---
 
+## Why star this?
+
+Red-Team AI finds security bugs in AI agents by reading the source code first, then generating attacks specific to your tools, auth, guardrails, routes, and policies.
+
+Use it if you are building:
+- AI agents with tools or MCP servers
+- RAG apps with private data
+- customer-support, finance, healthcare, insurance, or internal copilots
+- multi-agent workflows where tool chaining can leak data
+
+⭐ Star this repo if you want practical agent security tests that go beyond prompt-injection lists.
+
+<!-- TODO: add 10-second demo GIF/screenshot here (dashboard run against demo-agentic-app) -->
+
+---
+
+## Try it in 2 minutes
+
+```bash
+git clone https://github.com/sundi133/wb-red-team.git
+cd wb-red-team
+npm install
+cp .env.example .env   # add at least one LLM key (ANTHROPIC_API_KEY, OPENAI_API_KEY, ...)
+npm run gen:interactive
+```
+
+Then run against the demo app:
+
+```bash
+git clone https://github.com/sundi133/demo-agentic-app.git ../demo-agentic-app
+cd ../demo-agentic-app && npm install && npm start &
+cd -
+npm run demo
+```
+
+`npm run demo` runs the bundled `config-quick-test.json` against the demo app. Reports land in `report/` as JSON and Markdown.
+
+---
+
+## Red-Team AI vs black-box scanners
+
+| Capability | Black-box scanner | Red-Team AI |
+|---|:---:|:---:|
+| Generic prompt-injection tests | ✅ | ✅ |
+| Reads source code | ❌ | ✅ |
+| Detects hardcoded secrets used in auth paths | ❌ | ✅ |
+| Builds attacks from the actual tool graph | ❌ | ✅ |
+| Generates compliance-aware reports | sometimes | ✅ |
+| Dashboard with live progress + risk scoring | varies | ✅ |
+
+---
+
 ## What it finds that black-box tools don't
+
+Quick summary of the three findings detailed below, against [`demo-agentic-app`](https://github.com/sundi133/demo-agentic-app):
+
+| Finding | Severity | Why black-box tools miss it |
+|---|---|---|
+| Forged JWT from source-discovered secret | CRITICAL | Requires reading `src/lib/auth.ts` |
+| Tool-chain exfiltration (`read_file → send_email`) | CRITICAL | Requires knowing the tool graph |
+| Regex-specific guardrail bypass | HIGH | Requires reading exact allowlist regex |
+
 
 Three real findings from running against [`demo-agentic-app`](https://github.com/sundi133/demo-agentic-app). Each one requires source-code awareness to generate:
 
