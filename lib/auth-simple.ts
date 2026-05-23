@@ -126,7 +126,9 @@ function findSimpleAuthUser(username: string): SimpleAuthUser | undefined {
   return parseSimpleAuthUsers().find((user) => user.username === username);
 }
 
-function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+function parseCookies(
+  cookieHeader: string | undefined,
+): Record<string, string> {
   const cookies: Record<string, string> = {};
   if (!cookieHeader) return cookies;
   for (const part of cookieHeader.split(";")) {

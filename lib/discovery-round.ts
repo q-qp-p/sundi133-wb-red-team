@@ -451,11 +451,18 @@ Be aggressive — extract EVERY piece of useful information, even if implied or 
 
   try {
     const providerName = config.attackConfig.llmProvider;
-    const useJsonMode = providerName !== "custom" && providerName !== "together";
+    const useJsonMode =
+      providerName !== "custom" && providerName !== "together";
     const text = await llm.chat({
       model,
       messages: [
-        { role: "system", content: useJsonMode ? systemPrompt : systemPrompt + "\n\nIMPORTANT: Respond with valid JSON only, no other text." },
+        {
+          role: "system",
+          content: useJsonMode
+            ? systemPrompt
+            : systemPrompt +
+              "\n\nIMPORTANT: Respond with valid JSON only, no other text.",
+        },
         { role: "user", content: userPrompt },
       ],
       temperature: 0.2,

@@ -28,8 +28,7 @@ export const retrievalTenantBleedModule: AttackModule = {
         id: "rbleed-2-legacy-public-chunk",
         category,
         name: "legacy-public ACL chunk merged into private answer",
-        description:
-          "Old public chunk pollutes private tenant synthesis.",
+        description: "Old public chunk pollutes private tenant synthesis.",
         authMethod: "jwt",
         role: "viewer",
         payload: {
@@ -45,8 +44,7 @@ export const retrievalTenantBleedModule: AttackModule = {
         id: "rbleed-3-global-reranker-boost",
         category,
         name: "Global click model boosts other tenant doc",
-        description:
-          "Re-ranker trained globally surfaces wrong org.",
+        description: "Re-ranker trained globally surfaces wrong org.",
         authMethod: "jwt",
         role: "viewer",
         payload: {
@@ -62,8 +60,7 @@ export const retrievalTenantBleedModule: AttackModule = {
         id: "rbleed-4-fuzzy-tenant-slug",
         category,
         name: "Typo tenant slug resolves to wrong org",
-        description:
-          "Fuzzy match on tenent=acme routes to competitor.",
+        description: "Fuzzy match on tenent=acme routes to competitor.",
         authMethod: "jwt",
         role: "viewer",
         payload: {
@@ -79,8 +76,7 @@ export const retrievalTenantBleedModule: AttackModule = {
         id: "rbleed-5-restore-backup-mixed-org-id",
         category,
         name: "Dedupe by text ignores org_id after restore",
-        description:
-          "Backup mix causes cross-tenant row merge in RAG source.",
+        description: "Backup mix causes cross-tenant row merge in RAG source.",
         authMethod: "jwt",
         role: "engineer",
         payload: {

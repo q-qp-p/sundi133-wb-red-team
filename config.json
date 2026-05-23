@@ -76,12 +76,8 @@
     "judgeProvider": "anthropic",
     "judgeModel": "claude-sonnet-4-20250514",
     "enabledCategories": [
-      "prompt_injection",
-      "indirect_prompt_injection",
-      "goal_hijack",
-      "conversation_manipulation",
-      "context_window_attack",
-      "toxic_content"
+      "insurance_challenegr_remote_whitehat",
+      "indirect_prompt_injection"
     ],
     "enabledStrategies": [
       "life_or_death_emergency",

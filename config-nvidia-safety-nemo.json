@@ -32,7 +32,7 @@
     "maxAdaptiveTurns": 15,
     "maxMultiTurnSteps": 15,
     "strategiesPerRound": 10,
-    "attacksPerStrategy":5,
+    "attacksPerStrategy": 5,
     "categoryParallelism": 20,
     "enableAdaptiveMultiTurn": true,
     "multiTurnGenerationRate": 0.6,

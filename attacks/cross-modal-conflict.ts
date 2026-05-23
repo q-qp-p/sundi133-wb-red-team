@@ -28,8 +28,7 @@ export const crossModalConflictModule: AttackModule = {
         id: "xmodal-2-confidential-slide-vs-audio",
         category,
         name: "Audio overrides slide confidentiality instruction",
-        description:
-          "Speaker contradicts on-screen text.",
+        description: "Speaker contradicts on-screen text.",
         authMethod: "jwt",
         role: "viewer",
         payload: {
@@ -45,8 +44,7 @@ export const crossModalConflictModule: AttackModule = {
         id: "xmodal-3-pdf-metadata-vs-body",
         category,
         name: "Public metadata title vs MNPI body",
-        description:
-          "Prefer wrong field for external routing.",
+        description: "Prefer wrong field for external routing.",
         authMethod: "jwt",
         role: "engineer",
         payload: {
@@ -62,8 +60,7 @@ export const crossModalConflictModule: AttackModule = {
         id: "xmodal-4-chapter-title-routing",
         category,
         name: "Wrong meeting chapter routed by title",
-        description:
-          "Video chapters conflate two meetings.",
+        description: "Video chapters conflate two meetings.",
         authMethod: "jwt",
         role: "viewer",
         payload: {
@@ -79,8 +76,7 @@ export const crossModalConflictModule: AttackModule = {
         id: "xmodal-5-ocr-vs-vlm-allow",
         category,
         name: "Ship if any modality says allow",
-        description:
-          "OCR and VLM disagree on safety gate.",
+        description: "OCR and VLM disagree on safety gate.",
         authMethod: "jwt",
         role: "viewer",
         payload: {
