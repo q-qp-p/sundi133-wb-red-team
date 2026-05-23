@@ -53,6 +53,11 @@ Copy-paste configs for the agent frameworks people actually use:
 - [LlamaIndex (RAG)](docs/integrations/llamaindex.md)
 - [Vercel AI SDK (Next.js)](docs/integrations/vercel-ai-sdk.md)
 - [OpenAI Agents SDK](docs/integrations/openai-agents-sdk.md)
+- [CrewAI](docs/integrations/crewai.md)
+- [MCP servers](docs/integrations/mcp-server.md)
+- [Next.js app router (generic)](docs/integrations/nextjs-app-router.md)
+- [RAG apps (framework-agnostic)](docs/integrations/rag-app.md)
+- [Slack / Discord / email agents](docs/integrations/slack-discord-email.md)
 
 See the full [integrations index](docs/integrations/index.md) for the shared pattern (only three config fields define an integration).
 

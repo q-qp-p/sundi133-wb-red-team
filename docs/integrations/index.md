@@ -14,6 +14,11 @@ Red-Team AI is HTTP-target-agnostic — anything you can expose behind a POST en
 | LlamaIndex | [llamaindex.md](llamaindex.md) | [`configs/integrations/llamaindex.json`](../../configs/integrations/llamaindex.json) |
 | Vercel AI SDK (Next.js) | [vercel-ai-sdk.md](vercel-ai-sdk.md) | [`configs/integrations/vercel-ai-sdk.json`](../../configs/integrations/vercel-ai-sdk.json) |
 | OpenAI Agents SDK | [openai-agents-sdk.md](openai-agents-sdk.md) | [`configs/integrations/openai-agents-sdk.json`](../../configs/integrations/openai-agents-sdk.json) |
+| CrewAI | [crewai.md](crewai.md) | [`configs/integrations/crewai.json`](../../configs/integrations/crewai.json) |
+| MCP servers | [mcp-server.md](mcp-server.md) | [`configs/integrations/mcp-server.json`](../../configs/integrations/mcp-server.json) |
+| Next.js app router (generic) | [nextjs-app-router.md](nextjs-app-router.md) | [`configs/integrations/nextjs-app-router.json`](../../configs/integrations/nextjs-app-router.json) |
+| RAG apps (framework-agnostic) | [rag-app.md](rag-app.md) | [`configs/integrations/rag-app.json`](../../configs/integrations/rag-app.json) |
+| Slack / Discord / email agents | [slack-discord-email.md](slack-discord-email.md) | [`configs/integrations/slack-discord-email.json`](../../configs/integrations/slack-discord-email.json) |
 
 ## How it works
 
