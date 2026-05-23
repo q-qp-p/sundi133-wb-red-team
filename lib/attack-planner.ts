@@ -23,6 +23,29 @@ import {
 import { parseJsonArrayFromLlmResponse } from "./parse-llm-json-array.js";
 import { formatErrorDetails } from "./error-utils.js";
 
+/** Run async tasks with a concurrency limit (worker-pool pattern). */
+async function runPlanWithConcurrency<T>(
+  tasks: (() => Promise<T>)[],
+  maxConcurrency: number,
+): Promise<T[]> {
+  const results: T[] = new Array(tasks.length);
+  let nextIndex = 0;
+
+  async function worker(): Promise<void> {
+    while (nextIndex < tasks.length) {
+      const i = nextIndex++;
+      results[i] = await tasks[i]();
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(maxConcurrency, tasks.length) },
+    () => worker(),
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 function buildApplicationContext(config: Config): string {
   const details = config.target.applicationDetails?.trim();
   if (!details) return "";
@@ -105,55 +128,70 @@ export async function planAttacks(
   // Merge built-in + custom strategies
   const mergedStrategies = getAllStrategies(config.attackConfig.customStrategiesFile);
 
-  console.log(`  📋 Planning attacks for ${totalModules} categories (${mergedStrategies.length} strategies)...`);
+  const categoryParallelism = config.attackConfig.categoryParallelism ?? 1;
+  console.log(`  📋 Planning attacks for ${totalModules} categories (${mergedStrategies.length} strategies)${categoryParallelism > 1 ? ` [parallelism=${categoryParallelism}]` : ""}...`);
 
-  for (let i = 0; i < modules.length; i++) {
-    const mod = modules[i];
-    const progress = `[${i + 1}/${totalModules}]`;
+  const sharedPlanIndex = { value: 0 };
 
-    process.stdout.write(`    ${progress} ${mod.category}...`);
-    const categoryStart = Date.now();
+  const planTasks = modules.map((mod) => {
+    return async (): Promise<Attack[]> => {
+      sharedPlanIndex.value++;
+      const progress = `[${sharedPlanIndex.value}/${totalModules}]`;
+      const catPrefix = categoryParallelism > 1 ? `[${mod.category}] ` : "";
 
-    // Always include seed attacks on round 1
-    let seedCount = 0;
-    if (round === 1 && (config.attackConfig.includeSeedAttacks ?? true)) {
-      const seedAttacks = mod.getSeedAttacks(analysis);
-      // Assign strategies to seed attacks (they don't have them by default)
-      const seedStrategies = sampleStrategies(
-        mergedStrategies,
-        config.attackConfig.enabledStrategies,
-        seedAttacks.length,
+      process.stdout.write(`    ${catPrefix}${progress} ${mod.category}...`);
+      const categoryStart = Date.now();
+
+      const categoryAttacks: Attack[] = [];
+
+      // Always include seed attacks on round 1
+      let seedCount = 0;
+      if (round === 1 && (config.attackConfig.includeSeedAttacks ?? true)) {
+        const seedAttacks = mod.getSeedAttacks(analysis);
+        const seedStrategies = sampleStrategies(
+          mergedStrategies,
+          config.attackConfig.enabledStrategies,
+          seedAttacks.length,
+        );
+        seedAttacks.forEach((a, idx) => {
+          if (!a.strategyName && seedStrategies.length > 0) {
+            const s = seedStrategies[idx % seedStrategies.length];
+            a.strategyId = s.id;
+            a.strategyName = s.name;
+          }
+        });
+        categoryAttacks.push(...seedAttacks);
+        seedCount = seedAttacks.length;
+      }
+
+      // LLM-generated attacks
+      let generatedCount = 0;
+      if (config.attackConfig.enableLlmGeneration) {
+        const generated = await generateAttacks(
+          config,
+          analysis,
+          mod,
+          previousResults,
+          round,
+          defenseProfiles,
+        );
+        categoryAttacks.push(...generated);
+        generatedCount = generated.length;
+      }
+
+      const categoryTime = Date.now() - categoryStart;
+      process.stdout.write(
+        ` ${catPrefix}${seedCount + generatedCount} attacks (${categoryTime}ms)\n`,
       );
-      seedAttacks.forEach((a, idx) => {
-        if (!a.strategyName && seedStrategies.length > 0) {
-          const s = seedStrategies[idx % seedStrategies.length];
-          a.strategyId = s.id;
-          a.strategyName = s.name;
-        }
-      });
-      allAttacks.push(...seedAttacks);
-      seedCount = seedAttacks.length;
-    }
 
-    // LLM-generated attacks
-    let generatedCount = 0;
-    if (config.attackConfig.enableLlmGeneration) {
-      const generated = await generateAttacks(
-        config,
-        analysis,
-        mod,
-        previousResults,
-        round,
-        defenseProfiles,
-      );
-      allAttacks.push(...generated);
-      generatedCount = generated.length;
-    }
+      return categoryAttacks;
+    };
+  });
 
-    const categoryTime = Date.now() - categoryStart;
-    process.stdout.write(
-      ` ${seedCount + generatedCount} attacks (${categoryTime}ms)\n`,
-    );
+  // Run planning tasks with concurrency pool
+  const planResults = await runPlanWithConcurrency(planTasks, categoryParallelism);
+  for (const categoryAttacks of planResults) {
+    allAttacks.push(...categoryAttacks);
   }
 
   // Feature 3: Automatic exploit refinement for PARTIAL results (round 2+ inline)

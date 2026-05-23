@@ -1,5 +1,6 @@
 import * as jose from "jose";
 import { randomUUID } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { execFileSync, execSync } from "node:child_process";
 import type { Config, Attack, Credential, McpExecutionTrace } from "./types.js";
 import { getTargetAdapter } from "./target-adapter.js";
@@ -10,8 +11,29 @@ import { formatErrorDetails } from "./error-utils.js";
 // Cache JWT tokens per role
 const tokenCache = new Map<string, string>();
 
-// Session variables from preAuthCommand + setupSteps — used as {{var:name}} in templates
+// Session variables from preAuthCommand + setupSteps — used as {{var:name}} in templates.
+// Global fallback for sequential mode; parallel categories use AsyncLocalStorage scoping.
 const sessionVars = new Map<string, string>();
+
+// Per-category session scope for parallel execution
+const sessionStore = new AsyncLocalStorage<Map<string, string>>();
+
+/** Get the active session vars — async-local scope if available, else global. */
+function getSessionVars(): Map<string, string> {
+  return sessionStore.getStore() ?? sessionVars;
+}
+
+/**
+ * Run a callback with its own isolated session variable scope.
+ * Used by category-parallel execution so each category gets independent session state.
+ */
+export function withSessionScope<T>(fn: () => Promise<T>): Promise<T> {
+  // Seed the new scope with a copy of the current vars (e.g., from preAuthenticate)
+  const parentVars = getSessionVars();
+  const scopedVars = new Map(parentVars);
+  return sessionStore.run(scopedVars, fn);
+}
+
 let targetTlsOverrideApplied = false;
 
 function applyTargetTlsOverrides(): void {
@@ -99,7 +121,7 @@ function execCurlJson(
 export function interpolateVars(text: string): string {
   return text
     .replace(/\{\{uuid\}\}/g, () => randomUUID())
-    .replace(/\{\{var:(\w+)\}\}/g, (_, name) => sessionVars.get(name) ?? process.env[name] ?? "");
+    .replace(/\{\{var:(\w+)\}\}/g, (_, name) => getSessionVars().get(name) ?? process.env[name] ?? "");
 }
 
 /** Recursively interpolate all string values in an object. */
@@ -146,7 +168,7 @@ function runPreAuthCommand(config: Config): void {
     console.log(`  Trimmed length: ${output.length}`);
     console.log(`  Raw stdout JSON: ${JSON.stringify(rawOutput)}`);
     console.log(`  Trimmed JSON: ${JSON.stringify(output)}`);
-    sessionVars.set(cmd.outputVar, output);
+    getSessionVars().set(cmd.outputVar, output);
     console.log(`    [OK] ${cmd.outputVar} = ${output}`);
   } catch (err) {
     console.error(`    [FAIL] Pre-auth command failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -241,7 +263,7 @@ async function runSetupSteps(config: Config): Promise<void> {
         for (const [varName, jsonPath] of Object.entries(step.extract)) {
           const value = extractPath(data, jsonPath);
           if (value !== undefined && value !== null) {
-            sessionVars.set(varName, String(value));
+            getSessionVars().set(varName, String(value));
             console.log(`    [OK] ${label}: ${varName} = ${String(value)}`);
           } else {
             console.warn(`    [WARN] ${label}: could not extract "${jsonPath}" from response`);

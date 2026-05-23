@@ -96,6 +96,7 @@ import {
   executeAdaptiveMultiTurn,
   executeRapidFire,
   sleep,
+  withSessionScope,
 } from "./lib/attack-runner.js";
 import { analyzeResponse, type AppContext } from "./lib/response-analyzer.js";
 import {
@@ -215,6 +216,40 @@ function logFindings(result: AttackResult): void {
       `    LLM judge: ${result.llmReasoning}${result.judgeConfidence != null ? ` (confidence ${result.judgeConfidence}%)` : ""}`,
     );
   }
+}
+
+/** Group attacks by their category, preserving order within each group. */
+function groupAttacksByCategory(attacks: Attack[]): Map<string, Attack[]> {
+  const groups = new Map<string, Attack[]>();
+  for (const attack of attacks) {
+    const list = groups.get(attack.category) || [];
+    list.push(attack);
+    groups.set(attack.category, list);
+  }
+  return groups;
+}
+
+/** Run async tasks with a concurrency limit (worker-pool pattern). */
+async function runWithConcurrency<T>(
+  tasks: (() => Promise<T>)[],
+  maxConcurrency: number,
+): Promise<T[]> {
+  const results: T[] = new Array(tasks.length);
+  let nextIndex = 0;
+
+  async function worker(): Promise<void> {
+    while (nextIndex < tasks.length) {
+      const i = nextIndex++;
+      results[i] = await tasks[i]();
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(maxConcurrency, tasks.length) },
+    () => worker(),
+  );
+  await Promise.all(workers);
+  return results;
 }
 
 async function maybeGenerateIdealResponse(
@@ -590,217 +625,236 @@ async function main() {
       ? [...resumedPartialResults]
       : [];
     const skipCategories: Set<string> = (round === startRound) ? new Set(resumedCategories) : new Set();
-    let lastCategory: string | null = null;
     const doneCategories: string[] = Array.from(skipCategories);
 
     if (skipCategories.size > 0) {
       console.log(`  Skipping already-completed categories: ${Array.from(skipCategories).join(", ")}`);
     }
 
-    for (let i = 0; i < attacks.length; i++) {
-      const attack = attacks[i];
+    // Determine effective category parallelism
+    const categoryParallelism = config.attackConfig.categoryParallelism ?? 1;
 
-      // Skip attacks from already-completed categories
-      if (skipCategories.has(attack.category)) continue;
+    // Group attacks by category and filter out already-completed ones
+    const categoryGroups = groupAttacksByCategory(attacks);
+    for (const cat of skipCategories) {
+      categoryGroups.delete(cat);
+    }
+    const categoryNames = Array.from(categoryGroups.keys());
 
-      const progress = `[${i + 1}/${attacks.length}]`;
+    if (categoryParallelism > 1) {
+      console.log(`  Running ${categoryNames.length} categories with parallelism=${categoryParallelism}`);
+    }
 
-      // Save checkpoint when category changes (per-category checkpointing)
-      if (lastCategory !== null && attack.category !== lastCategory) {
-        if (!doneCategories.includes(lastCategory)) {
-          doneCategories.push(lastCategory);
+    // Shared progress index across concurrent categories
+    const sharedIndex = { value: roundResults.length };
+    const totalAttacksInRound = attacks.length;
+
+    // Build one task per category
+    const categoryTasks = categoryNames.map((categoryName) => {
+      const categoryAttacks = categoryGroups.get(categoryName)!;
+      return (): Promise<void> => withSessionScope(async () => {
+        const catPrefix = categoryParallelism > 1 ? `[${categoryName}] ` : "";
+        const categoryResults: AttackResult[] = [];
+
+        for (let j = 0; j < categoryAttacks.length; j++) {
+          const attack = categoryAttacks[j];
+          sharedIndex.value++;
+          const progress = `[${sharedIndex.value}/${totalAttacksInRound}]`;
+
+          // Handle rate-limit rapid-fire attacks specially
+          const rapidFire = (
+            attack.payload as Record<string, unknown> | undefined
+          )?._rapidFire as number | undefined;
+          if (rapidFire && attack.category === "rate_limit") {
+            console.log(
+              `  ${catPrefix}${progress} ${attack.name} (${rapidFire}x rapid-fire)...`,
+            );
+            const cleanPayload = { ...attack.payload };
+            delete (cleanPayload as Record<string, unknown>)._rapidFire;
+            const cleanAttack = { ...attack, payload: cleanPayload };
+
+            await prepareConversation(config);
+            const responses = await executeRapidFire(
+              config,
+              cleanAttack,
+              rapidFire,
+            );
+            const got429 = responses.some((r) => r.statusCode === 429);
+            const allOk = responses.every((r) => r.statusCode === 200);
+            const lastResponse = responses[responses.length - 1];
+
+            const result = await analyzeResponse(
+              config,
+              attack,
+              lastResponse.statusCode,
+              lastResponse.body,
+              lastResponse.timeMs,
+              appContext,
+              lastResponse.executionTrace,
+            );
+
+            if (!got429 && allOk) {
+              result.verdict = "PASS";
+              result.findings.push(
+                `All ${rapidFire} requests succeeded — rate limit not enforced`,
+              );
+            } else if (got429) {
+              result.verdict = "FAIL";
+              result.findings.push(
+                `Rate limit correctly enforced — got 429 after ${responses.filter((r) => r.statusCode === 200).length} requests`,
+              );
+            }
+
+            console.log(`    ${catPrefix}${getColoredIcon(result.verdict)} ${result.verdict}`);
+            logFindings(result);
+            await maybeGenerateIdealResponse(config, result);
+            categoryResults.push(result);
+          } else {
+            try {
+              // Multi-turn attack (predefined steps) or Adaptive multi-turn attack
+              if (attack.steps && attack.steps.length > 0) {
+                const totalSteps = 1 + attack.steps.length;
+                process.stdout.write(
+                  `  ${catPrefix}${progress} ${attack.name} (${totalSteps} steps)...`,
+                );
+
+                await prepareConversation(config);
+                const { results: stepResults, stoppedEarly } = await executeMultiTurn(
+                  config,
+                  attack,
+                  async (cfg, atk, sc, b, t) => {
+                    const r = await analyzeResponse(cfg, atk, sc, b, t, appContext);
+                    return { verdict: r.verdict, findings: r.findings };
+                  },
+                );
+              } else if (
+                config.attackConfig.enableAdaptiveMultiTurn &&
+                config.attackConfig.enableMultiTurnGeneration
+              ) {
+                const maxTurns = config.attackConfig.maxAdaptiveTurns ?? 15;
+                process.stdout.write(
+                  `  ${catPrefix}${progress} ${attack.name} (adaptive, max ${maxTurns} turns)...`,
+                );
+
+                await prepareConversation(config);
+                const {
+                  results: stepResults,
+                  stoppedEarly,
+                  conversationHistory,
+                } = await executeAdaptiveMultiTurn(
+                  config,
+                  attack,
+                  async (cfg, atk, sc, b, t) => {
+                    const r = await analyzeResponse(cfg, atk, sc, b, t, appContext);
+                    return { verdict: r.verdict, findings: r.findings };
+                  },
+                );
+
+                const lastStep = stepResults[stepResults.length - 1];
+                const result = await analyzeResponse(
+                  config,
+                  attack,
+                  lastStep.statusCode,
+                  lastStep.body,
+                  lastStep.timeMs,
+                  appContext,
+                  lastStep.executionTrace,
+                );
+                result.stepIndex = lastStep.stepIndex;
+                result.totalSteps = stepResults.length;
+
+                const icon = getColoredIcon(result.verdict);
+                result.conversation = conversationHistory.map((ch) => ({
+                  stepIndex: ch.stepIndex,
+                  payload: { message: ch.userMessage },
+                  statusCode: stepResults[ch.stepIndex]?.statusCode ?? 0,
+                  responseBody: ch.aiResponse,
+                  responseTimeMs: stepResults[ch.stepIndex]?.timeMs ?? 0,
+                }));
+
+                const earlyTag = stoppedEarly
+                  ? ` (stopped at step ${lastStep.stepIndex + 1})`
+                  : "";
+                console.log(
+                  ` ${icon}${result.verdict} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${earlyTag}`,
+                );
+                logFindings(result);
+                await maybeGenerateIdealResponse(config, result);
+
+                categoryResults.push(result);
+              } else {
+                // Single-turn attack
+                process.stdout.write(`  ${catPrefix}${progress} ${attack.name}...`);
+                await prepareConversation(config);
+                const { statusCode, body, timeMs, executionTrace } =
+                  await executeAttack(config, attack);
+                const result = await analyzeResponse(
+                  config,
+                  attack,
+                  statusCode,
+                  body,
+                  timeMs,
+                  appContext,
+                  executionTrace,
+                );
+
+                const icon = getColoredIcon(result.verdict);
+                console.log(` ${icon}${result.verdict} (${statusCode}, ${timeMs}ms)`);
+                logFindings(result);
+                await maybeGenerateIdealResponse(config, result);
+
+                categoryResults.push(result);
+              }
+            } catch (attackErr) {
+              console.log(
+                ` ${catPrefix}[??] ERROR — ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
+              );
+              categoryResults.push({
+                attack,
+                statusCode: 0,
+                responseBody: "",
+                responseTimeMs: 0,
+                verdict: "ERROR" as const,
+                findings: [
+                  `Attack execution failed: ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
+                ],
+              });
+            }
+          }
+
+          // Update progress counters
+          const lastResult = categoryResults[categoryResults.length - 1];
+          if (lastResult) {
+            globalAttackCount++;
+            if (lastResult.verdict === "PASS") globalPasses++;
+            else if (lastResult.verdict === "FAIL") globalFails++;
+            else if (lastResult.verdict === "PARTIAL") globalPartials++;
+            else globalErrors++;
+            const elapsed = Math.round((Date.now() - attackStartTime) / 1000);
+            printProgressLine(globalAttackCount, knownTotalAttacks, globalPasses, globalFails, globalPartials, globalErrors, elapsed);
+            console.log(); // newline after progress bar
+          }
+
+          // Delay between requests
+          if (config.attackConfig.delayBetweenRequestsMs > 0) {
+            await sleep(config.attackConfig.delayBetweenRequestsMs);
+          }
+        }
+
+        // Category complete — merge results and checkpoint
+        roundResults.push(...categoryResults);
+        if (!doneCategories.includes(categoryName)) {
+          doneCategories.push(categoryName);
         }
         try {
-          // Save completed full rounds + partial results from current round
-          saveCliCheckpoint(rounds, round - 1, [...roundResults], doneCategories);
-          console.log(`  ✅ Checkpoint saved after category "${lastCategory}" (${roundResults.length} attacks, ${doneCategories.length} categories done)`);
+          saveCliCheckpoint(rounds, round - 1, [...roundResults], [...doneCategories]);
+          console.log(`  ${catPrefix}✅ Checkpoint saved after category "${categoryName}" (${roundResults.length} attacks, ${doneCategories.length} categories done)`);
         } catch { /* ignore */ }
-      }
-      lastCategory = attack.category;
+      });
+    });
 
-      // Handle rate-limit rapid-fire attacks specially
-      const rapidFire = (
-        attack.payload as Record<string, unknown> | undefined
-      )?._rapidFire as number | undefined;
-      if (rapidFire && attack.category === "rate_limit") {
-        console.log(
-          `  ${progress} ${attack.name} (${rapidFire}x rapid-fire)...`,
-        );
-        const cleanPayload = { ...attack.payload };
-        delete (cleanPayload as Record<string, unknown>)._rapidFire;
-        const cleanAttack = { ...attack, payload: cleanPayload };
-
-        await prepareConversation(config);
-        const responses = await executeRapidFire(
-          config,
-          cleanAttack,
-          rapidFire,
-        );
-        // Check if any got 429
-        const got429 = responses.some((r) => r.statusCode === 429);
-        const allOk = responses.every((r) => r.statusCode === 200);
-        const lastResponse = responses[responses.length - 1];
-
-        const result = await analyzeResponse(
-          config,
-          attack,
-          lastResponse.statusCode,
-          lastResponse.body,
-          lastResponse.timeMs,
-          appContext,
-          lastResponse.executionTrace,
-        );
-
-        if (!got429 && allOk) {
-          result.verdict = "PASS";
-          result.findings.push(
-            `All ${rapidFire} requests succeeded — rate limit not enforced`,
-          );
-        } else if (got429) {
-          result.verdict = "FAIL";
-          result.findings.push(
-            `Rate limit correctly enforced — got 429 after ${responses.filter((r) => r.statusCode === 200).length} requests`,
-          );
-        }
-
-        console.log(`    ${getColoredIcon(result.verdict)} ${result.verdict}`);
-        logFindings(result);
-        await maybeGenerateIdealResponse(config, result);
-        roundResults.push(result);
-        continue;
-      }
-
-      try {
-        // Multi-turn attack (predefined steps) or Adaptive multi-turn attack
-        if (attack.steps && attack.steps.length > 0) {
-          const totalSteps = 1 + attack.steps.length;
-          process.stdout.write(
-            `  ${progress} ${attack.name} (${totalSteps} steps)...`,
-          );
-
-          await prepareConversation(config);
-          const { results: stepResults, stoppedEarly } = await executeMultiTurn(
-            config,
-            attack,
-            async (cfg, atk, sc, b, t) => {
-              const r = await analyzeResponse(cfg, atk, sc, b, t, appContext);
-              return { verdict: r.verdict, findings: r.findings };
-            },
-          );
-        } else if (
-          config.attackConfig.enableAdaptiveMultiTurn &&
-          config.attackConfig.enableMultiTurnGeneration
-        ) {
-          // Adaptive multi-turn attack (generates follow-ups based on AI responses)
-          const maxTurns = config.attackConfig.maxAdaptiveTurns ?? 15;
-          process.stdout.write(
-            `  ${progress} ${attack.name} (adaptive, max ${maxTurns} turns)...`,
-          );
-
-          await prepareConversation(config);
-          const {
-            results: stepResults,
-            stoppedEarly,
-            conversationHistory,
-          } = await executeAdaptiveMultiTurn(
-            config,
-            attack,
-            async (cfg, atk, sc, b, t) => {
-              const r = await analyzeResponse(cfg, atk, sc, b, t, appContext);
-              return { verdict: r.verdict, findings: r.findings };
-            },
-          );
-
-          const lastStep = stepResults[stepResults.length - 1];
-          const result = await analyzeResponse(
-            config,
-            attack,
-            lastStep.statusCode,
-            lastStep.body,
-            lastStep.timeMs,
-            appContext,
-            lastStep.executionTrace,
-          );
-          result.stepIndex = lastStep.stepIndex;
-          result.totalSteps = stepResults.length;
-
-          const icon = getColoredIcon(result.verdict);
-          // For adaptive multi-turn, use the actual conversation history with real messages
-          result.conversation = conversationHistory.map((ch) => ({
-            stepIndex: ch.stepIndex,
-            payload: { message: ch.userMessage }, // Use the actual message sent
-            statusCode: stepResults[ch.stepIndex]?.statusCode ?? 0,
-            responseBody: ch.aiResponse,
-            responseTimeMs: stepResults[ch.stepIndex]?.timeMs ?? 0,
-          }));
-
-          const earlyTag = stoppedEarly
-            ? ` (stopped at step ${lastStep.stepIndex + 1})`
-            : "";
-          console.log(
-            ` ${icon}${result.verdict} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${earlyTag}`,
-          );
-          logFindings(result);
-          await maybeGenerateIdealResponse(config, result);
-
-          roundResults.push(result);
-        } else {
-          // Single-turn attack
-          process.stdout.write(`  ${progress} ${attack.name}...`);
-          await prepareConversation(config);
-          const { statusCode, body, timeMs, executionTrace } =
-            await executeAttack(config, attack);
-          const result = await analyzeResponse(
-            config,
-            attack,
-            statusCode,
-            body,
-            timeMs,
-            appContext,
-            executionTrace,
-          );
-
-          const icon = getColoredIcon(result.verdict);
-          console.log(` ${icon}${result.verdict} (${statusCode}, ${timeMs}ms)`);
-          logFindings(result);
-          await maybeGenerateIdealResponse(config, result);
-
-          roundResults.push(result);
-        }
-      } catch (attackErr) {
-        console.log(
-          ` [??] ERROR — ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
-        );
-        roundResults.push({
-          attack,
-          statusCode: 0,
-          responseBody: "",
-          responseTimeMs: 0,
-          verdict: "ERROR" as const,
-          findings: [
-            `Attack execution failed: ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
-          ],
-        });
-      }
-
-      // Update progress counters
-      const lastResult = roundResults[roundResults.length - 1];
-      if (lastResult) {
-        globalAttackCount++;
-        if (lastResult.verdict === "PASS") globalPasses++;
-        else if (lastResult.verdict === "FAIL") globalFails++;
-        else if (lastResult.verdict === "PARTIAL") globalPartials++;
-        else globalErrors++;
-        const elapsed = Math.round((Date.now() - attackStartTime) / 1000);
-        printProgressLine(globalAttackCount, knownTotalAttacks, globalPasses, globalFails, globalPartials, globalErrors, elapsed);
-        console.log(); // newline after progress bar
-      }
-
-      // Delay between requests
-      if (config.attackConfig.delayBetweenRequestsMs > 0) {
-        await sleep(config.attackConfig.delayBetweenRequestsMs);
-      }
-    }
+    // Execute categories with concurrency pool
+    await runWithConcurrency(categoryTasks, categoryParallelism);
 
     // ── Refinement pass: convert PARTIALs from this round ──
     const roundPartials = roundResults.filter((r) => r.verdict === "PARTIAL");
