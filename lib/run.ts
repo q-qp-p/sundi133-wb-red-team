@@ -1262,15 +1262,18 @@ export async function runRedTeam(
       );
 
       if (refinedAttacks.length > 0) {
-        log("refine", `Executing ${refinedAttacks.length} refined attacks`, {
+        log("refine", `Executing ${refinedAttacks.length} refined attacks (parallelism=${concurrencyLimit})`, {
           round,
         });
 
-        for (let i = 0; i < refinedAttacks.length; i++) {
-          const attack = refinedAttacks[i];
+        const refinedSharedIdx = { value: 0 };
+
+        async function runOneRefinedAttack(attack: Attack): Promise<void> {
+          checkAbort();
+          const idx = ++refinedSharedIdx.value;
           const progressExtra = {
             round,
-            attackIndex: i + 1,
+            attackIndex: idx,
             totalAttacks: refinedAttacks.length,
           };
 
@@ -1318,7 +1321,7 @@ export async function runRedTeam(
 
               log(
                 "refine",
-                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+                `[R${idx}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
                 progressExtra,
               );
               await maybeGenerateIdealResponse(config, result);
@@ -1328,7 +1331,6 @@ export async function runRedTeam(
               config.attackConfig.enableAdaptiveMultiTurn &&
               config.attackConfig.enableMultiTurnGeneration
             ) {
-              const maxTurns = config.attackConfig.maxAdaptiveTurns ?? 15;
               const {
                 results: stepResults,
                 stoppedEarly,
@@ -1385,7 +1387,7 @@ export async function runRedTeam(
 
               log(
                 "refine",
-                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+                `[R${idx}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
                 progressExtra,
               );
               await maybeGenerateIdealResponse(config, result);
@@ -1406,7 +1408,7 @@ export async function runRedTeam(
 
               log(
                 "refine",
-                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+                `[R${idx}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
                 progressExtra,
               );
               await maybeGenerateIdealResponse(config, result);
@@ -1416,7 +1418,7 @@ export async function runRedTeam(
           } catch (refineErr) {
             log(
               "refine",
-              `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ERROR: ${refineErr instanceof Error ? refineErr.message : String(refineErr)}`,
+              `[R${idx}/${refinedAttacks.length}] ${attack.name} → ERROR: ${refineErr instanceof Error ? refineErr.message : String(refineErr)}`,
               progressExtra,
             );
             const errResult: AttackResult = {
@@ -1436,6 +1438,38 @@ export async function runRedTeam(
           if (config.attackConfig.delayBetweenRequestsMs > 0) {
             await sleep(config.attackConfig.delayBetweenRequestsMs);
           }
+        }
+
+        // Group refined attacks by category and run with parallelism
+        const refinedGroups = new Map<string, Attack[]>();
+        for (const attack of refinedAttacks) {
+          const list = refinedGroups.get(attack.category) || [];
+          list.push(attack);
+          refinedGroups.set(attack.category, list);
+        }
+
+        const refinedCatTasks = Array.from(refinedGroups.entries()).map(
+          ([, catAttacks]) =>
+            async (): Promise<void> => {
+              for (const attack of catAttacks) {
+                await runOneRefinedAttack(attack);
+              }
+            },
+        );
+
+        {
+          let nextIdx = 0;
+          async function worker(): Promise<void> {
+            while (nextIdx < refinedCatTasks.length) {
+              const myIdx = nextIdx++;
+              await refinedCatTasks[myIdx]();
+            }
+          }
+          const workers = Array.from(
+            { length: Math.min(concurrencyLimit, refinedCatTasks.length) },
+            () => worker(),
+          );
+          await Promise.all(workers);
         }
       }
     }
