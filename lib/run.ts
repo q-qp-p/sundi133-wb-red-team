@@ -983,24 +983,27 @@ export async function runRedTeam(
     }
 
     const roundResults: AttackResult[] = [];
+    const concurrencyLimit = Math.max(1, config.attackConfig.categoryParallelism ?? config.attackConfig.concurrency ?? 1);
+    const sharedIdx = { value: 0 };
 
-    for (let i = 0; i < attacks.length; i++) {
+    /** Execute a single attack (any type) and push the result. */
+    async function runOneAttack(attack: Attack): Promise<void> {
       checkAbort();
-      const attack = attacks[i];
+      const idx = ++sharedIdx.value;
       const progressExtra = {
         round,
         totalRounds: config.attackConfig.adaptiveRounds,
-        attackIndex: i + 1,
+        attackIndex: idx,
         totalAttacks: attacks.length,
       };
 
-      // Rate-limit rapid-fire attacks (payload may be missing on malformed LLM output)
+      // Rate-limit rapid-fire attacks
       const rapidFire = (attack.payload as Record<string, unknown> | undefined)
         ?._rapidFire as number | undefined;
       if (rapidFire && attack.category === "rate_limit") {
         log(
           "attacks",
-          `[${i + 1}/${attacks.length}] ${attack.name} (${rapidFire}x rapid-fire)...`,
+          `[${idx}/${attacks.length}] ${attack.name} (${rapidFire}x rapid-fire)...`,
           progressExtra,
         );
         const cleanPayload = { ...attack.payload };
@@ -1040,13 +1043,13 @@ export async function runRedTeam(
 
         log(
           "attacks",
-          `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+          `[${idx}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
           progressExtra,
         );
         await maybeGenerateIdealResponse(config, result);
         roundResults.push(result);
         emitResult(result, progressExtra);
-        continue;
+        return;
       }
 
       try {
@@ -1054,7 +1057,7 @@ export async function runRedTeam(
           // Multi-turn attack (predefined steps)
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} (${1 + attack.steps.length} steps)...`,
+            `[${idx}/${attacks.length}] ${attack.name} (${1 + attack.steps.length} steps)...`,
             progressExtra,
           );
 
@@ -1092,7 +1095,7 @@ export async function runRedTeam(
 
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+            `[${idx}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
             progressExtra,
           );
           await maybeGenerateIdealResponse(config, result);
@@ -1106,7 +1109,7 @@ export async function runRedTeam(
           const maxTurns = config.attackConfig.maxAdaptiveTurns ?? 15;
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} (adaptive, max ${maxTurns} turns)...`,
+            `[${idx}/${attacks.length}] ${attack.name} (adaptive, max ${maxTurns} turns)...`,
             progressExtra,
           );
 
@@ -1146,7 +1149,7 @@ export async function runRedTeam(
 
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+            `[${idx}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
             progressExtra,
           );
           await maybeGenerateIdealResponse(config, result);
@@ -1156,7 +1159,7 @@ export async function runRedTeam(
           // Single-turn attack
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name}...`,
+            `[${idx}/${attacks.length}] ${attack.name}...`,
             progressExtra,
           );
           const { statusCode, body, timeMs, executionTrace } =
@@ -1173,7 +1176,7 @@ export async function runRedTeam(
 
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${statusCode}, ${timeMs}ms)`,
+            `[${idx}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${statusCode}, ${timeMs}ms)`,
             progressExtra,
           );
           await maybeGenerateIdealResponse(config, result);
@@ -1183,7 +1186,7 @@ export async function runRedTeam(
       } catch (attackErr) {
         log(
           "attacks",
-          `[${i + 1}/${attacks.length}] ${attack.name} → ERROR: ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
+          `[${idx}/${attacks.length}] ${attack.name} → ERROR: ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
           progressExtra,
         );
         const errResult: AttackResult = {
@@ -1205,6 +1208,46 @@ export async function runRedTeam(
       }
     }
 
+    // Execute attacks grouped by category with categoryParallelism
+    // Each category runs its attacks sequentially; multiple categories run in parallel
+    const categoryGroups = new Map<string, Attack[]>();
+    for (const attack of attacks) {
+      const list = categoryGroups.get(attack.category) || [];
+      list.push(attack);
+      categoryGroups.set(attack.category, list);
+    }
+    const categoryNames = Array.from(categoryGroups.keys());
+
+    if (concurrencyLimit > 1) {
+      log("attacks", `Running ${categoryNames.length} categories with parallelism=${concurrencyLimit}`, { round });
+    }
+
+    // Build one task per category — attacks within a category run sequentially
+    const categoryTasks = categoryNames.map((catName) => {
+      const catAttacks = categoryGroups.get(catName)!;
+      return async (): Promise<void> => {
+        for (const attack of catAttacks) {
+          await runOneAttack(attack);
+        }
+      };
+    });
+
+    // Worker pool over category tasks
+    {
+      let nextIdx = 0;
+      async function worker(): Promise<void> {
+        while (nextIdx < categoryTasks.length) {
+          const myIdx = nextIdx++;
+          await categoryTasks[myIdx]();
+        }
+      }
+      const workers = Array.from(
+        { length: Math.min(concurrencyLimit, categoryTasks.length) },
+        () => worker(),
+      );
+      await Promise.all(workers);
+    }
+
     // Refinement pass
     const roundPartials = roundResults.filter((r) => r.verdict === "PARTIAL");
     if (roundPartials.length > 0 && config.attackConfig.enableLlmGeneration) {
@@ -1219,15 +1262,18 @@ export async function runRedTeam(
       );
 
       if (refinedAttacks.length > 0) {
-        log("refine", `Executing ${refinedAttacks.length} refined attacks`, {
+        log("refine", `Executing ${refinedAttacks.length} refined attacks (parallelism=${concurrencyLimit})`, {
           round,
         });
 
-        for (let i = 0; i < refinedAttacks.length; i++) {
-          const attack = refinedAttacks[i];
+        const refinedSharedIdx = { value: 0 };
+
+        async function runOneRefinedAttack(attack: Attack): Promise<void> {
+          checkAbort();
+          const idx = ++refinedSharedIdx.value;
           const progressExtra = {
             round,
-            attackIndex: i + 1,
+            attackIndex: idx,
             totalAttacks: refinedAttacks.length,
           };
 
@@ -1275,7 +1321,7 @@ export async function runRedTeam(
 
               log(
                 "refine",
-                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+                `[R${idx}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
                 progressExtra,
               );
               await maybeGenerateIdealResponse(config, result);
@@ -1285,7 +1331,6 @@ export async function runRedTeam(
               config.attackConfig.enableAdaptiveMultiTurn &&
               config.attackConfig.enableMultiTurnGeneration
             ) {
-              const maxTurns = config.attackConfig.maxAdaptiveTurns ?? 15;
               const {
                 results: stepResults,
                 stoppedEarly,
@@ -1342,7 +1387,7 @@ export async function runRedTeam(
 
               log(
                 "refine",
-                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+                `[R${idx}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
                 progressExtra,
               );
               await maybeGenerateIdealResponse(config, result);
@@ -1363,7 +1408,7 @@ export async function runRedTeam(
 
               log(
                 "refine",
-                `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+                `[R${idx}/${refinedAttacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
                 progressExtra,
               );
               await maybeGenerateIdealResponse(config, result);
@@ -1373,7 +1418,7 @@ export async function runRedTeam(
           } catch (refineErr) {
             log(
               "refine",
-              `[R${i + 1}/${refinedAttacks.length}] ${attack.name} → ERROR: ${refineErr instanceof Error ? refineErr.message : String(refineErr)}`,
+              `[R${idx}/${refinedAttacks.length}] ${attack.name} → ERROR: ${refineErr instanceof Error ? refineErr.message : String(refineErr)}`,
               progressExtra,
             );
             const errResult: AttackResult = {
@@ -1393,6 +1438,38 @@ export async function runRedTeam(
           if (config.attackConfig.delayBetweenRequestsMs > 0) {
             await sleep(config.attackConfig.delayBetweenRequestsMs);
           }
+        }
+
+        // Group refined attacks by category and run with parallelism
+        const refinedGroups = new Map<string, Attack[]>();
+        for (const attack of refinedAttacks) {
+          const list = refinedGroups.get(attack.category) || [];
+          list.push(attack);
+          refinedGroups.set(attack.category, list);
+        }
+
+        const refinedCatTasks = Array.from(refinedGroups.entries()).map(
+          ([, catAttacks]) =>
+            async (): Promise<void> => {
+              for (const attack of catAttacks) {
+                await runOneRefinedAttack(attack);
+              }
+            },
+        );
+
+        {
+          let nextIdx = 0;
+          async function worker(): Promise<void> {
+            while (nextIdx < refinedCatTasks.length) {
+              const myIdx = nextIdx++;
+              await refinedCatTasks[myIdx]();
+            }
+          }
+          const workers = Array.from(
+            { length: Math.min(concurrencyLimit, refinedCatTasks.length) },
+            () => worker(),
+          );
+          await Promise.all(workers);
         }
       }
     }
