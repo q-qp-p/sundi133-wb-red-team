@@ -983,24 +983,27 @@ export async function runRedTeam(
     }
 
     const roundResults: AttackResult[] = [];
+    const concurrencyLimit = Math.max(1, config.attackConfig.concurrency || 1);
+    const sharedIdx = { value: 0 };
 
-    for (let i = 0; i < attacks.length; i++) {
+    /** Execute a single attack (any type) and push the result. */
+    async function runOneAttack(attack: Attack): Promise<void> {
       checkAbort();
-      const attack = attacks[i];
+      const idx = ++sharedIdx.value;
       const progressExtra = {
         round,
         totalRounds: config.attackConfig.adaptiveRounds,
-        attackIndex: i + 1,
+        attackIndex: idx,
         totalAttacks: attacks.length,
       };
 
-      // Rate-limit rapid-fire attacks (payload may be missing on malformed LLM output)
+      // Rate-limit rapid-fire attacks
       const rapidFire = (attack.payload as Record<string, unknown> | undefined)
         ?._rapidFire as number | undefined;
       if (rapidFire && attack.category === "rate_limit") {
         log(
           "attacks",
-          `[${i + 1}/${attacks.length}] ${attack.name} (${rapidFire}x rapid-fire)...`,
+          `[${idx}/${attacks.length}] ${attack.name} (${rapidFire}x rapid-fire)...`,
           progressExtra,
         );
         const cleanPayload = { ...attack.payload };
@@ -1040,13 +1043,13 @@ export async function runRedTeam(
 
         log(
           "attacks",
-          `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
+          `[${idx}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)}`,
           progressExtra,
         );
         await maybeGenerateIdealResponse(config, result);
         roundResults.push(result);
         emitResult(result, progressExtra);
-        continue;
+        return;
       }
 
       try {
@@ -1054,7 +1057,7 @@ export async function runRedTeam(
           // Multi-turn attack (predefined steps)
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} (${1 + attack.steps.length} steps)...`,
+            `[${idx}/${attacks.length}] ${attack.name} (${1 + attack.steps.length} steps)...`,
             progressExtra,
           );
 
@@ -1092,7 +1095,7 @@ export async function runRedTeam(
 
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+            `[${idx}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
             progressExtra,
           );
           await maybeGenerateIdealResponse(config, result);
@@ -1106,7 +1109,7 @@ export async function runRedTeam(
           const maxTurns = config.attackConfig.maxAdaptiveTurns ?? 15;
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} (adaptive, max ${maxTurns} turns)...`,
+            `[${idx}/${attacks.length}] ${attack.name} (adaptive, max ${maxTurns} turns)...`,
             progressExtra,
           );
 
@@ -1146,7 +1149,7 @@ export async function runRedTeam(
 
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
+            `[${idx}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${lastStep.statusCode}, ${lastStep.timeMs}ms)${stoppedEarly ? ` (stopped early)` : ""}`,
             progressExtra,
           );
           await maybeGenerateIdealResponse(config, result);
@@ -1156,7 +1159,7 @@ export async function runRedTeam(
           // Single-turn attack
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name}...`,
+            `[${idx}/${attacks.length}] ${attack.name}...`,
             progressExtra,
           );
           const { statusCode, body, timeMs, executionTrace } =
@@ -1173,7 +1176,7 @@ export async function runRedTeam(
 
           log(
             "attacks",
-            `[${i + 1}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${statusCode}, ${timeMs}ms)`,
+            `[${idx}/${attacks.length}] ${attack.name} → ${getVerdictLabel(result.verdict)} (${statusCode}, ${timeMs}ms)`,
             progressExtra,
           );
           await maybeGenerateIdealResponse(config, result);
@@ -1183,7 +1186,7 @@ export async function runRedTeam(
       } catch (attackErr) {
         log(
           "attacks",
-          `[${i + 1}/${attacks.length}] ${attack.name} → ERROR: ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
+          `[${idx}/${attacks.length}] ${attack.name} → ERROR: ${attackErr instanceof Error ? attackErr.message : String(attackErr)}`,
           progressExtra,
         );
         const errResult: AttackResult = {
@@ -1203,6 +1206,26 @@ export async function runRedTeam(
       if (config.attackConfig.delayBetweenRequestsMs > 0) {
         await sleep(config.attackConfig.delayBetweenRequestsMs);
       }
+    }
+
+    // Execute attacks with worker-pool concurrency
+    if (concurrencyLimit > 1) {
+      log("attacks", `Running ${attacks.length} attacks with concurrency=${concurrencyLimit}`, { round });
+    }
+    {
+      const taskQueue = attacks.slice();
+      let nextIdx = 0;
+      async function worker(): Promise<void> {
+        while (nextIdx < taskQueue.length) {
+          const myIdx = nextIdx++;
+          await runOneAttack(taskQueue[myIdx]);
+        }
+      }
+      const workers = Array.from(
+        { length: Math.min(concurrencyLimit, taskQueue.length) },
+        () => worker(),
+      );
+      await Promise.all(workers);
     }
 
     // Refinement pass
