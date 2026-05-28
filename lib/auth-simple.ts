@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
+import bcrypt from "bcryptjs";
 import { query, isDbConfigured } from "./db.js";
 import { generateTenantKey } from "./encryption.js";
 import type { AuthContext } from "./auth.js";
@@ -276,7 +277,18 @@ export async function loginSimpleUser(
   password: string,
 ): Promise<{ auth: AuthContext; user: SimpleAuthUserInfo; token: string }> {
   const user = findSimpleAuthUser(username);
-  if (!user || user.password !== password) {
+  if (!user) {
+    // Constant-time: always run a bcrypt compare even if user not found
+    await bcrypt.compare(password, "$2a$10$invalidhashplaceholderXXXXXXXXXXXXXXXXXXXXXXX");
+    throw new Error("Invalid username or password");
+  }
+
+  // Support bcrypt hashes ($2a$, $2b$, $2y$) and plaintext (backward compat)
+  const isBcrypt = /^\$2[aby]\$\d+\$/.test(user.password);
+  const passwordValid = isBcrypt
+    ? await bcrypt.compare(password, user.password)
+    : user.password === password;
+  if (!passwordValid) {
     throw new Error("Invalid username or password");
   }
 
