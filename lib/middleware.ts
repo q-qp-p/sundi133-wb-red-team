@@ -67,12 +67,6 @@ async function handleRequest(
         res.setHeader("Vary", "Origin");
       }
     }
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization",
-    );
-
     // ── Security headers ──
     res.setHeader(
       "Strict-Transport-Security",
@@ -90,8 +84,18 @@ async function handleRequest(
       "Content-Security-Policy",
       "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     );
+    // Prevent caching of API responses (sensitive data)
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    // Remove server fingerprinting
+    res.removeHeader("X-Powered-By");
 
     if (req.method === "OPTIONS") {
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization",
+      );
       res.writeHead(204);
       res.end();
       return;
