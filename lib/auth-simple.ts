@@ -19,6 +19,7 @@ interface SessionPayload {
   sid: string;
   exp: number;
   iat: number;
+  nbf: number;
   iss: string;
   aud: string;
 }
@@ -50,8 +51,9 @@ function getSessionSecret(): string {
   }
 
   if (secret.length < 32) {
-    console.warn(
-      "WARNING: SIMPLE_AUTH_SESSION_SECRET is shorter than 32 characters. Use a stronger secret in production.",
+    throw new Error(
+      "SIMPLE_AUTH_SESSION_SECRET must be at least 32 characters. " +
+        'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"',
     );
   }
 
@@ -262,8 +264,13 @@ function deserializeSession(token: string): SessionPayload {
   ) {
     throw new Error("Invalid session payload — please log in again");
   }
-  if (payload.exp < Math.floor(Date.now() / 1000)) {
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.exp < now) {
     throw new Error("Session expired");
+  }
+  // Validate not-before if present (new tokens always have it)
+  if (typeof payload.nbf === "number" && payload.nbf > now + 30) {
+    throw new Error("Token not yet valid");
   }
   // Validate issuer/audience if present (new tokens always have them)
   if (payload.iss && payload.iss !== "red-team-dashboard") {
@@ -303,6 +310,7 @@ export async function loginSimpleUser(
     sid: randomUUID(),
     exp: now + getSessionTtlSeconds(),
     iat: now,
+    nbf: now,
     iss: "red-team-dashboard",
     aud: "red-team-session",
   });
