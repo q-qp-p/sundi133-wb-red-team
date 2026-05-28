@@ -678,6 +678,7 @@ const server = createServer(
         JSON.stringify({
           mode: authMode,
           clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY || null,
+          hcaptchaSiteKey: process.env.HCAPTCHA_SITE_KEY || null,
         }),
       );
       return;
@@ -714,6 +715,29 @@ const server = createServer(
         const body = JSON.parse(await readBody(req));
         const username = String(body.username || "").trim();
         const password = String(body.password || "");
+
+        // hCaptcha verification (when configured)
+        const hcaptchaSecret = process.env.HCAPTCHA_SECRET_KEY;
+        if (hcaptchaSecret && process.env.HCAPTCHA_SITE_KEY) {
+          const captchaToken = String(body.captchaToken || "");
+          if (!captchaToken) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "CAPTCHA verification required" }));
+            return;
+          }
+          const verifyResp = await fetch("https://api.hcaptcha.com/siteverify", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `response=${encodeURIComponent(captchaToken)}&secret=${encodeURIComponent(hcaptchaSecret)}`,
+          });
+          const verifyData = (await verifyResp.json()) as { success: boolean };
+          if (!verifyData.success) {
+            res.writeHead(403, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "CAPTCHA verification failed" }));
+            return;
+          }
+        }
+
         const { token, user } = await loginSimpleUser(username, password);
         res.writeHead(200, {
           "Content-Type": "application/json",
