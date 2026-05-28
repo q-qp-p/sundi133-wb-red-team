@@ -745,10 +745,11 @@ const server = createServer(
         });
         res.end(JSON.stringify({ ok: true, user }));
       } catch (err) {
+        console.warn(`  [auth] Login failed: ${err instanceof Error ? err.message : String(err)}`);
         res.writeHead(401, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            error: err instanceof Error ? err.message : String(err),
+            error: "Invalid username or password",
           }),
         );
       }
@@ -775,12 +776,12 @@ const server = createServer(
         const user = await getSimpleSessionUser(req.headers.cookie);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ authenticated: true, user }));
-      } catch (err) {
+      } catch {
         res.writeHead(401, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             authenticated: false,
-            error: err instanceof Error ? err.message : String(err),
+            error: "Not authenticated",
           }),
         );
       }
@@ -802,7 +803,7 @@ const server = createServer(
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(
             JSON.stringify({
-              error: `Invalid config: ${err instanceof Error ? err.message : String(err)}`,
+              error: "Invalid configuration",
             }),
           );
           return;
@@ -829,7 +830,7 @@ const server = createServer(
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            error: `Bad request: ${err instanceof Error ? err.message : String(err)}`,
+            error: "Bad request",
           }),
         );
       }
@@ -1588,12 +1589,13 @@ const server = createServer(
         // Save the analysis alongside the report
         res.end();
       } catch (err) {
+        console.error(`  [compliance] Analysis failed: ${err instanceof Error ? err.message : String(err)}`);
         if (!res.headersSent) {
           res.writeHead(500, { "Content-Type": "application/json" });
         }
         res.end(
           JSON.stringify({
-            error: err instanceof Error ? err.message : String(err),
+            error: "Analysis failed",
           }),
         );
       }
