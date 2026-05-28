@@ -18,6 +18,8 @@ interface SessionPayload {
   sid: string;
   exp: number;
   iat: number;
+  iss: string;
+  aud: string;
 }
 
 export interface SimpleAuthUserInfo {
@@ -211,22 +213,42 @@ async function ensureSimpleAuthContext(
   };
 }
 
+const JWT_HEADER = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+
 function serializeSession(payload: SessionPayload): string {
-  const encoded = base64UrlEncode(JSON.stringify(payload));
-  const signature = signPayload(encoded);
-  return `${encoded}.${signature}`;
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const signingInput = `${JWT_HEADER}.${encodedPayload}`;
+  const signature = signPayload(signingInput);
+  return `${JWT_HEADER}.${encodedPayload}.${signature}`;
 }
 
 function deserializeSession(token: string): SessionPayload {
-  const [encoded, signature] = token.split(".");
-  if (!encoded || !signature) {
+  const parts = token.split(".");
+  // Support both legacy 2-part (payload.sig) and standard 3-part JWT (header.payload.sig)
+  let encodedPayload: string;
+  let signature: string;
+  let signingInput: string;
+  if (parts.length === 3) {
+    // Standard JWT: header.payload.signature
+    encodedPayload = parts[1];
+    signature = parts[2];
+    signingInput = `${parts[0]}.${parts[1]}`;
+  } else if (parts.length === 2) {
+    // Legacy format: payload.signature (backward compat for active sessions)
+    encodedPayload = parts[0];
+    signature = parts[1];
+    signingInput = parts[0];
+  } else {
     throw new Error("Invalid session token");
   }
-  const expected = signPayload(encoded);
+  if (!encodedPayload || !signature) {
+    throw new Error("Invalid session token");
+  }
+  const expected = signPayload(signingInput);
   if (!safeCompare(signature, expected)) {
     throw new Error("Invalid session signature");
   }
-  const payload = JSON.parse(base64UrlDecode(encoded)) as SessionPayload;
+  const payload = JSON.parse(base64UrlDecode(encodedPayload)) as SessionPayload;
   if (
     !payload.username ||
     typeof payload.exp !== "number" ||
@@ -238,6 +260,13 @@ function deserializeSession(token: string): SessionPayload {
   }
   if (payload.exp < Math.floor(Date.now() / 1000)) {
     throw new Error("Session expired");
+  }
+  // Validate issuer/audience if present (new tokens always have them)
+  if (payload.iss && payload.iss !== "red-team-dashboard") {
+    throw new Error("Invalid token issuer");
+  }
+  if (payload.aud && payload.aud !== "red-team-session") {
+    throw new Error("Invalid token audience");
   }
   return payload;
 }
@@ -259,6 +288,8 @@ export async function loginSimpleUser(
     sid: randomUUID(),
     exp: now + getSessionTtlSeconds(),
     iat: now,
+    iss: "red-team-dashboard",
+    aud: "red-team-session",
   });
 
   return {
