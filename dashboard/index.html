@@ -3241,6 +3241,7 @@
             />
           </div>
           <div id="authError" class="auth-error"></div>
+          <div id="authCaptchaContainer" style="display:none;margin-top:8px;"></div>
         </div>
         <button class="auth-sign-in-btn" id="authSignInBtn">Sign In</button>
         <p
@@ -4421,6 +4422,8 @@
       let authToken = null;
       let authMode = "none";
       let clerkInstance = null;
+      let hcaptchaSiteKey = null;
+      let hcaptchaWidgetId = null;
       const authChannel =
         typeof BroadcastChannel !== "undefined"
           ? new BroadcastChannel("red-team-auth")
@@ -4464,7 +4467,9 @@
           }
 
           if (authMode === "simple") {
+            hcaptchaSiteKey = config.hcaptchaSiteKey || null;
             setupSimpleAuthUi();
+            if (hcaptchaSiteKey) await loadHcaptcha();
             await syncSimpleAuthSession();
             return;
           }
@@ -4559,10 +4564,20 @@
         button.textContent = "Signing In...";
 
         try {
+          // Include hCaptcha token if widget is active
+          const loginBody = { username, password };
+          if (hcaptchaSiteKey && window.hcaptcha && hcaptchaWidgetId != null) {
+            const captchaToken = window.hcaptcha.getResponse(hcaptchaWidgetId);
+            if (!captchaToken) {
+              throw new Error("Please complete the CAPTCHA");
+            }
+            loginBody.captchaToken = captchaToken;
+          }
+
           const res = await _origFetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
+            body: JSON.stringify(loginBody),
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Login failed");
@@ -4571,6 +4586,10 @@
         } catch (err) {
           errorEl.textContent =
             err instanceof Error ? err.message : String(err);
+          // Reset captcha on failure
+          if (window.hcaptcha && hcaptchaWidgetId != null) {
+            window.hcaptcha.reset(hcaptchaWidgetId);
+          }
         } finally {
           button.disabled = false;
           button.textContent = "Sign In";
@@ -4664,6 +4683,36 @@
         // Now load data
         await loadReportsMeta();
         refreshActiveRuns();
+      }
+
+      function loadHcaptcha() {
+        return new Promise((resolve, reject) => {
+          if (window.hcaptcha) {
+            renderHcaptcha();
+            resolve();
+            return;
+          }
+          const s = document.createElement("script");
+          s.src = "https://js.hcaptcha.com/1/api.js?render=explicit";
+          s.async = true;
+          s.onload = () => {
+            renderHcaptcha();
+            resolve();
+          };
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      function renderHcaptcha() {
+        const container = document.getElementById("authCaptchaContainer");
+        if (!container || !window.hcaptcha || !hcaptchaSiteKey) return;
+        container.style.display = "block";
+        container.innerHTML = "";
+        hcaptchaWidgetId = window.hcaptcha.render(container, {
+          sitekey: hcaptchaSiteKey,
+          theme: "dark",
+        });
       }
 
       function loadClerkSdk() {

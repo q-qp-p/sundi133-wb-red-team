@@ -11,7 +11,7 @@ import {
   existsSync,
   mkdirSync,
 } from "node:fs";
-import { join, extname } from "node:path";
+import { join, extname, resolve as resolvePath } from "node:path";
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -91,6 +91,40 @@ function checkLoginRateLimit(ip: string): {
   }
   entry.count++;
   if (entry.count > LOGIN_RATE_LIMIT) {
+    const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
+    return { allowed: false, retryAfterSec };
+  }
+  return { allowed: true, retryAfterSec: 0 };
+}
+
+// ── API rate limiter (for expensive endpoints) ──
+const apiRateLimits = new Map<string, RateLimitEntry>();
+const API_RATE_LIMIT = parseInt(process.env.API_RATE_LIMIT || "30", 10); // 30 requests
+const API_RATE_WINDOW_MS = parseInt(
+  process.env.API_RATE_WINDOW_MS || "60000",
+  10,
+); // 1 min
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of apiRateLimits) {
+    if (entry.resetAt <= now) apiRateLimits.delete(key);
+  }
+}, 60_000).unref();
+
+function checkApiRateLimit(
+  ip: string,
+  endpoint: string,
+): { allowed: boolean; retryAfterSec: number } {
+  const key = `${ip}:${endpoint}`;
+  const now = Date.now();
+  const entry = apiRateLimits.get(key);
+  if (!entry || entry.resetAt <= now) {
+    apiRateLimits.set(key, { count: 1, resetAt: now + API_RATE_WINDOW_MS });
+    return { allowed: true, retryAfterSec: 0 };
+  }
+  entry.count++;
+  if (entry.count > API_RATE_LIMIT) {
     const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
     return { allowed: false, retryAfterSec };
   }
@@ -678,6 +712,7 @@ const server = createServer(
         JSON.stringify({
           mode: authMode,
           clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY || null,
+          hcaptchaSiteKey: process.env.HCAPTCHA_SITE_KEY || null,
         }),
       );
       return;
@@ -714,6 +749,29 @@ const server = createServer(
         const body = JSON.parse(await readBody(req));
         const username = String(body.username || "").trim();
         const password = String(body.password || "");
+
+        // hCaptcha verification (when configured)
+        const hcaptchaSecret = process.env.HCAPTCHA_SECRET_KEY;
+        if (hcaptchaSecret && process.env.HCAPTCHA_SITE_KEY) {
+          const captchaToken = String(body.captchaToken || "");
+          if (!captchaToken) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "CAPTCHA verification required" }));
+            return;
+          }
+          const verifyResp = await fetch("https://api.hcaptcha.com/siteverify", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `response=${encodeURIComponent(captchaToken)}&secret=${encodeURIComponent(hcaptchaSecret)}`,
+          });
+          const verifyData = (await verifyResp.json()) as { success: boolean };
+          if (!verifyData.success) {
+            res.writeHead(403, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "CAPTCHA verification failed" }));
+            return;
+          }
+        }
+
         const { token, user } = await loginSimpleUser(username, password);
         res.writeHead(200, {
           "Content-Type": "application/json",
@@ -721,10 +779,11 @@ const server = createServer(
         });
         res.end(JSON.stringify({ ok: true, user }));
       } catch (err) {
+        console.warn(`  [auth] Login failed: ${err instanceof Error ? err.message : String(err)}`);
         res.writeHead(401, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            error: err instanceof Error ? err.message : String(err),
+            error: "Invalid username or password",
           }),
         );
       }
@@ -751,12 +810,12 @@ const server = createServer(
         const user = await getSimpleSessionUser(req.headers.cookie);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ authenticated: true, user }));
-      } catch (err) {
+      } catch {
         res.writeHead(401, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             authenticated: false,
-            error: err instanceof Error ? err.message : String(err),
+            error: "Not authenticated",
           }),
         );
       }
@@ -767,6 +826,13 @@ const server = createServer(
 
     // POST /api/run — start a new red-team run
     if (url.pathname === "/api/run" && req.method === "POST") {
+      const clientIp = req.headers["x-forwarded-for"]?.toString().split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+      const { allowed, retryAfterSec } = checkApiRateLimit(clientIp, "run");
+      if (!allowed) {
+        res.writeHead(429, { "Content-Type": "application/json", "Retry-After": String(retryAfterSec) });
+        res.end(JSON.stringify({ error: "Too many requests. Please try again later.", retryAfterSec }));
+        return;
+      }
       try {
         const body = JSON.parse(await readBody(req));
 
@@ -778,7 +844,7 @@ const server = createServer(
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(
             JSON.stringify({
-              error: `Invalid config: ${err instanceof Error ? err.message : String(err)}`,
+              error: "Invalid configuration",
             }),
           );
           return;
@@ -805,7 +871,7 @@ const server = createServer(
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
-            error: `Bad request: ${err instanceof Error ? err.message : String(err)}`,
+            error: "Bad request",
           }),
         );
       }
@@ -1464,6 +1530,13 @@ const server = createServer(
 
     // API: compliance analysis — LLM-powered per-item analysis
     if (url.pathname === "/api/owasp-analyze" && req.method === "POST") {
+      const clientIp = req.headers["x-forwarded-for"]?.toString().split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+      const { allowed, retryAfterSec } = checkApiRateLimit(clientIp, "owasp-analyze");
+      if (!allowed) {
+        res.writeHead(429, { "Content-Type": "application/json", "Retry-After": String(retryAfterSec) });
+        res.end(JSON.stringify({ error: "Too many requests. Please try again later.", retryAfterSec }));
+        return;
+      }
       try {
         const body = JSON.parse(await readBody(req));
         const { reportFile } = body;
@@ -1564,12 +1637,13 @@ const server = createServer(
         // Save the analysis alongside the report
         res.end();
       } catch (err) {
+        console.error(`  [compliance] Analysis failed: ${err instanceof Error ? err.message : String(err)}`);
         if (!res.headersSent) {
           res.writeHead(500, { "Content-Type": "application/json" });
         }
         res.end(
           JSON.stringify({
-            error: err instanceof Error ? err.message : String(err),
+            error: "Analysis failed",
           }),
         );
       }
@@ -1648,6 +1722,13 @@ const server = createServer(
 
     // API: risk analysis — LLM-powered per-vulnerability business impact
     if (url.pathname === "/api/risk-analyze" && req.method === "POST") {
+      const clientIp = req.headers["x-forwarded-for"]?.toString().split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+      const { allowed, retryAfterSec } = checkApiRateLimit(clientIp, "risk-analyze");
+      if (!allowed) {
+        res.writeHead(429, { "Content-Type": "application/json", "Retry-After": String(retryAfterSec) });
+        res.end(JSON.stringify({ error: "Too many requests. Please try again later.", retryAfterSec }));
+        return;
+      }
       try {
         const body = JSON.parse(await readBody(req));
         const { attacks, provider, model } = body;
@@ -1842,16 +1923,40 @@ Be specific and factual. Reference real incidents and realistic financial figure
       return;
     }
 
+    // ── Well-known endpoints ──
+    if (url.pathname === "/.well-known/security.txt" || url.pathname === "/security.txt") {
+      const contactEmail = process.env.SECURITY_CONTACT_EMAIL || "security@votal.ai";
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end(
+        `Contact: mailto:${contactEmail}\nPreferred-Languages: en\nCanonical: https://cart.votal.ai/.well-known/security.txt\n`,
+      );
+      return;
+    }
+
+    if (url.pathname === "/robots.txt") {
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end("User-agent: *\nDisallow: /api/\nDisallow: /report/\n");
+      return;
+    }
+
     // Serve static files from dashboard dir
     let filePath = url.pathname === "/" ? "/index.html" : url.pathname;
-    // Prevent path traversal
-    if (filePath.includes("..")) {
+    // Prevent path traversal (relative and absolute)
+    if (filePath.includes("..") || filePath.includes("\\")) {
       res.writeHead(400);
       res.end("Bad request");
       return;
     }
     try {
       const fullPath = join(DASHBOARD_DIR, filePath);
+      // Ensure resolved path is within dashboard dir (prevents absolute path injection)
+      const resolvedDashboard = resolvePath(DASHBOARD_DIR);
+      const resolvedFull = resolvePath(fullPath);
+      if (!resolvedFull.startsWith(resolvedDashboard + "/") && resolvedFull !== resolvedDashboard) {
+        res.writeHead(400);
+        res.end("Bad request");
+        return;
+      }
       const data = readFileSync(fullPath);
       const mime = MIME[extname(fullPath)] || "application/octet-stream";
       res.writeHead(200, { "Content-Type": mime });
