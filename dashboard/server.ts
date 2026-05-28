@@ -11,7 +11,7 @@ import {
   existsSync,
   mkdirSync,
 } from "node:fs";
-import { join, extname } from "node:path";
+import { join, extname, resolve as resolvePath } from "node:path";
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -1868,14 +1868,22 @@ Be specific and factual. Reference real incidents and realistic financial figure
 
     // Serve static files from dashboard dir
     let filePath = url.pathname === "/" ? "/index.html" : url.pathname;
-    // Prevent path traversal
-    if (filePath.includes("..")) {
+    // Prevent path traversal (relative and absolute)
+    if (filePath.includes("..") || filePath.includes("\\")) {
       res.writeHead(400);
       res.end("Bad request");
       return;
     }
     try {
       const fullPath = join(DASHBOARD_DIR, filePath);
+      // Ensure resolved path is within dashboard dir (prevents absolute path injection)
+      const resolvedDashboard = resolvePath(DASHBOARD_DIR);
+      const resolvedFull = resolvePath(fullPath);
+      if (!resolvedFull.startsWith(resolvedDashboard + "/") && resolvedFull !== resolvedDashboard) {
+        res.writeHead(400);
+        res.end("Bad request");
+        return;
+      }
       const data = readFileSync(fullPath);
       const mime = MIME[extname(fullPath)] || "application/octet-stream";
       res.writeHead(200, { "Content-Type": mime });
