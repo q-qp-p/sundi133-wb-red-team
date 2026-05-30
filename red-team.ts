@@ -343,6 +343,9 @@ async function main() {
   console.log(
     `  LLM generation: ${config.attackConfig.enableLlmGeneration ? "enabled" : "disabled"}`,
   );
+  console.log(
+    `  Attack mode: ${config.attackConfig.attackMode ?? "balanced"}`,
+  );
 
   // Filter modules based on enabledCategories (empty/absent = all enabled)
   const moduleSet =

@@ -745,6 +745,7 @@ export async function runRedTeam(
 
   const targetLabel = describeTarget(config);
   log("config", `Target: ${targetLabel}`);
+  log("config", `Attack mode: ${config.attackConfig.attackMode ?? "balanced"}`);
 
   // Filter modules
   const moduleSet =
