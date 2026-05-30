@@ -361,6 +361,47 @@ export async function analyzeResponse(
 
   let judgeConfidence: number | undefined;
 
+  // ── Policy verdict patterns: deterministic pattern-based verdicts ──
+  // When matched, these override everything and skip the LLM judge.
+  if (verdict !== "ERROR" && resolved.verdict_patterns) {
+    const vp = resolved.verdict_patterns;
+    let patternVerdict: Verdict | undefined;
+    // Check fail patterns first (defense held takes priority)
+    if (vp.fail?.some((p) => bodyStr.includes(p))) {
+      patternVerdict = "FAIL";
+    } else if (vp.pass?.some((p) => bodyStr.includes(p))) {
+      patternVerdict = "PASS";
+    } else if (vp.partial?.some((p) => bodyStr.includes(p))) {
+      patternVerdict = "PARTIAL";
+    }
+    if (patternVerdict) {
+      verdict = patternVerdict;
+      findings.push(`Policy verdict pattern matched ${patternVerdict} in response body`);
+      return {
+        attack,
+        verdict,
+        llmVerdict: undefined,
+        statusCode,
+        responseBody: body,
+        responseTimeMs: timeMs,
+        executionTrace,
+        findings,
+        llmReasoning: undefined,
+        llmEvidenceFor: undefined,
+        llmEvidenceAgainst: undefined,
+        judgeConfidence: undefined,
+        policyUsed: {
+          name: policy.name,
+          pass_criteria: resolved.pass_criteria,
+          fail_criteria: resolved.fail_criteria,
+          partial_criteria: resolved.partial_criteria,
+          instructions: resolved.instructions,
+          severity_override: resolved.severity_override,
+        },
+      };
+    }
+  }
+
   const deterministicVerdict = verdict;
   const deterministicFindings = [...findings];
 

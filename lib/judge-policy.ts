@@ -21,6 +21,15 @@ export interface PolicyCriteria {
    *  chatbot-oriented evidence-validation heuristics (useful for classifiers,
    *  guardrails, and other non-generative targets). */
   skip_evidence_validation?: boolean;
+  /** Deterministic substring/regex patterns that map directly to verdicts.
+   *  When a pattern matches the response body, the verdict is set immediately
+   *  and the LLM judge is skipped entirely. Patterns are checked in order:
+   *  fail first, then pass, then partial. */
+  verdict_patterns?: {
+    pass?: string[];
+    fail?: string[];
+    partial?: string[];
+  };
 }
 
 export interface CategoryPolicy extends PolicyCriteria {
@@ -50,6 +59,11 @@ export interface ResolvedPolicy {
   severity_override?: string | null;
   skip_llm_judge: boolean;
   skip_evidence_validation: boolean;
+  verdict_patterns?: {
+    pass?: string[];
+    fail?: string[];
+    partial?: string[];
+  };
 }
 
 // ── Loader ──
@@ -118,8 +132,28 @@ export function resolvePolicy(
       severity_override: null,
       skip_llm_judge: false,
       skip_evidence_validation: g.skip_evidence_validation ?? false,
+      verdict_patterns: g.verdict_patterns,
     };
   }
+
+  // Merge verdict_patterns: category patterns extend global ones
+  const mergedVerdictPatterns =
+    g.verdict_patterns || c.verdict_patterns
+      ? {
+          pass: [
+            ...(g.verdict_patterns?.pass || []),
+            ...(c.verdict_patterns?.pass || []),
+          ],
+          fail: [
+            ...(g.verdict_patterns?.fail || []),
+            ...(c.verdict_patterns?.fail || []),
+          ],
+          partial: [
+            ...(g.verdict_patterns?.partial || []),
+            ...(c.verdict_patterns?.partial || []),
+          ],
+        }
+      : undefined;
 
   // Category criteria are additive — they extend global, not replace
   return {
@@ -130,6 +164,7 @@ export function resolvePolicy(
     severity_override: c.severity_override ?? null,
     skip_llm_judge: c.skip_llm_judge ?? false,
     skip_evidence_validation: c.skip_evidence_validation ?? g.skip_evidence_validation ?? false,
+    verdict_patterns: mergedVerdictPatterns,
   };
 }
 
