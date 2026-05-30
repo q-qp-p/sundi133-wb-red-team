@@ -629,6 +629,13 @@ export interface Config {
      * Increasing this multiplies LLM-generated attacks: attacksPerStrategy × strategies × categories.
      */
     attacksPerStrategy?: number;
+    /**
+     * Controls how attack prompts are generated.
+     * - "aggressive": Direct, obvious harmful prompts — tests baseline detection.
+     * - "balanced": Mix of direct and disguised prompts (default).
+     * - "subtle": Highly disguised, natural-sounding messages — tests evasion resistance.
+     */
+    attackMode?: "aggressive" | "balanced" | "subtle";
   };
 }
 
