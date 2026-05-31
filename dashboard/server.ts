@@ -428,6 +428,10 @@ async function startJob(job: Job): Promise<void> {
   job.status = "running";
   const ac = new AbortController();
   job.abortController = ac;
+  // Persist running status to DB so it survives server restart
+  if (isDbConfigured() && job.tenantId) {
+    query("UPDATE runs SET status=$1 WHERE id=$2", ["running", job.id]).catch(() => {});
+  }
 
   let clonedDir: string | null = null;
   try {
@@ -468,8 +472,8 @@ async function startJob(job: Job): Promise<void> {
       ac.signal,
     );
     // Don't overwrite if already cancelled by user
-    console.log(`  [CANCEL-CHECK] runRedTeam returned successfully, job.status=${job.status}`);
-    if (job.status === "cancelled") {
+    console.log(`  [CANCEL-CHECK] runRedTeam returned successfully, job.status=${job.status}, _cancelled=${job._cancelled}`);
+    if (job._cancelled || job.status === "cancelled") {
       if (!job.finishedAt) job.finishedAt = new Date().toISOString();
       activeRuns = Math.max(0, activeRuns - 1);
       drainQueue();
@@ -625,7 +629,7 @@ async function startJob(job: Job): Promise<void> {
     }
     activeRuns = Math.max(0, activeRuns - 1);
     drainQueue();
-    if (isDbConfigured() && job.tenantId) {
+    if (isDbConfigured() && job.tenantId && !job._cancelled) {
       query("UPDATE runs SET status=$1, finished_at=$2, error=$3 WHERE id=$4", [
         job.status,
         job.finishedAt,
