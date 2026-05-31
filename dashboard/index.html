@@ -12258,6 +12258,7 @@
 
       // ── Sidebar run tracking ──
       const pollingRuns = new Set();
+      const pollingIntervals = new Map(); // runId → intervalId
       let selectedRunId = null;
       const liveExpandedRows = new Set();
       let liveExpandAll = false;
@@ -12324,8 +12325,7 @@
             }
 
             if (data.status === "done" || data.status === "error" || data.status === "cancelled") {
-              clearInterval(interval);
-              pollingRuns.delete(runId);
+              stopPolling(runId);
               if (data.status === "done") {
                 // Small delay to ensure DB write is fully committed
                 setTimeout(function () {
@@ -12339,6 +12339,13 @@
             // ignore transient errors
           }
         }, 2000);
+        pollingIntervals.set(runId, interval);
+      }
+
+      function stopPolling(runId) {
+        var iv = pollingIntervals.get(runId);
+        if (iv) { clearInterval(iv); pollingIntervals.delete(runId); }
+        pollingRuns.delete(runId);
       }
 
       function selectRun(runId) {
@@ -12719,11 +12726,15 @@
       async function cancelRun(runId) {
         if (!confirm("Are you sure you want to cancel this run? This cannot be undone.")) return;
 
+        // Stop polling immediately so it can't overwrite cancelled status
+        stopPolling(runId);
+
         // Immediately show "cancelled" state so user gets instant feedback
         const cached = runDataCache.get(runId);
         if (cached) {
           cached.status = "cancelled";
           cached.error = "Cancelled by user";
+          cached.finishedAt = cached.finishedAt || new Date().toISOString();
         }
         renderSidebarRuns();
         if (currentTab === "runs") renderRunsTab();
