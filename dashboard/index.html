@@ -4,62 +4,59 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Red Team Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
     <style>
       :root {
-        /* Base colors — refined deep dark palette */
-        --bg: #050816;
-        --surface: rgba(15, 23, 42, 0.72);
-        --surface2: rgba(30, 41, 59, 0.55);
-        --surface3: rgba(51, 65, 85, 0.55);
-        --border: rgba(148, 163, 184, 0.18);
-        --border-hover: rgba(148, 163, 184, 0.38);
-        --text: #eef2f8;
-        --text2: #8b97ab;
-        --accent: #3b82f6;
-        --blue: #3b82f6;
-        --cyan: #06b6d4;
-        --red: #ff4d5e;
-        --orange: #f97316;
-        --green: #22c55e;
+        /* ═══ NEON BREACH RISK — deep dark cyberpunk palette ═══ */
+        --bg: #050711;
+        --bg2: #0b1020;
+        --surface: rgba(11, 17, 34, 0.66);
+        --surface2: rgba(20, 28, 52, 0.6);
+        --surface3: rgba(34, 45, 78, 0.62);
+        --border: rgba(0, 245, 255, 0.14);
+        --border-hover: rgba(0, 245, 255, 0.42);
+        --text: #f4f8ff;
+        --text2: #8fa4bd;
+        --accent: #00f5ff;
+        --blue: #00f5ff;
+        --cyan: #00f5ff;
+        --red: #ff335f;
+        --orange: #ff9d2e;
+        --green: #00e6a8;
         --purple: #8b5cf6;
-        --yellow: #facc15;
-        --critical: #ff4d5e;
-        --high: #f97316;
-        --medium: #facc15;
-        --low: #8b97ab;
+        --yellow: #ffc24b;
+        --critical: #ff2e77;
+        --high: #ff9d2e;
+        --medium: #ffc24b;
+        --low: #8fa4bd;
 
         /* Neon gradients */
-        --grad-primary: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
-        --grad-brand: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #06b6d4 100%);
-        --grad-danger: linear-gradient(135deg, #ff4d5e 0%, #f97316 100%);
-        --grad-success: linear-gradient(135deg, #22c55e 0%, #06b6d4 100%);
+        --grad-primary: linear-gradient(135deg, #8b5cf6 0%, #00f5ff 100%);
+        --grad-brand: linear-gradient(135deg, #00f5ff 0%, #8b5cf6 50%, #ff2e77 100%);
+        --grad-danger: linear-gradient(135deg, #ff2e77 0%, #ff9d2e 100%);
+        --grad-success: linear-gradient(135deg, #00e6a8 0%, #00f5ff 100%);
 
         /* Semantic color backgrounds */
-        --red-bg: rgba(255, 77, 94, 0.12);
-        --red-bg-subtle: rgba(255, 77, 94, 0.06);
-        --red-border: rgba(255, 77, 94, 0.32);
-        --green-bg: rgba(34, 197, 94, 0.12);
-        --green-bg-subtle: rgba(34, 197, 94, 0.06);
-        --green-border: rgba(34, 197, 94, 0.32);
-        --orange-bg: rgba(249, 115, 22, 0.12);
-        --orange-bg-subtle: rgba(249, 115, 22, 0.06);
-        --orange-border: rgba(249, 115, 22, 0.32);
-        --accent-bg: rgba(59, 130, 246, 0.14);
-        --accent-bg-subtle: rgba(59, 130, 246, 0.07);
-        --accent-border: rgba(59, 130, 246, 0.34);
-        --cyan-bg: rgba(6, 182, 212, 0.12);
-        --cyan-border: rgba(6, 182, 212, 0.32);
-        --purple-bg: rgba(139, 92, 246, 0.14);
+        --red-bg: rgba(255, 51, 95, 0.14);
+        --red-bg-subtle: rgba(255, 51, 95, 0.07);
+        --red-border: rgba(255, 51, 95, 0.36);
+        --green-bg: rgba(0, 230, 168, 0.13);
+        --green-bg-subtle: rgba(0, 230, 168, 0.06);
+        --green-border: rgba(0, 230, 168, 0.34);
+        --orange-bg: rgba(255, 157, 46, 0.13);
+        --orange-bg-subtle: rgba(255, 157, 46, 0.06);
+        --orange-border: rgba(255, 157, 46, 0.34);
+        --accent-bg: rgba(0, 245, 255, 0.13);
+        --accent-bg-subtle: rgba(0, 245, 255, 0.07);
+        --accent-border: rgba(0, 245, 255, 0.34);
+        --cyan-bg: rgba(0, 245, 255, 0.12);
+        --cyan-border: rgba(0, 245, 255, 0.32);
+        --purple-bg: rgba(139, 92, 246, 0.15);
         --purple-bg-subtle: rgba(139, 92, 246, 0.07);
-        --purple-border: rgba(139, 92, 246, 0.34);
-        --text2-bg: rgba(139, 151, 171, 0.12);
-        --text2-border: rgba(139, 151, 171, 0.22);
+        --purple-border: rgba(139, 92, 246, 0.36);
+        --pink-bg: rgba(255, 46, 119, 0.14);
+        --pink-border: rgba(255, 46, 119, 0.36);
+        --text2-bg: rgba(143, 164, 189, 0.12);
+        --text2-border: rgba(143, 164, 189, 0.22);
 
         /* Spacing scale (4px base) */
         --sp-1: 4px;
@@ -99,11 +96,11 @@
           0 4px 8px rgba(0, 0, 0, 0.2), 0 8px 32px rgba(0, 0, 0, 0.2);
         --shadow-xl:
           0 8px 16px rgba(0, 0, 0, 0.2), 0 16px 48px rgba(0, 0, 0, 0.3);
-        --shadow-glow-accent: 0 0 28px rgba(59, 130, 246, 0.3);
-        --shadow-glow-red: 0 0 28px rgba(255, 77, 94, 0.28);
-        --shadow-glow-green: 0 0 28px rgba(34, 197, 94, 0.28);
-        --shadow-glow-purple: 0 0 28px rgba(139, 92, 246, 0.3);
-        --shadow-glow-cyan: 0 0 28px rgba(6, 182, 212, 0.28);
+        --shadow-glow-accent: 0 0 32px rgba(0, 245, 255, 0.34);
+        --shadow-glow-red: 0 0 32px rgba(255, 46, 119, 0.34);
+        --shadow-glow-green: 0 0 32px rgba(0, 230, 168, 0.3);
+        --shadow-glow-purple: 0 0 32px rgba(139, 92, 246, 0.32);
+        --shadow-glow-cyan: 0 0 32px rgba(0, 245, 255, 0.32);
       }
 
       /* ═══ LIGHT THEME — clean, professional product palette (warm orange accent) ═══ */
@@ -248,6 +245,118 @@
         box-shadow: var(--shadow-sm);
       }
 
+      /* Light mode — comprehensive color fixes for readability */
+      html[data-theme="light"] .finding-item {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+      }
+      html[data-theme="light"] .finding-description {
+        background: #f9fafb;
+        border-left-color: #e5e7eb;
+        color: #374151;
+      }
+      html[data-theme="light"] .finding-description strong {
+        color: #c2461f;
+      }
+      html[data-theme="light"] .detail-box {
+        background: #f9fafb;
+        border-color: #e5e7eb;
+      }
+      html[data-theme="light"] .detail-box-title {
+        color: #c2461f;
+      }
+      html[data-theme="light"] .detail-box-content {
+        color: #374151;
+      }
+      html[data-theme="light"] .content-box-title {
+        background: #f3f4f6;
+        border-bottom-color: #e5e7eb;
+        color: #c2461f;
+      }
+      html[data-theme="light"] .content-box-body {
+        background: #ffffff;
+        color: #4b5563;
+      }
+      html[data-theme="light"] .cat-row {
+        background: #ffffff;
+        border-color: #e5e7eb;
+      }
+      html[data-theme="light"] .cat-name {
+        color: #1b1e23;
+      }
+      html[data-theme="light"] .cat-bar-bg {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+      }
+      html[data-theme="light"] .strategy-row {
+        background: #ffffff;
+        border-bottom-color: #e5e7eb;
+      }
+      html[data-theme="light"] .strategy-name {
+        color: #1b1e23;
+      }
+      html[data-theme="light"] .strategy-desc {
+        color: #6b7280;
+      }
+      html[data-theme="light"] .filter-bar {
+        background: #f9fafb;
+        border-color: #e5e7eb;
+      }
+      html[data-theme="light"] .filter-bar select,
+      html[data-theme="light"] .filter-bar input {
+        background: #ffffff;
+        color: #1b1e23;
+        border-color: #d1d5db;
+      }
+      html[data-theme="light"] .filter-bar select:focus,
+      html[data-theme="light"] .filter-bar input:focus {
+        border-color: #c2461f;
+        box-shadow: 0 0 0 3px rgba(226, 85, 42, 0.1);
+      }
+      html[data-theme="light"] table {
+        background: #ffffff;
+      }
+      html[data-theme="light"] table thead {
+        background: #f9fafb;
+        border-bottom-color: #e5e7eb;
+      }
+      html[data-theme="light"] table th {
+        color: #374151;
+        font-weight: 600;
+      }
+      html[data-theme="light"] table td {
+        color: #4b5563;
+        border-color: #f3f4f6;
+      }
+      html[data-theme="light"] .main-row:hover {
+        background: #f9fafb;
+      }
+      html[data-theme="light"] .detail-row {
+        background: #f9fafb;
+      }
+      html[data-theme="light"] .verdict {
+        box-shadow: none;
+      }
+      html[data-theme="light"] .finding-header {
+        border-bottom-color: #e5e7eb;
+      }
+      html[data-theme="light"] .finding-meta {
+        border-top-color: #e5e7eb;
+        border-bottom-color: #e5e7eb;
+      }
+      html[data-theme="light"] .meta-badge {
+        background: #f3f4f6;
+        color: #374151;
+      }
+      html[data-theme="light"] .attack-heading-highlight {
+        color: #c2461f;
+      }
+      html[data-theme="light"] .attack-heading-highlight:hover {
+        background: rgba(226, 85, 42, 0.08);
+        text-shadow: none;
+        box-shadow: 0 0 0 2px rgba(226, 85, 42, 0.15);
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
@@ -256,22 +365,39 @@
       body {
         background: var(--bg);
         background-image:
+          /* faint cyber grid */
+          linear-gradient(rgba(0, 245, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 245, 255, 0.035) 1px, transparent 1px),
+          /* neon ambient glows */
           radial-gradient(
-            ellipse 70% 55% at 15% -8%,
-            rgba(139, 92, 246, 0.13),
+            ellipse 70% 55% at 12% -8%,
+            rgba(139, 92, 246, 0.16),
             transparent 60%
           ),
           radial-gradient(
-            ellipse 60% 50% at 85% 0%,
-            rgba(59, 130, 246, 0.1),
+            ellipse 60% 50% at 88% 0%,
+            rgba(0, 245, 255, 0.12),
             transparent 55%
           ),
           radial-gradient(
-            ellipse 80% 60% at 50% 110%,
-            rgba(6, 182, 212, 0.08),
+            ellipse 70% 55% at 92% 92%,
+            rgba(255, 46, 119, 0.1),
             transparent 60%
           ),
-          linear-gradient(180deg, #050816 0%, #080c18 50%, #0b1020 100%);
+          radial-gradient(
+            ellipse 80% 60% at 30% 110%,
+            rgba(0, 230, 168, 0.07),
+            transparent 60%
+          ),
+          linear-gradient(180deg, #050711 0%, #070a18 50%, #0b1020 100%);
+        background-size:
+          44px 44px,
+          44px 44px,
+          100% 100%,
+          100% 100%,
+          100% 100%,
+          100% 100%,
+          100% 100%;
         background-attachment: fixed;
         color: var(--text);
         font-family:
@@ -296,7 +422,7 @@
           opacity 0.2s ease;
       }
       a:hover {
-        color: #8ba8ff;
+        color: #5af2ff;
       }
 
       /* ── Global UX polish ── */
@@ -327,7 +453,7 @@
       button:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: 2px;
-        box-shadow: 0 0 0 4px rgba(107, 138, 253, 0.12);
+        box-shadow: 0 0 0 4px rgba(0, 245, 255, 0.12);
       }
 
       /* Loading shimmer animation */
@@ -348,7 +474,7 @@
 
       /* Subtle selection color */
       ::selection {
-        background: rgba(107, 138, 253, 0.3);
+        background: rgba(0, 245, 255, 0.3);
         color: var(--text);
       }
 
@@ -624,7 +750,7 @@
       }
       .c-card:hover {
         border-color: var(--border-hover);
-        box-shadow: var(--shadow-lg), 0 0 28px rgba(59, 130, 246, 0.1);
+        box-shadow: var(--shadow-lg), 0 0 28px rgba(0, 245, 255, 0.1);
         transform: translateY(-2px);
       }
       .c-card-compact {
@@ -632,21 +758,36 @@
         border: 1px solid var(--border);
         border-radius: var(--r-xl);
         padding: var(--sp-5);
-        transition:
-          border-color 0.3s,
-          box-shadow 0.3s;
+        transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      }
+      .c-card-compact:hover {
+        border-color: var(--border-hover);
+        box-shadow: 0 0 20px rgba(0,245,255,0.1);
+        transform: translateY(-2px);
       }
       .c-card-flush {
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--r-2xl);
         overflow: hidden;
+        transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      }
+      .c-card-flush:hover {
+        border-color: var(--border-hover);
+        box-shadow: 0 0 20px rgba(0,245,255,0.1);
+        transform: translateY(-2px);
       }
       .c-card-bg {
         background: var(--bg);
         border: 1px solid var(--border);
         border-radius: var(--r-xl);
         padding: var(--sp-5);
+        transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      }
+      .c-card-bg:hover {
+        border-color: var(--border-hover);
+        box-shadow: 0 0 20px rgba(0,245,255,0.1);
+        transform: translateY(-2px);
       }
 
       /* Stat & metric cards */
@@ -666,7 +807,7 @@
       }
       .c-stat-card:hover {
         transform: translateY(-3px);
-        box-shadow: var(--shadow-lg), 0 0 24px rgba(59, 130, 246, 0.1);
+        box-shadow: var(--shadow-lg), 0 0 24px rgba(0, 245, 255, 0.1);
         border-color: var(--border-hover);
       }
       .c-stat-val {
@@ -681,6 +822,12 @@
         font-weight: 500;
         letter-spacing: 0.3px;
       }
+      /* 3D card wrapper — perspective lives here */
+      .card-3d-wrap {
+        perspective: 800px;
+        perspective-origin: center;
+      }
+
       .c-metric-card {
         background: var(--surface);
         backdrop-filter: blur(14px) saturate(1.4);
@@ -690,12 +837,31 @@
         padding: var(--sp-5);
         box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.04);
         transition:
-          border-color 0.3s,
-          box-shadow 0.3s,
-          transform 0.25s;
+          border-color 0.08s,
+          box-shadow 0.08s,
+          transform 0.08s;
         position: relative;
         overflow: hidden;
+        transform-style: preserve-3d;
+        will-change: transform;
       }
+      /* Shine layer that follows mouse */
+      .c-metric-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: var(--r-xl);
+        background: radial-gradient(
+          circle at var(--mx, 50%) var(--my, 50%),
+          rgba(255,255,255,0.10) 0%,
+          transparent 60%
+        );
+        pointer-events: none;
+        z-index: 2;
+        transition: opacity 0.3s;
+        opacity: 0;
+      }
+      .c-metric-card:hover::before { opacity: 1; }
       .c-metric-card::after {
         content: "";
         position: absolute;
@@ -715,13 +881,11 @@
       .c-metric-card:hover {
         border-color: color-mix(in srgb, var(--mc, var(--accent)) 45%, transparent);
         box-shadow:
-          var(--shadow-lg),
+          0 20px 40px rgba(0,0,0,0.4),
           0 0 30px color-mix(in srgb, var(--mc, var(--accent)) 28%, transparent);
-        transform: translateY(-4px);
       }
-      .c-metric-card:hover::after {
-        opacity: 1;
-      }
+      .c-metric-card:hover::after { opacity: 1; }
+
       .c-metric-icon {
         display: flex;
         align-items: center;
@@ -729,6 +893,8 @@
         margin-bottom: var(--sp-3);
         position: relative;
         z-index: 1;
+        transform: translateZ(30px);
+        transition: transform 0.08s;
       }
       .c-metric-badge {
         width: 40px;
@@ -744,10 +910,9 @@
         box-shadow:
           0 0 18px color-mix(in srgb, var(--mc, var(--accent)) 30%, transparent),
           inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        transition: transform 0.08s ease, box-shadow 0.08s ease;
       }
       .c-metric-card:hover .c-metric-badge {
-        transform: scale(1.08);
         box-shadow:
           0 0 26px color-mix(in srgb, var(--mc, var(--accent)) 50%, transparent),
           inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -764,6 +929,8 @@
         z-index: 1;
         color: var(--mc, var(--text));
         text-shadow: 0 0 24px color-mix(in srgb, var(--mc, var(--accent)) 35%, transparent);
+        transform: translateZ(20px);
+        transition: transform 0.08s;
       }
       .c-metric-label {
         font-size: var(--fs-sm);
@@ -773,6 +940,8 @@
         margin-top: 2px;
         position: relative;
         z-index: 1;
+        transform: translateZ(10px);
+        transition: transform 0.08s;
       }
 
       /* Badges */
@@ -906,12 +1075,12 @@
         box-shadow: var(--shadow-glow-green);
       }
       .c-btn-danger {
-        background: rgba(255, 107, 107, 0.1);
+        background: rgba(255, 46, 119, 0.1);
         border: 1px solid var(--red);
         color: var(--red);
       }
       .c-btn-danger:hover {
-        background: rgba(255, 107, 107, 0.18);
+        background: rgba(255, 46, 119, 0.18);
         transform: translateY(-1px);
         box-shadow: var(--shadow-glow-red);
       }
@@ -957,14 +1126,14 @@
         padding: 12px 16px;
       }
       .c-tr-hover:hover {
-        background: rgba(107, 138, 253, 0.04);
+        background: rgba(0, 245, 255, 0.04);
       }
       .c-tr-click {
         cursor: pointer;
         transition: all 0.2s;
       }
       .c-tr-click:hover {
-        background: rgba(107, 138, 253, 0.06);
+        background: rgba(0, 245, 255, 0.06);
       }
 
       /* Step wizard */
@@ -1018,7 +1187,7 @@
       .c-input:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(107, 138, 253, 0.12);
+        box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.12);
         background: var(--bg);
       }
       .c-label {
@@ -1192,9 +1361,9 @@
         border-radius: 9px;
         background: linear-gradient(
           135deg,
-          #ff6b6b 0%,
-          #c084fc 50%,
-          #6b8afd 100%
+          #ff2e77 0%,
+          #8b5cf6 50%,
+          #00f5ff 100%
         );
         display: flex;
         align-items: center;
@@ -1206,11 +1375,11 @@
         transition:
           transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
           box-shadow 0.3s;
-        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.2);
+        box-shadow: 0 2px 8px rgba(255, 46, 119, 0.2);
       }
       .top-nav-brand:hover .top-nav-brand-icon {
         transform: scale(1.12) rotate(-3deg);
-        box-shadow: 0 4px 20px rgba(255, 107, 107, 0.35);
+        box-shadow: 0 4px 20px rgba(255, 46, 119, 0.35);
       }
       .top-nav-brand-text {
         font-size: 16px;
@@ -1263,7 +1432,7 @@
       }
       .top-nav-tab.active {
         color: var(--text);
-        background: rgba(107, 138, 253, 0.1);
+        background: rgba(0, 245, 255, 0.1);
       }
       .top-nav-tab.active::after {
         content: "";
@@ -1299,10 +1468,10 @@
       @keyframes badgePulse {
         0%,
         100% {
-          box-shadow: 0 0 0 0 rgba(107, 138, 253, 0.4);
+          box-shadow: 0 0 0 0 rgba(0, 245, 255, 0.4);
         }
         50% {
-          box-shadow: 0 0 0 5px rgba(107, 138, 253, 0);
+          box-shadow: 0 0 0 5px rgba(0, 245, 255, 0);
         }
       }
       .top-nav-spacer {
@@ -1429,7 +1598,7 @@
           ),
           radial-gradient(
             ellipse 120% 30% at 0% 100%,
-            rgba(6, 182, 212, 0.07),
+            rgba(0, 245, 255, 0.07),
             transparent 70%
           ),
           linear-gradient(
@@ -1574,7 +1743,7 @@
           linear-gradient(
             135deg,
             rgba(139, 92, 246, 0.22) 0%,
-            rgba(59, 130, 246, 0.18) 100%
+            rgba(0, 245, 255, 0.18) 100%
           );
         border: 1px solid rgba(139, 92, 246, 0.4);
         box-shadow:
@@ -1675,12 +1844,12 @@
         background:
           linear-gradient(
             135deg,
-            rgba(34, 197, 94, 0.12) 0%,
-            rgba(6, 182, 212, 0.08) 100%
+            rgba(0, 230, 168, 0.12) 0%,
+            rgba(0, 245, 255, 0.08) 100%
           );
-        border: 1px solid rgba(34, 197, 94, 0.28);
+        border: 1px solid rgba(0, 230, 168, 0.28);
         box-shadow:
-          0 0 22px rgba(34, 197, 94, 0.14),
+          0 0 22px rgba(0, 230, 168, 0.14),
           inset 0 1px 0 rgba(255, 255, 255, 0.06);
         overflow: hidden;
         white-space: nowrap;
@@ -1688,7 +1857,7 @@
       }
       .nav-rail-status-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 0 30px rgba(34, 197, 94, 0.22);
+        box-shadow: 0 0 30px rgba(0, 230, 168, 0.22);
       }
       .nav-rail-status-icon {
         width: 34px;
@@ -1699,7 +1868,7 @@
         align-items: center;
         justify-content: center;
         background: var(--grad-success);
-        box-shadow: 0 2px 10px rgba(34, 197, 94, 0.4);
+        box-shadow: 0 2px 10px rgba(0, 230, 168, 0.4);
       }
       .nav-rail-status-icon svg {
         width: 18px;
@@ -2034,7 +2203,7 @@
       .sidebar-search:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(107, 138, 253, 0.12);
+        box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.12);
         background: var(--bg);
       }
       .sidebar-search::placeholder {
@@ -2088,13 +2257,14 @@
           transform 0.15s ease;
       }
       .run-item:hover {
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(0, 245, 255, 0.06);
+        border-left-color: rgba(0, 245, 255, 0.4);
       }
       .run-item:active {
         transform: scale(0.995);
       }
       .run-item.active {
-        background: rgba(107, 138, 253, 0.08);
+        background: rgba(0, 245, 255, 0.08);
         border-left-color: var(--accent);
       }
       .run-item-icon {
@@ -2185,13 +2355,14 @@
           transform 0.15s ease;
       }
       .report-item:hover {
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(0, 245, 255, 0.06);
+        border-left-color: rgba(0, 245, 255, 0.4);
       }
       .report-item:active {
         transform: scale(0.995);
       }
       .report-item.active {
-        background: rgba(107, 138, 253, 0.08);
+        background: rgba(0, 245, 255, 0.08);
         border-left-color: var(--accent);
       }
       .report-item-score {
@@ -2210,7 +2381,7 @@
           transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .report-item:hover .report-item-score {
-        box-shadow: 0 0 16px rgba(107, 138, 253, 0.2);
+        box-shadow: 0 0 16px rgba(0, 245, 255, 0.2);
         transform: scale(1.1);
       }
       .report-item-info {
@@ -2325,28 +2496,28 @@
         background-image:
           radial-gradient(
             ellipse 45% 90% at 8% 50%,
-            rgba(34, 197, 94, 0.12),
+            rgba(139, 92, 246, 0.12),
             transparent 70%
           ),
           radial-gradient(
             ellipse 50% 80% at 100% 50%,
-            rgba(6, 182, 212, 0.08),
+            rgba(0, 245, 255, 0.09),
             transparent 70%
           );
-        border: 1px solid rgba(34, 197, 94, 0.22);
+        border: 1px solid var(--border);
         border-radius: var(--r-2xl);
         padding: 28px 36px;
         margin-bottom: 28px;
         box-shadow:
           var(--shadow-lg),
-          0 0 40px rgba(34, 197, 94, 0.1),
+          0 0 40px rgba(0, 245, 255, 0.08),
           inset 0 1px 0 rgba(255, 255, 255, 0.05);
         transition: box-shadow 0.3s ease;
       }
       .score-banner:hover {
         box-shadow:
           var(--shadow-xl),
-          0 0 56px rgba(34, 197, 94, 0.18),
+          0 0 56px rgba(0, 245, 255, 0.14),
           inset 0 1px 0 rgba(255, 255, 255, 0.06);
       }
       .score-ring {
@@ -2496,7 +2667,7 @@
       }
       .section:hover {
         border-color: var(--border-hover);
-        box-shadow: var(--shadow-lg), 0 0 28px rgba(59, 130, 246, 0.08);
+        box-shadow: var(--shadow-lg), 0 0 28px rgba(0, 245, 255, 0.08);
       }
       .section h2 {
         font-size: 17px;
@@ -2515,101 +2686,69 @@
         font-weight: 500;
       }
 
-      /* Report detail — collapsible accordion sections (one open at a time) */
-      #app .section > h2 {
-        cursor: pointer;
-        user-select: none;
-      }
-      #app .section > h2::after {
-        content: "";
-        margin-left: auto;
-        width: 9px;
-        height: 9px;
-        border-right: 2px solid var(--text2);
-        border-bottom: 2px solid var(--text2);
-        transform: rotate(45deg);
-        transition: transform 0.25s ease;
-        flex-shrink: 0;
-        margin-top: -4px;
-      }
-      #app .section > h2:hover::after {
-        border-color: var(--text);
-      }
-      #app .section.collapsed > h2 {
-        margin-bottom: 0;
-      }
-      #app .section.collapsed > h2::after {
-        transform: rotate(-45deg);
-        margin-top: 0;
-      }
-      #app .section.collapsed > *:not(h2) {
-        display: none !important;
-      }
-
       /* Category chart */
       .cat-grid {
         display: grid;
-        grid-template-columns: 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
       }
       .cat-row {
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 8px;
-        padding: 6px 0;
-        transition: background 0.15s ease;
-        border-radius: 4px;
-        margin: 0 -4px;
-        padding-left: 4px;
-        padding-right: 4px;
+        padding: 12px 16px;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.4,0,0.2,1);
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+        border: 1px solid rgba(0, 245, 255, 0.1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
       }
       .cat-row:hover {
-        background: rgba(107, 138, 253, 0.04);
+        border-color: rgba(0, 245, 255, 0.35);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 245, 255, 0.15);
+        transform: translateY(-2px);
       }
       .cat-name {
-        width: 220px;
-        font-size: 12px;
-        color: var(--text2);
-        text-align: right;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        flex-shrink: 0;
       }
       .cat-bar-bg {
-        flex: 1;
-        height: 20px;
-        background: rgba(15, 23, 42, 0.6);
+        height: 24px;
+        background: rgba(15, 23, 42, 0.8);
         border: 1px solid var(--border);
-        border-radius: var(--r-full);
+        border-radius: 12px;
         overflow: hidden;
         position: relative;
         display: flex;
       }
       .cat-bar-pass {
         background: linear-gradient(90deg, #ff4d5e, #f97316);
-        box-shadow: 0 0 12px rgba(255, 77, 94, 0.5);
+        box-shadow: 0 0 12px rgba(255, 51, 95, 0.5);
         height: 100%;
         transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .cat-bar-partial {
-        background: linear-gradient(90deg, #f97316, #facc15);
+        background: linear-gradient(90deg, #f97316, #ffc24b);
         box-shadow: 0 0 12px rgba(249, 115, 22, 0.45);
         height: 100%;
         transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .cat-bar-fail {
-        background: linear-gradient(90deg, #22c55e, #06b6d4);
-        box-shadow: 0 0 12px rgba(34, 197, 94, 0.45);
+        background: linear-gradient(90deg, #00e6a8, #00f5ff);
+        box-shadow: 0 0 12px rgba(0, 230, 168, 0.45);
         height: 100%;
         transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .cat-count {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--text2);
-        width: 70px;
-        text-align: left;
-        flex-shrink: 0;
+        text-align: center;
+        font-weight: 500;
       }
 
       /* Findings table */
@@ -2656,19 +2795,38 @@
         transform: scale(1.06);
       }
       .sev-critical {
-        background: rgba(255, 107, 107, 0.12);
-        color: var(--critical);
-        border-color: rgba(255, 107, 107, 0.2);
+        background: rgba(255, 46, 119, 0.18);
+        color: #ff2e77;
+        border-color: rgba(255, 46, 119, 0.4);
+        font-weight: 700;
+        animation: criticalPulse 2s ease-in-out infinite;
+        box-shadow: 0 0 10px rgba(255, 46, 119, 0.4);
+      }
+      @keyframes fdIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes criticalPulse {
+        0%, 100% { box-shadow: 0 0 10px rgba(255, 46, 119, 0.4), inset 0 0 10px rgba(255, 46, 119, 0.1); }
+        50% { box-shadow: 0 0 20px rgba(255, 46, 119, 0.6), inset 0 0 15px rgba(255, 46, 119, 0.2); }
       }
       .sev-high {
-        background: rgba(249, 115, 22, 0.12);
+        background: rgba(255, 157, 46, 0.18);
         color: var(--high);
-        border-color: rgba(249, 115, 22, 0.2);
+        border-color: rgba(255, 157, 46, 0.4);
+        font-weight: 600;
+        box-shadow: 0 0 8px rgba(255, 157, 46, 0.4);
+        transition: all 0.3s ease;
+      }
+      .sev-high:hover {
+        box-shadow: 0 0 15px rgba(255, 157, 46, 0.6);
       }
       .sev-medium {
-        background: rgba(240, 160, 60, 0.12);
+        background: rgba(240, 160, 60, 0.15);
         color: var(--medium);
-        border-color: rgba(240, 160, 60, 0.2);
+        border-color: rgba(240, 160, 60, 0.3);
+        box-shadow: 0 0 6px rgba(240, 160, 60, 0.3);
       }
       .sev-low {
         background: rgba(125, 133, 144, 0.12);
@@ -2722,23 +2880,423 @@
       }
       .detail-content .finding-tag {
         display: inline-block;
-        background: rgba(255, 107, 107, 0.08);
+        background: rgba(255, 46, 119, 0.08);
         color: var(--red);
         padding: 3px 10px;
         border-radius: 6px;
         margin: 2px;
         font-size: 11px;
-        border: 1px solid rgba(255, 107, 107, 0.12);
+        border: 1px solid rgba(255, 46, 119, 0.12);
       }
       .detail-content .file-tag {
         display: inline-block;
-        background: rgba(107, 138, 253, 0.08);
+        background: rgba(0, 245, 255, 0.08);
         color: var(--accent);
         padding: 3px 10px;
         border-radius: 6px;
         margin: 2px;
         font-size: 11px;
-        border: 1px solid rgba(107, 138, 253, 0.12);
+        border: 1px solid rgba(0, 245, 255, 0.12);
+      }
+
+      /* Attack heading hover effect */
+      .attack-heading-highlight {
+        color: #FF0000;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        padding: 4px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+      }
+      .attack-heading-highlight:hover {
+        background: rgba(255, 0, 0, 0.2);
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+      }
+
+      /* Findings list */
+      .findings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .finding-item {
+        padding: 20px;
+        border: 1px solid rgba(0, 245, 255, 0.2);
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(11, 17, 34, 0.9) 0%, rgba(20, 28, 52, 0.7) 100%);
+        font-size: 13px;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        white-space: normal;
+        position: relative;
+        transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+      }
+      .finding-item::before {
+        display: none;
+      }
+      .finding-item:hover {
+        border-color: rgba(0, 245, 255, 0.3);
+        background: rgba(0, 245, 255, 0.03);
+      }
+      .finding-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid rgba(0, 245, 255, 0.15);
+        position: relative;
+        z-index: 1;
+      }
+      .finding-header .verdict {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.2s ease;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      }
+      .finding-header .verdict:hover {
+        /* no hover effect */
+      }
+      .finding-header .sev {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .finding-header .sev:hover {
+        /* no hover effect */
+      }
+      .finding-header .category {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        background: rgba(0, 245, 255, 0.1);
+        color: #00f5ff;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid rgba(0, 245, 255, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .finding-header .category:hover {
+        /* no hover effect */
+      }
+      .finding-title-glow {
+        flex: 1;
+        font-weight: 700;
+        color: #f4f8ff;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        font-size: 15px;
+      }
+      .finding-description {
+        margin: 16px 0;
+        color: #d4dce9;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        line-height: 1.6;
+        padding: 12px 14px;
+        background: rgba(11, 17, 34, 0.6);
+        border-left: 3px solid rgba(0, 245, 255, 0.2);
+        border-radius: 4px;
+        position: relative;
+        z-index: 1;
+      }
+      .finding-description:hover {
+        /* no hover effect */
+      }
+      .finding-description strong {
+        color: #00f5ff;
+        font-weight: 600;
+      }
+      .finding-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 14px 0;
+        padding: 12px 0;
+        border-top: 1px solid rgba(0, 245, 255, 0.1);
+        border-bottom: 1px solid rgba(0, 245, 255, 0.1);
+        position: relative;
+        z-index: 1;
+      }
+      .meta-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        background: linear-gradient(135deg, rgba(0, 245, 255, 0.08), rgba(139, 122, 255, 0.05));
+        border: 1px solid rgba(0, 245, 255, 0.2);
+        border-radius: 6px;
+        font-size: 12px;
+        transition: all 0.2s ease;
+        box-shadow: 0 0 8px rgba(0, 245, 255, 0.1);
+      }
+      .meta-badge:hover {
+        background: linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(139, 122, 255, 0.1));
+        border-color: rgba(0, 245, 255, 0.4);
+        box-shadow: 0 0 12px rgba(0, 245, 255, 0.2);
+      }
+      .badge-label {
+        color: var(--text2);
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .badge-value {
+        color: #00f5ff;
+        font-weight: 700;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .finding-content-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 16px 0;
+        position: relative;
+        z-index: 1;
+      }
+      @media (max-width: 1024px) {
+        .finding-content-row {
+          grid-template-columns: 1fr;
+        }
+      }
+      .finding-content-box {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(0, 245, 255, 0.2);
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 245, 255, 0.03));
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(0, 245, 255, 0.05), inset 0 0 15px rgba(0, 245, 255, 0.02);
+      }
+      .finding-content-box:hover {
+        border-color: rgba(0, 245, 255, 0.4);
+        box-shadow: 0 0 25px rgba(0, 245, 255, 0.15), inset 0 0 20px rgba(0, 245, 255, 0.05);
+        transform: translateY(-2px);
+      }
+      .payload-box {
+        border-left: 3px solid #00f5ff;
+      }
+      .response-box {
+        border-left: 3px solid #8b7aff;
+      }
+      .content-box-title {
+        padding: 10px 14px;
+        background: linear-gradient(135deg, rgba(0, 245, 255, 0.1), rgba(139, 122, 255, 0.05));
+        border-bottom: 1px solid rgba(0, 245, 255, 0.15);
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #00f5ff;
+      }
+      .response-box .content-box-title {
+        color: #8b7aff;
+      }
+      .content-box-body {
+        padding: 12px 14px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--text2);
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+        line-height: 1.6;
+      }
+      .content-box-body::-webkit-scrollbar {
+        width: 6px;
+      }
+      .content-box-body::-webkit-scrollbar-track {
+        background: rgba(0, 245, 255, 0.05);
+        border-radius: 3px;
+      }
+      .content-box-body::-webkit-scrollbar-thumb {
+        background: rgba(0, 245, 255, 0.3);
+        border-radius: 3px;
+      }
+      .content-box-body::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 245, 255, 0.5);
+      }
+
+      /* Detail boxes for findings, files, threat assessment, strategy, policy */
+      .detail-box {
+        margin: 14px 0;
+        padding: 14px;
+        border: 1px solid rgba(0, 245, 255, 0.15);
+        border-radius: 6px;
+        background: rgba(11, 17, 34, 0.5);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .detail-box:hover {
+        border-color: rgba(0, 245, 255, 0.35);
+        background: rgba(0, 245, 255, 0.04);
+      }
+      .detail-box-title {
+        font-weight: 600;
+        font-size: 12px;
+        color: #00f5ff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .detail-box-content {
+        color: #d4dce9;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .findings-box,
+      .files-box {
+        border-left: 3px solid rgba(0, 245, 255, 0.4);
+      }
+      .findings-list,
+      .files-list {
+        margin: 8px 0 0 0;
+        padding-left: 20px;
+        list-style: none;
+      }
+      .findings-list li,
+      .files-list li {
+        color: var(--text2);
+        font-size: 12px;
+        margin: 6px 0;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        position: relative;
+        padding-left: 8px;
+      }
+      .findings-list li::before {
+        content: "◆";
+        color: rgba(0, 245, 255, 0.6);
+        margin-right: 8px;
+        font-weight: bold;
+      }
+      .files-list li::before {
+        content: "📄";
+        margin-right: 8px;
+        font-size: 11px;
+      }
+      .files-list li strong {
+        color: #00f5ff;
+        font-weight: 700;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+      }
+      .threat-box {
+        border-left: 3px solid #ff006e;
+      }
+      .threat-box .detail-box-title {
+        color: #ff006e;
+      }
+      .threat-meta {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        color: var(--text2);
+      }
+      .threat-confidence {
+        background: linear-gradient(135deg, #ff006e, #ff1493);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 700;
+      }
+      .threat-reasoning {
+        color: var(--text);
+        font-size: 13px;
+        line-height: 1.6;
+        padding: 10px;
+        background: rgba(255, 0, 110, 0.05);
+        border-radius: 6px;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .strategy-box {
+        border-left: 3px solid #8b7aff;
+      }
+      .strategy-box .detail-box-title {
+        color: #8b7aff;
+      }
+      .policy-box {
+        border-left: 3px solid #00ff88;
+      }
+      .policy-box .detail-box-title {
+        color: #00ff88;
+      }
+      .policy-name {
+        font-weight: 700;
+        color: var(--text);
+        font-size: 13px;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+      }
+      .policy-section {
+        margin: 10px 0;
+        padding: 8px;
+        background: rgba(0, 255, 136, 0.05);
+        border-radius: 6px;
+      }
+      .policy-label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        font-weight: 700;
+      }
+      .policy-label.pass-label {
+        color: #00ff88;
+      }
+      .policy-label.fail-label {
+        color: #ff006e;
+      }
+      .policy-label.partial-label {
+        color: #ffa500;
+      }
+      .policy-section ul {
+        margin: 0;
+        padding-left: 18px;
+        list-style: none;
+      }
+      .policy-section li {
+        margin: 4px 0;
+        color: var(--text2);
+        font-size: 12px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        position: relative;
+      }
+      .policy-section li::before {
+        content: "•";
+        position: absolute;
+        left: -10px;
+        color: currentColor;
       }
 
       /* Round tabs */
@@ -2769,7 +3327,7 @@
         background: linear-gradient(135deg, var(--accent), #8b7aff);
         color: #fff;
         border-color: transparent;
-        box-shadow: 0 3px 12px rgba(107, 138, 253, 0.3);
+        box-shadow: 0 3px 12px rgba(0, 245, 255, 0.3);
         transform: translateY(-1px);
       }
 
@@ -2868,7 +3426,9 @@
       }
 
       .strategy-row:hover {
-        background: var(--surface);
+        background: rgba(0, 245, 255, 0.05);
+        border-left-width: 3px;
+        padding-left: 13px;
       }
 
       .strategy-row.high-risk::before {
@@ -2932,7 +3492,7 @@
       }
 
       .level-low {
-        background: rgba(34, 197, 94, 0.1);
+        background: rgba(0, 230, 168, 0.1);
         color: var(--green);
       }
 
@@ -3090,7 +3650,7 @@
       .filter-bar input:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(107, 138, 253, 0.1);
+        box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
       }
       .filter-bar input {
         width: 130px;
@@ -3201,16 +3761,16 @@
         transform: translateY(-1px);
       }
       .fw-chip:has(input:checked) {
-        background: rgba(107, 138, 253, 0.12);
+        background: rgba(0, 245, 255, 0.12);
         border-color: var(--accent);
         color: var(--accent);
         box-shadow: var(--shadow-glow-accent);
       }
       .fw-chip:has(input:checked):hover {
-        background: rgba(107, 138, 253, 0.18);
+        background: rgba(0, 245, 255, 0.18);
       }
       .fw-chip:has(input:checked) .fw-count {
-        background: rgba(107, 138, 253, 0.2);
+        background: rgba(0, 245, 255, 0.2);
         color: var(--accent);
       }
       .fw-chip:active {
@@ -3243,12 +3803,12 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 2px 10px rgba(107, 138, 253, 0.25);
+        box-shadow: 0 2px 10px rgba(0, 245, 255, 0.25);
         font-family: inherit;
       }
       .compliance-run-btn:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 18px rgba(107, 138, 253, 0.35);
+        box-shadow: 0 4px 18px rgba(0, 245, 255, 0.35);
       }
       .compliance-run-btn:disabled {
         opacity: 0.4;
@@ -3286,7 +3846,7 @@
         background: linear-gradient(90deg, var(--accent), var(--purple));
         border-radius: 2px;
         transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 0 8px rgba(107, 138, 253, 0.3);
+        box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
       }
 
       /* Framework results */
@@ -3385,7 +3945,7 @@
         user-select: none;
       }
       .compliance-header:hover {
-        background: rgba(107, 138, 253, 0.03);
+        background: rgba(0, 245, 255, 0.03);
       }
       .compliance-expand {
         font-size: 11px;
@@ -3426,7 +3986,7 @@
         white-space: nowrap;
       }
       .compliance-status.vulnerable {
-        background: rgba(255, 107, 107, 0.12);
+        background: rgba(255, 46, 119, 0.12);
         color: var(--red);
       }
       .compliance-status.at_risk {
@@ -3490,7 +4050,7 @@
       }
       .compliance-finding-tag {
         display: inline-block;
-        background: rgba(255, 107, 107, 0.08);
+        background: rgba(255, 46, 119, 0.08);
         color: var(--red);
         padding: 2px 8px;
         border-radius: 4px;
@@ -3526,7 +4086,7 @@
         user-select: none;
       }
       .conv-step-header:hover {
-        background: rgba(107, 138, 253, 0.06);
+        background: rgba(0, 245, 255, 0.06);
       }
       .conv-step-header .step-num {
         background: var(--accent);
@@ -3595,7 +4155,7 @@
 
       /* Row highlighting for keyboard navigation */
       .main-row.keyboard-focus {
-        background: rgba(107, 138, 253, 0.08) !important;
+        background: rgba(0, 245, 255, 0.08) !important;
         border: 1px solid var(--accent);
         border-radius: 6px;
       }
@@ -3629,7 +4189,7 @@
       }
 
       .conv-step-header:hover {
-        background: rgba(107, 138, 253, 0.08) !important;
+        background: rgba(0, 245, 255, 0.08) !important;
       }
 
       /* Request/response preview styling */
@@ -3744,7 +4304,7 @@
         background-image:
           radial-gradient(
             800px 500px at 30% 20%,
-            rgba(107, 138, 253, 0.08),
+            rgba(0, 245, 255, 0.08),
             transparent 60%
           ),
           radial-gradient(
@@ -3754,7 +4314,7 @@
           ),
           radial-gradient(
             400px 300px at 50% 50%,
-            rgba(255, 107, 107, 0.04),
+            rgba(255, 46, 119, 0.04),
             transparent 60%
           );
         z-index: 9999;
@@ -3772,8 +4332,8 @@
         padding: 40px;
         box-shadow:
           0 24px 80px rgba(0, 0, 0, 0.5),
-          0 0 0 1px rgba(107, 138, 253, 0.08),
-          0 0 60px rgba(107, 138, 253, 0.05);
+          0 0 0 1px rgba(0, 245, 255, 0.08),
+          0 0 60px rgba(0, 245, 255, 0.05);
         animation: authFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       }
       @keyframes authFadeIn {
@@ -3826,7 +4386,7 @@
       .auth-field input:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 4px rgba(107, 138, 253, 0.12);
+        box-shadow: 0 0 0 4px rgba(0, 245, 255, 0.12);
         background: var(--bg);
       }
       .auth-sign-in-btn {
@@ -3845,11 +4405,11 @@
         cursor: pointer;
         width: 100%;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 16px rgba(107, 138, 253, 0.25);
+        box-shadow: 0 4px 16px rgba(0, 245, 255, 0.25);
       }
       .auth-sign-in-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 24px rgba(107, 138, 253, 0.35);
+        box-shadow: 0 6px 24px rgba(0, 245, 255, 0.35);
       }
       .auth-sign-in-btn:active {
         transform: translateY(0);
@@ -3901,7 +4461,7 @@
         background:
           radial-gradient(
             1000px 500px at 20% 15%,
-            rgba(107, 138, 253, 0.07),
+            rgba(0, 245, 255, 0.07),
             transparent 55%
           ),
           radial-gradient(
@@ -3911,7 +4471,7 @@
           ),
           radial-gradient(
             500px 400px at 70% 20%,
-            rgba(255, 107, 107, 0.05),
+            rgba(255, 46, 119, 0.05),
             transparent 60%
           ),
           var(--surface);
@@ -3997,7 +4557,7 @@
       .attack-path-graph .apg-edge.sev-critical .apg-edge-path {
         stroke: var(--red);
         stroke-width: 2;
-        filter: drop-shadow(0 0 5px rgba(255, 107, 107, 0.6));
+        filter: drop-shadow(0 0 5px rgba(255, 46, 119, 0.6));
       }
       .attack-path-graph .apg-edge.is-primary .apg-edge-path {
         stroke-width: 2.25;
@@ -4524,12 +5084,12 @@
          ════════════════════════════════════════════════════════════════ */
 
       :root {
-        --premium-glow: 0 0 0 1px rgba(107, 138, 253, 0.04),
+        --premium-glow: 0 0 0 1px rgba(0, 245, 255, 0.04),
           0 1px 2px rgba(0, 0, 0, 0.18), 0 8px 24px -8px rgba(0, 0, 0, 0.32),
-          0 24px 48px -16px rgba(107, 138, 253, 0.08);
-        --premium-glow-hover: 0 0 0 1px rgba(107, 138, 253, 0.12),
+          0 24px 48px -16px rgba(0, 245, 255, 0.08);
+        --premium-glow-hover: 0 0 0 1px rgba(0, 245, 255, 0.12),
           0 2px 6px rgba(0, 0, 0, 0.2), 0 16px 40px -12px rgba(0, 0, 0, 0.42),
-          0 28px 64px -20px rgba(107, 138, 253, 0.18);
+          0 28px 64px -20px rgba(0, 245, 255, 0.18);
         --grad-brand: linear-gradient(
           135deg,
           var(--red) 0%,
@@ -4581,7 +5141,7 @@
         background-image:
           radial-gradient(
             ellipse 90% 55% at 50% -12%,
-            rgba(107, 138, 253, 0.09),
+            rgba(0, 245, 255, 0.09),
             transparent 70%
           ),
           radial-gradient(
@@ -4596,7 +5156,7 @@
           ),
           radial-gradient(
             ellipse 55% 45% at 100% 100%,
-            rgba(255, 107, 107, 0.04),
+            rgba(255, 46, 119, 0.04),
             transparent 60%
           );
       }
@@ -4677,7 +5237,7 @@
         background: linear-gradient(
           90deg,
           transparent,
-          rgba(107, 138, 253, 0.45),
+          rgba(0, 245, 255, 0.45),
           rgba(192, 132, 252, 0.45),
           transparent
         );
@@ -4789,10 +5349,18 @@
       }
       tbody tr {
         position: relative;
+        transition: background 0.18s ease;
       }
       /* Soft accent indicator on first cell when hovering a row */
       tbody tr:hover td:first-child {
         box-shadow: inset 3px 0 0 -0.5px var(--accent);
+      }
+      .main-row:hover {
+        background: rgba(0, 245, 255, 0.04) !important;
+        cursor: pointer;
+      }
+      .main-row:active {
+        background: rgba(0, 245, 255, 0.08) !important;
       }
 
       /* ── Severity badges: gradient fills + lift glow ── */
@@ -4807,8 +5375,8 @@
       .sev-critical {
         background: linear-gradient(
           135deg,
-          rgba(255, 107, 107, 0.2),
-          rgba(255, 107, 107, 0.08)
+          rgba(255, 46, 119, 0.2),
+          rgba(255, 46, 119, 0.08)
         );
       }
       .sev-critical:hover {
@@ -4861,7 +5429,7 @@
       }
       .compliance-run-btn:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 8px 26px -6px rgba(107, 138, 253, 0.5);
+        box-shadow: 0 8px 26px -6px rgba(0, 245, 255, 0.5);
       }
 
       /* ── Secondary / utility buttons: crisper hover ── */
@@ -4908,9 +5476,9 @@
       .top-nav-brand-icon {
         background: linear-gradient(
           135deg,
-          #ff6b6b 0%,
-          #c084fc 50%,
-          #6b8afd 100%
+          #ff2e77 0%,
+          #8b5cf6 50%,
+          #00f5ff 100%
         );
         background-size: 200% 200%;
       }
@@ -5285,700 +5853,99 @@
                 "
               >
                 <div style="max-width: 1000px; margin: 0 auto">
-                  <!-- Header -->
-                  <div
-                    style="
-                      display: flex;
-                      justify-content: space-between;
-                      align-items: center;
-                      margin-bottom: 20px;
-                    "
-                  >
-                    <div>
-                      <h2
-                        style="
-                          font-size: 20px;
-                          font-weight: 700;
-                          margin-bottom: 2px;
-                        "
-                      >
-                        New Red-Team Run
-                      </h2>
-                      <div style="font-size: 12px; color: var(--text2)">
-                        Configure and launch a security scan against your AI
-                        application.
-                      </div>
-                    </div>
-                    <button
-                      id="closeRunPanel"
-                      style="
-                        background: var(--surface2);
-                        color: var(--text);
-                        border: 1px solid var(--border);
-                        border-radius: 8px;
-                        padding: 8px 16px;
-                        cursor: pointer;
-                        font-size: 12px;
-                        font-family: inherit;
-                      "
-                    >
-                      Close
-                    </button>
-                  </div>
+                  <!-- Two-column layout: Left = Templates, Right = Config -->
+                  <div style="display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start;">
 
-                  <!-- Template Cards -->
-                  <div
-                    style="
-                      background: var(--surface);
-                      border: 1px solid var(--border);
-                      border-radius: 12px;
-                      padding: 20px;
-                      margin-bottom: 16px;
-                    "
-                  >
-                    <div
-                      style="
-                        font-size: 13px;
-                        font-weight: 600;
-                        margin-bottom: 12px;
-                      "
-                    >
-                      Choose a Template
-                    </div>
-                    <div
-                      style="
-                        display: grid;
-                        grid-template-columns: repeat(5, 1fr);
-                        gap: 10px;
-                      "
-                    >
-                      <div
-                        onclick="loadConfigTemplate('openai-compatible')"
-                        class="tpl-card"
-                        id="tpl-openai-compatible"
-                        style="
-                          background: rgba(107, 138, 253, 0.08);
-                          border: 1px solid var(--accent);
-                          border-radius: 8px;
-                          padding: 14px;
-                          cursor: pointer;
-                          text-align: center;
-                          transition: all 0.15s;
-                        "
-                      >
-                        <div style="font-size: 20px; margin-bottom: 6px">
-                          🤖
-                        </div>
-                        <div style="font-size: 12px; font-weight: 600">
-                          OpenAI-Compatible
-                        </div>
-                        <div
-                          style="
-                            font-size: 10px;
-                            color: var(--text2);
-                            margin-top: 3px;
-                          "
-                        >
-                          LiteLLM, vLLM, Ollama
-                        </div>
-                      </div>
-                      <div
-                        onclick="loadConfigTemplate('custom-agent')"
-                        class="tpl-card"
-                        id="tpl-custom-agent"
-                        style="
-                          background: var(--bg);
-                          border: 1px solid var(--border);
-                          border-radius: 8px;
-                          padding: 14px;
-                          cursor: pointer;
-                          text-align: center;
-                          transition: all 0.15s;
-                        "
-                      >
-                        <div style="font-size: 20px; margin-bottom: 6px">
-                          🛡️
-                        </div>
-                        <div style="font-size: 12px; font-weight: 600">
-                          Custom Agent
-                        </div>
-                        <div
-                          style="
-                            font-size: 10px;
-                            color: var(--text2);
-                            margin-top: 3px;
-                          "
-                        >
-                          Auth, roles, tools
-                        </div>
-                      </div>
-                      <div
-                        onclick="loadConfigTemplate('full')"
-                        class="tpl-card"
-                        id="tpl-full"
-                        style="
-                          background: var(--bg);
-                          border: 1px solid var(--border);
-                          border-radius: 8px;
-                          padding: 14px;
-                          cursor: pointer;
-                          text-align: center;
-                          transition: all 0.15s;
-                        "
-                      >
-                        <div style="font-size: 20px; margin-bottom: 6px">
-                          ⚙️
-                        </div>
-                        <div style="font-size: 12px; font-weight: 600">
-                          Full Config
-                        </div>
-                        <div
-                          style="
-                            font-size: 10px;
-                            color: var(--text2);
-                            margin-top: 3px;
-                          "
-                        >
-                          All options
-                        </div>
-                      </div>
-                      <div
-                        onclick="loadConfigTemplate('quick')"
-                        class="tpl-card"
-                        id="tpl-quick"
-                        style="
-                          background: var(--bg);
-                          border: 1px solid var(--border);
-                          border-radius: 8px;
-                          padding: 14px;
-                          cursor: pointer;
-                          text-align: center;
-                          transition: all 0.15s;
-                        "
-                      >
-                        <div style="font-size: 20px; margin-bottom: 6px">
-                          ⚡
-                        </div>
-                        <div style="font-size: 12px; font-weight: 600">
-                          Quick Test
-                        </div>
-                        <div
-                          style="
-                            font-size: 10px;
-                            color: var(--text2);
-                            margin-top: 3px;
-                          "
-                        >
-                          Minimal, 1 round
-                        </div>
-                      </div>
-                      <div
-                        onclick="loadConfigTemplate('mcp')"
-                        class="tpl-card"
-                        id="tpl-mcp"
-                        style="
-                          background: var(--bg);
-                          border: 1px solid var(--border);
-                          border-radius: 8px;
-                          padding: 14px;
-                          cursor: pointer;
-                          text-align: center;
-                          transition: all 0.15s;
-                        "
-                      >
-                        <div style="font-size: 20px; margin-bottom: 6px">
-                          🔌
-                        </div>
-                        <div style="font-size: 12px; font-weight: 600">
-                          MCP Server
-                        </div>
-                        <div
-                          style="
-                            font-size: 10px;
-                            color: var(--text2);
-                            margin-top: 3px;
-                          "
-                        >
-                          stdio, SSE, HTTP
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Config Editor -->
-                  <div
-                    style="
-                      background: var(--surface);
-                      border: 1px solid var(--border);
-                      border-radius: 12px;
-                      padding: 20px;
-                      margin-bottom: 16px;
-                    "
-                  >
-                    <div
-                      style="
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 12px;
-                      "
-                    >
-                      <div style="font-size: 13px; font-weight: 600">
-                        Configuration
-                      </div>
-                      <div style="font-size: 10px; color: var(--text2)">
-                        Edit the JSON below or use a template above.
-                        <span style="color: var(--accent)">baseUrl</span> and
-                        <span style="color: var(--accent)"
-                          >applicationDetails</span
-                        >
-                        are the key fields to update.
-                      </div>
-                    </div>
-                    <textarea
-                      id="runConfigEditor"
-                      spellcheck="false"
-                      style="
-                        width: 100%;
-                        height: 420px;
-                        background: var(--bg);
-                        color: var(--text);
-                        border: 1px solid var(--border);
-                        border-radius: 8px;
-                        padding: 14px;
-                        font-family:
-                          &quot;JetBrains Mono&quot;, &quot;SF Mono&quot;,
-                          Monaco, Consolas, monospace;
-                        font-size: 12px;
-                        line-height: 1.6;
-                        resize: vertical;
-                        tab-size: 2;
-                      "
-                    ></textarea>
-                  </div>
-
-                  <!-- Reference Guide -->
-                  <div
-                    style="
-                      background: var(--surface);
-                      border: 1px solid var(--border);
-                      border-radius: 12px;
-                      margin-bottom: 16px;
-                      overflow: hidden;
-                    "
-                  >
-                    <details open>
-                      <summary
-                        style="
-                          padding: 16px 20px;
-                          cursor: pointer;
-                          font-size: 13px;
-                          font-weight: 600;
-                          display: flex;
-                          align-items: center;
-                          gap: 8px;
-                          user-select: none;
-                        "
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          width="16"
-                          height="16"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="12" y1="16" x2="12" y2="12" />
-                          <line x1="12" y1="8" x2="12.01" y2="8" />
-                        </svg>
-                        Configuration Reference — Attack Categories, Strategies
-                        & Parameters
-                      </summary>
-                      <div
-                        style="
-                          padding: 0 20px 20px;
-                          border-top: 1px solid var(--border);
-                        "
-                      >
-                        <!-- Config Parameters -->
-                        <div style="margin-top: 16px; margin-bottom: 20px">
-                          <div
-                            style="
-                              font-size: 12px;
-                              font-weight: 700;
-                              color: var(--accent);
-                              margin-bottom: 8px;
-                            "
-                          >
-                            KEY PARAMETERS
+                    <!-- LEFT: Template Chooser -->
+                    <div style="flex: 0 0 280px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;">
+                      <div style="font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">Choose a Template</div>
+                      <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <div onclick="loadConfigTemplate('openai-compatible')" class="tpl-card" id="tpl-openai-compatible" style="background: rgba(0,245,255,0.08); border: 1px solid var(--accent); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); display: flex; align-items: center; gap: 12px;">
+                          <span style="font-size: 22px; flex-shrink:0;">🤖</span>
+                          <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--accent);">OpenAI</div>
+                            <div style="font-size: 10px; color: var(--text2); margin-top: 2px;">LiteLLM, vLLM, Ollama</div>
                           </div>
-                          <table
-                            style="
-                              width: 100%;
-                              border-collapse: collapse;
-                              font-size: 11px;
-                            "
-                          >
-                            <thead>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <th
-                                  style="
-                                    padding: 6px 10px;
-                                    text-align: left;
-                                    color: var(--text2);
-                                    font-weight: 600;
-                                  "
-                                >
-                                  Field
-                                </th>
-                                <th
-                                  style="
-                                    padding: 6px 10px;
-                                    text-align: left;
-                                    color: var(--text2);
-                                    font-weight: 600;
-                                  "
-                                >
-                                  Default
-                                </th>
-                                <th
-                                  style="
-                                    padding: 6px 10px;
-                                    text-align: left;
-                                    color: var(--text2);
-                                    font-weight: 600;
-                                  "
-                                >
-                                  Description
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody style="color: var(--text)">
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  target.baseUrl
-                                </td>
-                                <td style="padding: 5px 10px">—</td>
-                                <td style="padding: 5px 10px">
-                                  Your app's URL (use host.docker.internal for
-                                  local)
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  target.agentEndpoint
-                                </td>
-                                <td style="padding: 5px 10px">—</td>
-                                <td style="padding: 5px 10px">
-                                  Chat/agent API path (e.g., /api/chat,
-                                  /v1/chat/completions)
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  target.applicationDetails
-                                </td>
-                                <td style="padding: 5px 10px">—</td>
-                                <td style="padding: 5px 10px">
-                                  Describe your app — tools, roles, data access.
-                                  More detail = better attacks
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  attackConfig.adaptiveRounds
-                                </td>
-                                <td style="padding: 5px 10px">3</td>
-                                <td style="padding: 5px 10px">
-                                  Number of attack rounds (each adapts based on
-                                  prior results)
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  attackConfig.maxAttacksPerCategory
-                                </td>
-                                <td style="padding: 5px 10px">15</td>
-                                <td style="padding: 5px 10px">
-                                  Max attacks generated per category per round
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  attackConfig.llmProvider
-                                </td>
-                                <td style="padding: 5px 10px">anthropic</td>
-                                <td style="padding: 5px 10px">
-                                  anthropic, openai, or openrouter
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  attackConfig.enableLlmGeneration
-                                </td>
-                                <td style="padding: 5px 10px">true</td>
-                                <td style="padding: 5px 10px">
-                                  Use AI to generate novel attacks (disable for
-                                  seed-only)
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  attackConfig.enableAdaptiveMultiTurn
-                                </td>
-                                <td style="padding: 5px 10px">true</td>
-                                <td style="padding: 5px 10px">
-                                  Auto-generate multi-turn conversation attacks
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  attackConfig.enableDiscovery
-                                </td>
-                                <td style="padding: 5px 10px">false</td>
-                                <td style="padding: 5px 10px">
-                                  Run reconnaissance round to discover
-                                  tools/surfaces before attacking
-                                </td>
-                              </tr>
-                              <tr
-                                style="border-bottom: 1px solid var(--border)"
-                              >
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  attackConfig.enabledCategories
-                                </td>
-                                <td style="padding: 5px 10px">all</td>
-                                <td style="padding: 5px 10px">
-                                  Array of category IDs to test (empty = all 139
-                                  categories)
-                                </td>
-                              </tr>
-                              <tr>
-                                <td
-                                  style="
-                                    padding: 5px 10px;
-                                    font-family: monospace;
-                                    color: var(--accent);
-                                  "
-                                >
-                                  sensitivePatterns
-                                </td>
-                                <td style="padding: 5px 10px">[]</td>
-                                <td style="padding: 5px 10px">
-                                  Strings that should never appear in responses
-                                  (API keys, passwords, etc.)
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
                         </div>
-
-                        <!-- Attack Categories -->
-                        <div style="margin-bottom: 20px">
-                          <div
-                            style="
-                              display: flex;
-                              justify-content: space-between;
-                              align-items: center;
-                              margin-bottom: 8px;
-                              flex-wrap: wrap;
-                              gap: 8px;
-                            "
-                          >
-                            <div
-                              style="
-                                font-size: 12px;
-                                font-weight: 700;
-                                color: var(--accent);
-                              "
-                            >
-                              ATTACK CATEGORIES
-                              <span
-                                style="font-weight: 400; color: var(--text2)"
-                                >— click to copy, filter by framework</span
-                              >
-                            </div>
+                        <div onclick="loadConfigTemplate('custom-agent')" class="tpl-card" id="tpl-custom-agent" style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); display: flex; align-items: center; gap: 12px;">
+                          <span style="font-size: 22px; flex-shrink:0;">🛡️</span>
+                          <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text);">Custom Agent</div>
+                            <div style="font-size: 10px; color: var(--text2); margin-top: 2px;">Auth, roles, tools</div>
                           </div>
-                          <div
-                            id="refFrameworkFilter"
-                            style="
-                              display: flex;
-                              gap: 6px;
-                              flex-wrap: wrap;
-                              margin-bottom: 10px;
-                            "
-                          ></div>
-                          <div
-                            id="refCategories"
-                            style="
-                              display: flex;
-                              flex-wrap: wrap;
-                              gap: 4px;
-                              max-height: 250px;
-                              overflow-y: auto;
-                              padding: 4px 0;
-                            "
-                          ></div>
-                          <div
-                            id="refCatActions"
-                            style="
-                              margin-top: 8px;
-                              display: flex;
-                              gap: 8px;
-                              align-items: center;
-                            "
-                          ></div>
                         </div>
-
-                        <!-- Strategies -->
-                        <div>
-                          <div
-                            style="
-                              font-size: 12px;
-                              font-weight: 700;
-                              color: var(--accent);
-                              margin-bottom: 8px;
-                            "
-                          >
-                            ATTACK STRATEGIES
-                            <span style="font-weight: 400; color: var(--text2)"
-                              >(use in enabledStrategies array — empty =
-                              all)</span
-                            >
+                        <div onclick="loadConfigTemplate('full')" class="tpl-card" id="tpl-full" style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); display: flex; align-items: center; gap: 12px;">
+                          <span style="font-size: 22px; flex-shrink:0;">⚙️</span>
+                          <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text);">Full Config</div>
+                            <div style="font-size: 10px; color: var(--text2); margin-top: 2px;">All options</div>
                           </div>
-                          <div
-                            id="refStrategies"
-                            style="
-                              display: flex;
-                              flex-wrap: wrap;
-                              gap: 4px;
-                              max-height: 200px;
-                              overflow-y: auto;
-                              padding: 4px 0;
-                            "
-                          >
-                            <span style="color: var(--text2); font-size: 11px"
-                              >Loading strategies...</span
-                            >
+                        </div>
+                        <div onclick="loadConfigTemplate('quick')" class="tpl-card" id="tpl-quick" style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); display: flex; align-items: center; gap: 12px;">
+                          <span style="font-size: 22px; flex-shrink:0;">⚡</span>
+                          <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text);">Quick Test</div>
+                            <div style="font-size: 10px; color: var(--text2); margin-top: 2px;">Demo agentic app</div>
+                          </div>
+                        </div>
+                        <div onclick="loadConfigTemplate('mcp')" class="tpl-card" id="tpl-mcp" style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); display: flex; align-items: center; gap: 12px;">
+                          <span style="font-size: 22px; flex-shrink:0;">🔌</span>
+                          <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text);">MCP Server</div>
+                            <div style="font-size: 10px; color: var(--text2); margin-top: 2px;">stdio, SSE, HTTP</div>
                           </div>
                         </div>
                       </div>
-                    </details>
+                    </div>
+
+                    <!-- RIGHT: Config Editor -->
+                    <div style="flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px;">Configuration</div>
+                        <div style="font-size: 10px; color: var(--text2);">Edit <span style="color:var(--accent)">baseUrl</span> and <span style="color:var(--accent)">applicationDetails</span></div>
+                      </div>
+                      <textarea
+                        id="runConfigEditor"
+                        spellcheck="false"
+                        style="
+                          width: 100%;
+                          height: 520px;
+                          background: var(--bg);
+                          color: var(--text);
+                          border: 1px solid var(--border);
+                          border-radius: 8px;
+                          padding: 14px;
+                          font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+                          font-size: 12px;
+                          line-height: 1.6;
+                          resize: vertical;
+                          tab-size: 2;
+                          transition: border-color 0.2s ease;
+                          outline: none;
+                        "
+                        onfocus="this.style.borderColor='var(--accent)'"
+                        onblur="this.style.borderColor='var(--border)'"
+                      ></textarea>
+                    </div>
                   </div>
+
 
                   <!-- Actions -->
-                  <div
-                    style="
-                      display: flex;
-                      gap: 12px;
-                      align-items: center;
-                      margin-bottom: 20px;
-                    "
-                  >
+                  <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px; margin-top: 4px;">
                     <button
                       id="startRunBtn"
-                      style="
-                        background: var(--green);
-                        color: #000;
-                        border: none;
-                        border-radius: 8px;
-                        padding: 10px 28px;
-                        font-size: 14px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: opacity 0.15s;
-                      "
-                      onmouseover="this.style.opacity = '0.85'"
-                      onmouseout="this.style.opacity = '1'"
-                    >
-                      Start Run
-                    </button>
-                    <span
-                      id="runError"
-                      style="color: var(--red); font-size: 12px"
-                    ></span>
+                      style="background: var(--green); color: #000; border: none; border-radius: 8px; padding: 12px 36px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.3px;"
+                      onmouseover="this.style.opacity='0.85'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 16px rgba(0,230,168,0.4)'"
+                      onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='none'"
+                    >▶ Start Run</button>
+                    <span id="runError" style="color: var(--red); font-size: 12px"></span>
                   </div>
+
+                  <!-- Hidden placeholders for JS population (required by reference loader) -->
+                  <div id="refFrameworkFilter" style="display:none"></div>
+                  <div id="refCategories" style="display:none"></div>
+                  <div id="refCatActions" style="display:none"></div>
+                  <div id="refStrategies" style="display:none"></div>
 
                   <!-- Active Runs (in New Run panel) -->
                   <div id="activeRunsSection" style="display: none">
@@ -6594,6 +6561,51 @@
         if (collapsed) shell.classList.add("nav-collapsed");
       }
       window.addEventListener("DOMContentLoaded", initNavRail);
+
+      // ── 3D floating card effect ──
+      (function init3DCards() {
+        const MAX_TILT = 12; // degrees
+
+        function attachCard(card) {
+          if (card._3d) return;
+          card._3d = true;
+
+          card.addEventListener("mousemove", function (e) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const cx = rect.width / 2;
+            const cy = rect.height / 2;
+            const rx = ((y - cy) / cy) * -MAX_TILT;
+            const ry = ((x - cx) / cx) * MAX_TILT;
+            card.style.transform = "rotateX(" + rx + "deg) rotateY(" + ry + "deg) translateZ(8px)";
+            card.style.transition = "transform 0.05s linear, border-color 0.08s, box-shadow 0.08s";
+            // Move shine spot
+            card.style.setProperty("--mx", (x / rect.width * 100) + "%");
+            card.style.setProperty("--my", (y / rect.height * 100) + "%");
+          });
+
+          card.addEventListener("mouseleave", function () {
+            card.style.transform = "rotateX(0deg) rotateY(0deg) translateZ(0px)";
+            card.style.transition = "transform 0.4s cubic-bezier(0.4,0,0.2,1), border-color 0.3s, box-shadow 0.3s";
+          });
+
+          card.addEventListener("mouseenter", function () {
+            card.style.transition = "transform 0.05s linear, border-color 0.08s, box-shadow 0.08s";
+          });
+        }
+
+        // Attach to existing + dynamically added cards
+        function scanCards() {
+          document.querySelectorAll("[data-card3d]").forEach(attachCard);
+        }
+
+        document.addEventListener("DOMContentLoaded", scanCards);
+
+        // Re-scan whenever dashboard re-renders
+        const _obs = new MutationObserver(scanCards);
+        _obs.observe(document.body, { childList: true, subtree: true });
+      })();
 
       function renderDashboardTab() {
         const panel = document.getElementById("dashboardPanel");
@@ -7215,92 +7227,49 @@
           "</div>" +
           "</div>";
 
-        // Headline — vuln mode shows a circular success-rate score ring
-        if (mode === "vuln") {
+        const isVuln = mode === "vuln";
+        const accentColor = isVuln ? "#ff2e77" : "#00f5ff";
+        const accentBg   = isVuln ? "rgba(255,46,119,0.1)" : "rgba(0,245,255,0.08)";
+        const accentBorder = isVuln ? "rgba(255,46,119,0.3)" : "rgba(0,245,255,0.25)";
+        const barGradient = isVuln
+          ? "linear-gradient(90deg,#ff2e77,#ff9d2e)"
+          : "linear-gradient(90deg,#00f5ff,#8b5cf6)";
+
+        // Headline card
+        if (isVuln) {
           html +=
-            '<div class="u-mb-4 u-flex u-items-center" style="gap:14px;padding:12px 14px;border-radius:var(--r-lg);background:var(--surface2);border:1px solid var(--border);">' +
-            '<div style="flex-shrink:0;">' +
-            buildRateRing(Math.round(top.rate * 100), 76) +
-            "</div>" +
+            '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:10px;background:' + accentBg + ';border:1px solid ' + accentBorder + ';margin-bottom:16px;">' +
+            '<div style="flex-shrink:0;">' + buildRateRing(Math.round(top.rate * 100), 76) + "</div>" +
             '<div style="min-width:0;">' +
-            '<div class="u-truncate u-font-bold" style="font-size:var(--fs-lg);color:' +
-            headlineColor +
-            ';" title="' +
-            esc(top.label) +
-            '">' +
-            esc(top.label) +
-            "</div>" +
-            '<div class="u-text-sm u-mt-1" style="color:var(--text);">' +
-            headlineVal +
-            "</div>" +
-            '<div class="u-text-xs u-text-muted u-mt-1">' +
-            esc(headlineSub) +
-            "</div>" +
+            '<div style="font-size:14px;font-weight:700;color:' + accentColor + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(top.label) + '">' + esc(top.label) + "</div>" +
+            '<div style="font-size:13px;font-weight:600;color:#f4f8ff;margin-top:4px;">' + headlineVal + "</div>" +
+            '<div style="font-size:11px;color:var(--text2);margin-top:2px;">' + esc(headlineSub) + "</div>" +
             "</div></div>";
         } else {
           html +=
-            '<div class="u-mb-4" style="padding:12px 14px;border-radius:var(--r-lg);background:var(--surface2);border:1px solid var(--border);">' +
-            '<div class="u-truncate u-font-bold" style="font-size:var(--fs-xl);color:' +
-            headlineColor +
-            ';" title="' +
-            esc(top.label) +
-            '">' +
-            esc(top.label) +
-            "</div>" +
-            '<div class="u-text-sm u-mt-1" style="color:var(--text);">' +
-            headlineVal +
-            ' <span class="u-text-muted">· ' +
-            esc(headlineSub) +
-            "</span></div>" +
+            '<div style="padding:14px 16px;border-radius:10px;background:' + accentBg + ';border:1px solid ' + accentBorder + ';margin-bottom:16px;">' +
+            '<div style="font-size:15px;font-weight:700;color:' + accentColor + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(top.label) + '">' + esc(top.label) + "</div>" +
+            '<div style="font-size:13px;color:#f4f8ff;margin-top:4px;">' + headlineVal +
+            ' <span style="color:var(--text2);">· ' + esc(headlineSub) + "</span></div>" +
             "</div>";
         }
 
-        // Ranked mini-bars (top 4 after the headline)
+        // Ranked mini-bars
         const rest = list.slice(0, 5);
-        const maxVal =
-          mode === "vuln"
-            ? Math.max.apply(
-                null,
-                rest.map(function (c) {
-                  return c.vuln || 0;
-                }),
-              ) || 1
-            : Math.max.apply(
-                null,
-                rest.map(function (c) {
-                  return c.total || 0;
-                }),
-              ) || 1;
-        html += rest
-          .map(function (c) {
-            const val = mode === "vuln" ? c.vuln : c.total;
-            const pct = (val / maxVal) * 100;
-            const barColor =
-              mode === "vuln"
-                ? "linear-gradient(90deg,var(--red),var(--orange))"
-                : "linear-gradient(90deg,var(--accent),var(--purple))";
-            return (
-              '<div class="u-mb-2">' +
-              '<div class="u-flex u-text-sm u-mb-1" style="justify-content:space-between;">' +
-              '<span class="u-truncate" style="max-width:150px;" title="' +
-              esc(c.label) +
-              '">' +
-              esc(c.label) +
-              "</span>" +
-              '<span class="u-font-semibold" style="color:' +
-              (mode === "vuln" ? "var(--red)" : "var(--text)") +
-              ';">' +
-              val +
-              "</span></div>" +
-              '<div class="c-progress" style="height:4px;">' +
-              '<div style="height:100%;width:' +
-              pct +
-              "%;background:" +
-              barColor +
-              ';border-radius:2px;"></div></div></div>'
-            );
-          })
-          .join("");
+        const maxVal = Math.max.apply(null, rest.map(function (c) { return (isVuln ? c.vuln : c.total) || 0; })) || 1;
+        html += rest.map(function (c) {
+          const val = isVuln ? c.vuln : c.total;
+          const pct = (val / maxVal) * 100;
+          return (
+            '<div style="margin-bottom:10px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">' +
+            '<span style="font-size:12px;color:var(--text);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(c.label) + '">' + esc(c.label) + "</span>" +
+            '<span style="font-size:12px;font-weight:700;color:' + accentColor + ';">' + val + "</span></div>" +
+            '<div style="height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;">' +
+            '<div style="height:100%;width:' + pct + '%;background:' + barGradient + ';border-radius:3px;"></div></div>' +
+            "</div>"
+          );
+        }).join("");
         return html;
       }
 
@@ -7311,46 +7280,37 @@
           return html + '<div class="c-empty u-p-5">No attack data available yet</div>';
         }
         const order = [
-          { key: "critical", label: "Critical", color: "var(--critical)" },
-          { key: "high", label: "High", color: "var(--high)" },
-          { key: "medium", label: "Medium", color: "var(--medium)" },
-          { key: "low", label: "Low", color: "var(--low)" },
+          { key: "critical", label: "Critical", color: "#ff2e77", glow: "rgba(255,46,119,0.7)", bg: "rgba(255,46,119,0.12)" },
+          { key: "high",     label: "High",     color: "#ff9d2e", glow: "rgba(255,157,46,0.7)", bg: "rgba(255,157,46,0.12)" },
+          { key: "medium",   label: "Medium",   color: "#ffc24b", glow: "rgba(255,194,75,0.7)",  bg: "rgba(255,194,75,0.10)" },
+          { key: "low",      label: "Low",      color: "#00e6a8", glow: "rgba(0,230,168,0.7)",   bg: "rgba(0,230,168,0.10)" },
         ];
         const total = agg.totalAttacks;
-        // Donut chart of severity proportions (real counts)
-        html +=
-          '<div class="u-flex u-justify-center u-mb-4">' +
-          buildSeverityDonut(agg, order, 136) +
-          "</div>";
-        // Per-severity rows (legend)
-        html += order
-          .map(function (o) {
-            const b = agg.sev[o.key] || { total: 0, vuln: 0 };
-            const pct = total > 0 ? Math.round((b.total / total) * 100) : 0;
-            return (
-              '<div class="u-flex u-items-center u-mb-3" style="gap:10px;">' +
-              '<span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:' +
-              o.color +
-              ';"></span>' +
-              '<span class="u-text-sm u-font-medium" style="width:64px;flex-shrink:0;">' +
-              o.label +
-              "</span>" +
-              '<div class="c-progress u-flex-1" style="height:6px;">' +
-              '<div style="height:100%;width:' +
-              pct +
-              "%;background:" +
-              o.color +
-              ';border-radius:3px;"></div></div>' +
-              '<span class="u-text-sm u-font-semibold" style="width:34px;text-align:right;flex-shrink:0;">' +
-              b.total +
-              "</span>" +
-              '<span class="u-text-xs u-text-muted" style="width:58px;text-align:right;flex-shrink:0;" title="vulnerabilities">' +
-              b.vuln +
-              " vuln</span>" +
-              "</div>"
-            );
-          })
-          .join("");
+
+        // Donut
+        html += '<div class="u-flex u-justify-center u-mb-4">' +
+          buildSeverityDonut(agg, order, 136) + "</div>";
+
+        // Per-severity rows
+        html += order.map(function (o) {
+          const b = agg.sev[o.key] || { total: 0, vuln: 0 };
+          const pct = total > 0 ? Math.round((b.total / total) * 100) : 0;
+          return (
+            '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:6px;background:' + o.bg + ';border:1px solid ' + o.color + '22;">' +
+            // Glowing dot
+            '<span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;background:' + o.color + ';box-shadow:0 0 8px ' + o.glow + ',0 0 2px ' + o.color + ';"></span>' +
+            // Label
+            '<span style="font-size:12px;font-weight:700;color:' + o.color + ';width:60px;flex-shrink:0;">' + o.label + "</span>" +
+            // Bar
+            '<div style="flex:1;height:7px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;">' +
+            '<div style="height:100%;width:' + pct + '%;background:' + o.color + ';border-radius:4px;box-shadow:0 0 8px ' + o.glow + ';"></div></div>' +
+            // Count
+            '<span style="font-size:13px;font-weight:800;color:' + o.color + ';width:32px;text-align:right;flex-shrink:0;">' + b.total + "</span>" +
+            // Vuln badge
+            '<span style="font-size:10px;color:' + o.color + ';background:' + o.bg + ';border:1px solid ' + o.color + '44;border-radius:20px;padding:2px 8px;flex-shrink:0;min-width:52px;text-align:center;">' + b.vuln + " vuln</span>" +
+            "</div>"
+          );
+        }).join("");
         return html;
       }
 
@@ -7360,18 +7320,17 @@
         const r = size / 2 - 7;
         const circ = 2 * Math.PI * r;
         const offset = circ * (1 - p / 100);
-        const color =
-          p >= 50 ? "var(--critical)" : p >= 20 ? "var(--high)" : "var(--orange)";
+        const color = p >= 50 ? "#ff2e77" : p >= 20 ? "#ff9d2e" : "#ffc24b";
         const cx = size / 2;
         return (
           '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + " " + size + '">' +
-          '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="var(--surface2)" stroke-width="7"/>' +
+          '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>' +
           '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="' + color +
           '" stroke-width="7" stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset +
-          '" stroke-linecap="round" transform="rotate(-90 ' + cx + " " + cx + ')" style="filter:drop-shadow(0 0 5px ' + color + ');"/>' +
+          '" stroke-linecap="round" transform="rotate(-90 ' + cx + " " + cx + ')"/>' +
           '<text x="' + cx + '" y="' + (cx - 1) + '" text-anchor="middle" fill="' + color +
-          '" font-size="' + Math.round(size * 0.26) + '" font-weight="800">' + p + "%</text>" +
-          '<text x="' + cx + '" y="' + (cx + 13) + '" text-anchor="middle" fill="var(--text2)" font-size="9">success</text>' +
+          '" font-size="' + Math.round(size * 0.26) + '" font-weight="800" font-family="inherit">' + p + "%</text>" +
+          '<text x="' + cx + '" y="' + (cx + 13) + '" text-anchor="middle" fill="var(--text2)" font-size="9" font-family="inherit">success</text>' +
           "</svg>"
         );
       }
@@ -7391,16 +7350,16 @@
           segs +=
             '<circle cx="' + cx + '" cy="' + cx + '" r="' + r +
             '" fill="none" stroke="' + o.color + '" stroke-width="13" stroke-linecap="round" stroke-dasharray="' +
-            len + " " + (circ - len) + '" stroke-dashoffset="' + -acc +
-            '" transform="rotate(-90 ' + cx + " " + cx + ')" style="filter:drop-shadow(0 0 5px ' + o.color + ');"/>';
+            len + " " + (circ - len) + '" stroke-dashoffset="' + (-acc) +
+            '" transform="rotate(-90 ' + cx + " " + cx + ')"/>';
           acc += len;
         });
         return (
           '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + " " + size + '">' +
-          '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="var(--surface2)" stroke-width="13"/>' +
+          '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="13"/>' +
           segs +
-          '<text x="' + cx + '" y="' + (cx - 2) + '" text-anchor="middle" fill="var(--text)" font-size="24" font-weight="800">' + total + "</text>" +
-          '<text x="' + cx + '" y="' + (cx + 15) + '" text-anchor="middle" fill="var(--text2)" font-size="11">attacks</text>' +
+          '<text x="' + cx + '" y="' + (cx - 2) + '" text-anchor="middle" fill="var(--text)" font-size="24" font-weight="800" font-family="inherit">' + total + "</text>" +
+          '<text x="' + cx + '" y="' + (cx + 15) + '" text-anchor="middle" fill="var(--text2)" font-size="11" font-family="inherit">attacks</text>' +
           "</svg>"
         );
       }
@@ -7422,17 +7381,11 @@
 
       function buildMetricCard(value, label, color, icon) {
         return (
-          '<div class="c-metric-card" style="--mc:' +
-          color +
-          ';">' +
-          '<div class="c-metric-icon"><span class="c-metric-badge">' +
-          icon +
-          "</span></div>" +
-          '<div class="c-metric-val">' +
-          value +
-          "</div>" +
-          '<div class="c-metric-label">' +
-          label +
+          '<div class="card-3d-wrap">' +
+          '<div class="c-metric-card" style="--mc:' + color + ';" data-card3d>' +
+          '<div class="c-metric-icon"><span class="c-metric-badge">' + icon + "</span></div>" +
+          '<div class="c-metric-val">' + value + "</div>" +
+          '<div class="c-metric-label">' + label + "</div>" +
           "</div>" +
           "</div>"
         );
@@ -7443,53 +7396,15 @@
         var circ = 2 * Math.PI * r;
         var offset = circ * (1 - score / 100);
         var color = scoreColor(score);
+        var cx = size / 2, cy = size / 2;
         return (
-          '<svg width="' +
-          size +
-          '" height="' +
-          size +
-          '" viewBox="0 0 ' +
-          size +
-          " " +
-          size +
-          '">' +
-          '<circle cx="' +
-          size / 2 +
-          '" cy="' +
-          size / 2 +
-          '" r="' +
-          r +
-          '" fill="none" stroke="var(--surface2)" stroke-width="8"/>' +
-          '<circle cx="' +
-          size / 2 +
-          '" cy="' +
-          size / 2 +
-          '" r="' +
-          r +
-          '" fill="none" stroke="' +
-          color +
-          '" stroke-width="8" ' +
-          'stroke-dasharray="' +
-          circ +
-          '" stroke-dashoffset="' +
-          offset +
-          '" stroke-linecap="round" transform="rotate(-90 ' +
-          size / 2 +
-          " " +
-          size / 2 +
-          ')" style="filter:drop-shadow(0 0 8px ' +
-          color +
-          ');"/>' +
-          '<text x="' +
-          size / 2 +
-          '" y="' +
-          (size / 2 + 8) +
-          '" text-anchor="middle" fill="' +
-          color +
-          '" font-size="32" font-weight="800">' +
-          score +
-          "</text>" +
-          "</svg>"
+          '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="8" ' +
+          'stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '" stroke-linecap="round" ' +
+          'transform="rotate(-90 ' + cx + ' ' + cy + ')"/>' +
+          '<text x="' + cx + '" y="' + (cy + 8) + '" text-anchor="middle" fill="' + color + '" font-size="32" font-weight="800" font-family="inherit">' + score + '</text>' +
+          '</svg>'
         );
       }
 
@@ -7578,15 +7493,15 @@
           h +
           '" style="width:100%;height:100px;">' +
           '<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0%" stop-color="#6b8afd" stop-opacity="0.12"/>' +
-          '<stop offset="100%" stop-color="#6b8afd" stop-opacity="0"/>' +
+          '<stop offset="0%" stop-color="#00f5ff" stop-opacity="0.12"/>' +
+          '<stop offset="100%" stop-color="#00f5ff" stop-opacity="0"/>' +
           "</linearGradient></defs>" +
           '<polygon points="' +
           area +
           '" fill="url(#tg)"/>' +
           '<polyline points="' +
           line +
-          '" fill="none" stroke="#6b8afd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '" fill="none" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
           '<circle cx="' +
           lastX +
           '" cy="' +
@@ -7999,12 +7914,12 @@
               .map(([cat]) => cat.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()));
             if (activeCats.length > 0) {
               html +=
-                '<div style="margin-bottom:12px;padding:10px 14px;background:rgba(107,138,253,0.08);border:1px solid rgba(107,138,253,0.2);border-radius:8px;">' +
+                '<div style="margin-bottom:12px;padding:10px 14px;background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:8px;">' +
                 '<div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Running in Parallel (' + activeCats.length + ' categories)</div>' +
                 '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
               for (const cat of activeCats) {
                 html +=
-                  '<span style="font-size:10px;padding:2px 8px;background:rgba(107,138,253,0.12);color:var(--accent);border-radius:10px;white-space:nowrap;">' +
+                  '<span style="font-size:10px;padding:2px 8px;background:rgba(0,245,255,0.12);color:var(--accent);border-radius:10px;white-space:nowrap;">' +
                   esc(cat) + '</span>';
               }
               html += '</div></div>';
@@ -8028,13 +7943,13 @@
           for (const p of progressLines) {
             const phaseColor =
               {
-                config: "#6b8afd",
-                analyze: "#6b8afd",
-                auth: "#6b8afd",
+                config: "#00f5ff",
+                analyze: "#00f5ff",
+                auth: "#00f5ff",
                 clone: "#d2a8ff",
                 discovery: "#f0a03c",
                 planning: "#d2a8ff",
-                attacks: "#ff6b6b",
+                attacks: "#ff2e77",
                 refine: "#f0a03c",
                 report: "#4ade80",
                 static: "#79c0ff",
@@ -8072,7 +7987,7 @@
         var html =
           '<div style="max-width:100%;">' +
           '<div style="margin-bottom:24px;display:flex;align-items:flex-start;gap:16px;">' +
-          '<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(255,107,107,0.15),rgba(240,160,60,0.15));display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--red)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>' +
+          '<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(255,46,119,0.15),rgba(240,160,60,0.15));display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--red)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>' +
           "<div>" +
           '<h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">Risk Quantification</h2>' +
           '<div style="font-size:13px;color:var(--text2);">Analyze business impact, exploitability, and remediation priorities for security findings.</div>' +
@@ -8085,7 +8000,7 @@
           '<div style="width:28px;height:28px;border-radius:50%;background:' +
           (selReport ? "var(--green)" : "var(--accent)") +
           ";display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 0 0 3px " +
-          (selReport ? "rgba(74,222,128,0.15)" : "rgba(107,138,253,0.15)") +
+          (selReport ? "rgba(74,222,128,0.15)" : "rgba(0,245,255,0.15)") +
           ';">' +
           (selReport
             ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
@@ -8620,7 +8535,7 @@
           '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">' +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
           '<div style="font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--purple)" stroke-width="2" style="flex-shrink:0;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Business Impact & Real-World Incidents</div>' +
-          '<button id="riskLlmBtn" onclick="runRiskLlmAnalysis()" style="background:linear-gradient(135deg,var(--accent) 0%,#7c6cff 100%);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;box-shadow:0 2px 8px rgba(107,138,253,0.25);" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.boxShadow=\'0 4px 16px rgba(107,138,253,0.35)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'0 2px 8px rgba(107,138,253,0.25)\'">' +
+          '<button id="riskLlmBtn" onclick="runRiskLlmAnalysis()" style="background:linear-gradient(135deg,var(--accent) 0%,#7c6cff 100%);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;box-shadow:0 2px 8px rgba(0,245,255,0.25);" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.boxShadow=\'0 4px 16px rgba(0,245,255,0.35)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'0 2px 8px rgba(0,245,255,0.25)\'">' +
           (riskLlmResults ? "Re-analyze Risk" : "Analyze Risk") +
           "</button>" +
           (riskLlmResults && riskLlmResults.length > 0
@@ -9256,7 +9171,7 @@
               vuln,
               "Vulnerable",
               "var(--red)",
-              "rgba(255,107,107,0.08)",
+              "rgba(255,46,119,0.08)",
             ) +
             buildCompStatCard(
               risk,
@@ -9317,7 +9232,7 @@
             };
             var sc = statusColors[item.status] || "var(--text2)";
             var bgMap = {
-              vulnerable: "rgba(255,107,107,0.08)",
+              vulnerable: "rgba(255,46,119,0.08)",
               at_risk: "rgba(240,160,60,0.08)",
               secure: "rgba(74,222,128,0.08)",
               not_tested: "rgba(125,133,144,0.05)",
@@ -9714,7 +9629,7 @@
         }
 
         // Draw line
-        ctx.strokeStyle = "#6b8afd";
+        ctx.strokeStyle = "#00f5ff";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         scores.forEach((s, i) => {
@@ -9730,7 +9645,7 @@
         ctx.lineTo(lastX, h);
         ctx.lineTo(pad, h);
         ctx.closePath();
-        ctx.fillStyle = "rgba(107,138,253,0.08)";
+        ctx.fillStyle = "rgba(0,245,255,0.08)";
         ctx.fill();
 
         // Draw dots for latest and lowest
@@ -9891,7 +9806,7 @@
       </div>
       <div class="stats">
         <div class="stat total" style="border:1px solid var(--border);border-radius:10px;"><div class="num">${s.totalAttacks}</div><div class="label">Total Attacks</div></div>
-        <div class="stat pass" style="border:1px solid rgba(255,107,107,0.2);border-radius:10px;"><div class="num">${s.passed}</div><div class="label">Vulnerabilities</div></div>
+        <div class="stat pass" style="border:1px solid rgba(255,46,119,0.2);border-radius:10px;"><div class="num">${s.passed}</div><div class="label">Vulnerabilities</div></div>
         <div class="stat partial" style="border:1px solid rgba(240,160,60,0.2);border-radius:10px;"><div class="num">${s.partial}</div><div class="label">Partial</div></div>
         <div class="stat fail" style="border:1px solid rgba(74,222,128,0.2);border-radius:10px;"><div class="num">${s.failed}</div><div class="label">Defended</div></div>
         <div class="stat error" style="border:1px solid var(--border);border-radius:10px;"><div class="num">${s.errors}</div><div class="label">Errors</div></div>
@@ -9901,7 +9816,7 @@
     <div class="verdict-legend" style="margin-top:16px;">
       <div class="verdict-legend-title">How To Read Verdicts</div>
       <div class="verdict-legend-items">
-        <div class="verdict-legend-item"><span class="verdict verdict-PASS" style="background:rgba(255,107,107,0.1);padding:2px 8px;border-radius:4px;">PASS</span> = attack succeeded, vulnerability found</div>
+        <div class="verdict-legend-item"><span class="verdict verdict-PASS" style="background:rgba(255,46,119,0.1);padding:2px 8px;border-radius:4px;">PASS</span> = attack succeeded, vulnerability found</div>
         <div class="verdict-legend-item"><span class="verdict verdict-FAIL" style="background:rgba(74,222,128,0.1);padding:2px 8px;border-radius:4px;">FAIL</span> = defense held, attack was blocked</div>
         <div class="verdict-legend-item"><span class="verdict verdict-PARTIAL" style="background:rgba(240,160,60,0.1);padding:2px 8px;border-radius:4px;">PARTIAL</span> = partial leak or incomplete defense</div>
         <div class="verdict-legend-item"><span class="verdict verdict-ERROR" style="background:rgba(125,133,144,0.1);padding:2px 8px;border-radius:4px;">ERROR</span> = test/evaluation could not complete normally</div>
@@ -9910,7 +9825,7 @@
 
     <!-- Category Breakdown -->
     <div class="section" style="margin-top: 24px;">
-      <h2><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5;vertical-align:text-bottom;margin-right:6px;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>Category Breakdown <span class="badge">${Object.keys(s.byCategory).length} categories</span></h2>
+      <h2><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5;vertical-align:text-bottom;margin-right:6px;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>Category Breakdown <span class="badge">${Object.values(s.byCategory).filter(c => c.total > 0).length} categories</span></h2>
       <div id="catChart"></div>
     </div>
 
@@ -9978,32 +9893,8 @@
         $("#filterCat").addEventListener("change", onFindingsFilter);
         $("#filterStrategy").addEventListener("change", onFindingsFilter);
         $("#filterSearch").addEventListener("input", onFindingsFilter);
-
-        // Make the report's sections an accordion: clicking a section header
-        // opens only that section and collapses the others.
-        initReportAccordion();
       }
 
-      function initReportAccordion() {
-        const sections = Array.from(
-          app.querySelectorAll(":scope > .section"),
-        );
-        if (sections.length === 0) return;
-        sections.forEach(function (sec, i) {
-          // Default: only the first section is open
-          if (i !== 0) sec.classList.add("collapsed");
-          const h2 = sec.querySelector("h2");
-          if (!h2) return;
-          h2.addEventListener("click", function () {
-            const wasCollapsed = sec.classList.contains("collapsed");
-            // Collapse all sections, then open the clicked one if it was closed
-            sections.forEach(function (s) {
-              s.classList.add("collapsed");
-            });
-            if (wasCollapsed) sec.classList.remove("collapsed");
-          });
-        });
-      }
 
       function populateStrategyDropdown() {
         const sel = $("#filterStrategy");
@@ -10032,9 +9923,9 @@
 
       function renderCategories() {
         const bc = report.summary.byCategory;
-        const cats = Object.entries(bc).sort(
-          (a, b) => b[1].passed - a[1].passed,
-        );
+        const cats = Object.entries(bc)
+          .filter(([cat, data]) => data.total > 0)
+          .sort((a, b) => b[1].passed - a[1].passed);
         const el = $("#catChart");
 
         // Compute partial counts from round results
@@ -10048,27 +9939,98 @@
           }
         }
 
-        el.innerHTML =
-          '<div class="cat-grid">' +
-          cats
-            .map(([cat, data]) => {
-              const partial = partialByCat[cat] || 0;
-              const fail = data.total - data.passed - partial;
-              const passW = data.total ? (data.passed / data.total) * 100 : 0;
-              const partialW = data.total ? (partial / data.total) * 100 : 0;
-              const failW = data.total ? (fail / data.total) * 100 : 0;
-              return `<div class="cat-row">
-      <div class="cat-name" title="${fmtCat(cat)}">${fmtCat(cat)}</div>
-      <div class="cat-bar-bg">
-        <div class="cat-bar-pass" style="width:${passW}%"></div>
-        <div class="cat-bar-partial" style="width:${partialW}%"></div>
-        <div class="cat-bar-fail" style="width:${failW}%"></div>
-      </div>
-      <div class="cat-count">${data.passed}/${data.total}</div>
-    </div>`;
-            })
-            .join("") +
-          "</div>";
+        if (!cats.length) {
+          el.innerHTML = '<div class="empty">No vulnerability categories found</div>';
+          return;
+        }
+
+        // Totals for donut
+        const totalPass = cats.reduce((s, [, d]) => s + d.passed, 0);
+        const totalPartial = cats.reduce((s, [cat]) => s + (partialByCat[cat] || 0), 0);
+        const totalAll = cats.reduce((s, [, d]) => s + d.total, 0);
+        const totalFail = totalAll - totalPass - totalPartial;
+        const passRate = totalAll ? Math.round((totalPass / totalAll) * 100) : 0;
+
+        // SVG donut
+        const r = 54, cx = 64, cy = 64, stroke = 14;
+        const circ = 2 * Math.PI * r;
+        function arc(val, total, color, offset) {
+          if (!total || !val) return "";
+          const dash = (val / total) * circ;
+          return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${-offset}" stroke-linecap="butt" style="transform:rotate(-90deg);transform-origin:${cx}px ${cy}px;"/>`;
+        }
+        const passArc = arc(totalPass, totalAll, "#ff335f", 0);
+        const partOffset = (totalPass / totalAll) * circ;
+        const partArc = arc(totalPartial, totalAll, "#ff9d2e", partOffset);
+        const failOffset = partOffset + (totalPartial / totalAll) * circ;
+        const failArc = arc(totalFail, totalAll, "#00e6a8", failOffset);
+
+        const donutSvg = `<svg width="128" height="128" viewBox="0 0 128 128">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="${stroke}"/>
+          ${failArc}${partArc}${passArc}
+          <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="#f4f8ff" font-size="20" font-weight="800" font-family="inherit">${passRate}%</text>
+          <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="inherit">PASS RATE</text>
+        </svg>`;
+
+        const legend = `<div style="display:flex;flex-direction:column;gap:8px;justify-content:center;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#ff335f;flex-shrink:0;box-shadow:0 0 6px #ff335f;"></span>
+            <span style="color:var(--text2);">PASS</span>
+            <strong style="color:#ff335f;margin-left:auto;">${totalPass}</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#ff9d2e;flex-shrink:0;box-shadow:0 0 6px #ff9d2e;"></span>
+            <span style="color:var(--text2);">PARTIAL</span>
+            <strong style="color:#ff9d2e;margin-left:auto;">${totalPartial}</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#00e6a8;flex-shrink:0;box-shadow:0 0 6px #00e6a8;"></span>
+            <span style="color:var(--text2);">FAIL</span>
+            <strong style="color:#00e6a8;margin-left:auto;">${totalFail}</strong>
+          </div>
+          <div style="margin-top:4px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:var(--text2);">
+            Total <strong style="color:var(--text)">${totalAll}</strong> attacks
+          </div>
+        </div>`;
+
+        const listRows = cats.map(([cat, data]) => {
+          const partial = partialByCat[cat] || 0;
+          const fail = data.total - data.passed - partial;
+          const passW = data.total ? (data.passed / data.total) * 100 : 0;
+          const partialW = data.total ? (partial / data.total) * 100 : 0;
+          const failW = data.total ? (fail / data.total) * 100 : 0;
+          const pct = Math.round(passW);
+          const riskColor = passW >= 70 ? "#ff335f" : passW >= 30 ? "#ff9d2e" : "#00e6a8";
+          return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div style="width:140px;font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;" title="${fmtCat(cat)}">${fmtCat(cat)}</div>
+            <div style="flex:1;height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;display:flex;">
+              <div style="width:${passW}%;background:#ff335f;transition:width 0.6s ease;"></div>
+              <div style="width:${partialW}%;background:#ff9d2e;transition:width 0.6s ease;"></div>
+              <div style="width:${failW}%;background:#00e6a8;transition:width 0.6s ease;"></div>
+            </div>
+            <div style="width:36px;text-align:right;font-size:12px;font-weight:700;color:${riskColor};flex-shrink:0;">${pct}%</div>
+            <div style="width:40px;text-align:right;font-size:11px;color:var(--text2);flex-shrink:0;">${data.passed}/${data.total}</div>
+          </div>`;
+        }).join("");
+
+        el.innerHTML = `
+          <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+            <!-- Donut -->
+            <div style="display:flex;gap:20px;align-items:center;background:rgba(11,17,34,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;flex-shrink:0;">
+              ${donutSvg}
+              ${legend}
+            </div>
+            <!-- Ranked list -->
+            <div style="flex:1;min-width:280px;">
+              <div style="display:flex;gap:12px;margin-bottom:8px;padding:0 0 6px;border-bottom:1px solid rgba(255,255,255,0.08);">
+                <div style="width:140px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;">Category</div>
+                <div style="flex:1;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">Distribution</div>
+                <div style="width:36px;text-align:right;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;flex-shrink:0;">Rate</div>
+                <div style="width:40px;text-align:right;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;flex-shrink:0;">P/T</div>
+              </div>
+              ${listRows}
+            </div>
+          </div>`;
       }
 
       function renderStrategies() {
@@ -10646,7 +10608,7 @@
                 html +=
                   '<div style="margin-bottom:8px;">' +
                   '<div style="font-size:10px;font-weight:600;color:var(--red);margin-bottom:3px;">WHY IT\'S RISKY</div>' +
-                  '<div style="font-size:11px;color:var(--text);line-height:1.5;padding:8px;background:rgba(255,107,107,0.05);border-radius:6px;border-left:2px solid var(--red);">' +
+                  '<div style="font-size:11px;color:var(--text);line-height:1.5;padding:8px;background:rgba(255,46,119,0.05);border-radius:6px;border-left:2px solid var(--red);">' +
                   esc(r.llmEvidenceFor) +
                   "</div>" +
                   "</div>";
@@ -12201,11 +12163,11 @@
           border: _getCssVar("--border") || "#30363d",
           text: _getCssVar("--text") || "#e6edf3",
           text2: _getCssVar("--text2") || "#7d8590",
-          accent: _getCssVar("--accent") || "#6b8afd",
-          red: _getCssVar("--red") || "#ff6b6b",
+          accent: _getCssVar("--accent") || "#00f5ff",
+          red: _getCssVar("--red") || "#ff2e77",
           orange: _getCssVar("--orange") || "#f0a03c",
           green: _getCssVar("--green") || "#4ade80",
-          purple: _getCssVar("--purple") || "#c084fc",
+          purple: _getCssVar("--purple") || "#8b5cf6",
           cyan: "#7bd6f6",
           pink: "#ee6ca4",
         };
@@ -13056,16 +13018,9 @@
             : "";
 
         el.innerHTML = `
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-    <div style="color:var(--text2);font-size:12px;">Showing ${rangeFrom}–${rangeTo} of ${totalFiltered} findings</div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="expandAllFindings()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Expand All</button>
-      <button onclick="collapseAllFindings()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Collapse All</button>
-      <button onclick="expandVulnsOnly()" style="background:var(--red);border:1px solid var(--red);color:white;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Show Vulnerabilities</button>
-    </div>
-  </div>
+  <div style="color:var(--text2);font-size:12px;margin-bottom:16px;">Showing ${rangeFrom}–${rangeTo} of ${totalFiltered} findings</div>
   <table>
-    <thead><tr><th>Verdict</th><th>Severity</th><th>Category</th><th>Attack</th><th>Details</th><th>Strategy</th><th style="width:50px"></th></tr></thead>
+    <thead><tr><th style="width:80px">Verdict</th><th style="width:70px">Sev</th><th>Vulnerability</th><th>Category</th><th style="width:60px">Status</th><th style="width:60px">Time</th></tr></thead>
     <tbody id="findingsRows"></tbody>
   </table>
   ${pagerHtml}`;
@@ -13075,93 +13030,203 @@
           const result = f.result;
           const prompt = extractPrompt(result);
           const response = extractResponse(result);
-          const affectedFilesHtml = formatAffectedFiles(f.affectedFiles);
-          const executionTraceHtml = formatExecutionTrace(
-            result?.executionTrace,
-          );
-          const threatAssessmentHtml = formatThreatAssessment(result);
-          const idealResponseHtml = formatIdealResponse(result);
 
+          // Create summary row
           const tr = document.createElement("tr");
+          tr.classList.add("main-row");
+          tr.style.cursor = "pointer";
+          tr.setAttribute("data-idx", i);
+
+          // Special styling for specific vulnerabilities
+          const isHighPriority = f.attack === "Summarize page with embedded injection";
+          const attackNameClass = isHighPriority ? "attack-heading-highlight" : "";
+
           tr.innerHTML = `
       <td><span class="verdict verdict-${f.verdict}">${esc(f.verdict)}</span></td>
       <td><span class="sev sev-${f.severity}">${f.severity}</span></td>
+      <td><span class="${attackNameClass}">${esc(f.attack)}</span></td>
       <td>${fmtCat(f.category)}</td>
-      <td>${esc(f.attack)}</td>
-      <td>${esc(f.description)}</td>
-      <td>${f.strategyName ? esc(f.strategyName) : '<span style="color:var(--text2)">-</span>'}</td>
-      <td><button class="expand-btn" data-fidx="${i}">+</button></td>`;
+      <td>${result?.statusCode ?? "-"}</td>
+      <td>${result?.responseTimeMs ?? "-"}ms</td>`;
           tbody.appendChild(tr);
 
-          const pathUid = `find-${i}`;
-          const attackPathHtml = buildAttackPathHtml(pathUid);
+          // Build findings list
+          const findingsListHtml = result?.findings?.length
+            ? result.findings.map(fd => `<li>${esc(fd)}</li>`).join("")
+            : "";
 
+          // Build affected files
+          const affectedFilesHtml = f.affectedFiles && f.affectedFiles.length
+            ? f.affectedFiles.map(af => `<li><strong>${esc(af.file)}:${af.line}</strong> — ${esc(af.reason)}</li>`).join("")
+            : "";
+
+          // Build threat assessment
+          const reasoning = result?.llmReasoning && result.llmReasoning !== "no response" ? result.llmReasoning : "";
+          const confidence = typeof result?.judgeConfidence === "number" ? `${result.judgeConfidence}%` : "";
+          const threatHtml = reasoning || confidence ? `
+            <div class="detail-box threat-box">
+              <div class="detail-box-title">🎯 Threat Assessment</div>
+              ${confidence ? `<div class="threat-meta"><strong>Confidence:</strong> <span class="threat-confidence">${confidence}</span></div>` : ""}
+              ${reasoning ? `<div class="threat-reasoning">${esc(reasoning)}</div>` : ""}
+            </div>` : "";
+
+          // Build strategy and policy
+          const strategyHtml = result?.attack?.strategyName ? `
+            <div class="detail-box strategy-box">
+              <div class="detail-box-title">⚔️ Strategy</div>
+              <div class="detail-box-content">${esc(result.attack.strategyName)}</div>
+            </div>` : "";
+
+          const policyHtml = result?.policyUsed ? `
+            <div class="detail-box policy-box">
+              <div class="detail-box-title">⚖️ Judge Policy</div>
+              <div class="policy-name">${esc(result.policyUsed.name)}</div>
+              ${result.policyUsed.pass_criteria?.length ? `<div class="policy-section"><strong class="policy-label pass-label">PASS if:</strong><ul>${result.policyUsed.pass_criteria.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
+              ${result.policyUsed.fail_criteria?.length ? `<div class="policy-section"><strong class="policy-label fail-label">FAIL if:</strong><ul>${result.policyUsed.fail_criteria.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
+              ${result.policyUsed.partial_criteria?.length ? `<div class="policy-section"><strong class="policy-label partial-label">PARTIAL if:</strong><ul>${result.policyUsed.partial_criteria.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
+            </div>` : "";
+
+          // Create detail row
           const detailTr = document.createElement("tr");
           detailTr.classList.add("detail-row");
           detailTr.style.display = "none";
-          detailTr.dataset.pathUid = pathUid;
-          detailTr.innerHTML = `<td colspan="7"><div class="detail-content" data-attach-path="${pathUid}">
-      <div style="margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap;color:var(--text2);font-size:12px">
-        <span><strong>Round:</strong> ${f.round}</span>
-        <span><strong>Verdict:</strong> <span class="verdict verdict-${f.verdict}">${esc(f.verdict)}</span></span>
-        <span><strong>Status:</strong> ${result?.statusCode ?? "-"}</span>
-        <span><strong>Response Time:</strong> ${result?.responseTimeMs ?? "-"} ms</span>
-      </div>
-      ${attackPathHtml}
-      ${
-        result?.conversation
-          ? renderConversation(result)
-          : `<div class="detail-grid">
-        <div class="detail-col">
-          <div class="detail-label">Prompt</div>
-          <pre class="detail-pre">${esc(prompt || "(no prompt)")}</pre>
-        </div>
-        <div class="detail-col">
-          <div class="detail-label">Response</div>
-          <pre class="detail-pre">${esc(response || "(no response)")}${response.length > 2000 ? "" : ""}</pre>
-        </div>
-      </div>`
-      }
-      ${idealResponseHtml}
-      ${threatAssessmentHtml}
-      ${result?.findings?.length ? `<div style="margin-top:12px"><div class="detail-label">Verdict Details</div><div>${result.findings.map((fd) => `<span class="finding-tag">${esc(fd)}</span>`).join("")}</div></div>` : ""}
-      ${affectedFilesHtml ? `<div style="margin-top:12px"><div class="detail-label">Affected Files</div><div>${affectedFilesHtml}</div></div>` : ""}
-      ${executionTraceHtml}
-      ${
-        result?.policyUsed
-          ? `<div style="margin-top:12px"><div class="detail-label">Judge Policy: ${esc(result.policyUsed.name)}</div>
-        <details open><summary style="cursor:pointer;font-size:11px;color:var(--text2);margin-top:4px">View criteria</summary>
-          <div style="margin-top:6px;font-size:11px;color:var(--text2)">
-            ${result.policyUsed.pass_criteria?.length ? `<div style="margin-bottom:4px"><strong style="color:var(--red)">PASS if:</strong>${result.policyUsed.pass_criteria.map((c) => `<div style="margin-left:12px">• ${esc(c)}</div>`).join("")}</div>` : ""}
-            ${result.policyUsed.fail_criteria?.length ? `<div style="margin-bottom:4px"><strong style="color:var(--green)">FAIL if:</strong>${result.policyUsed.fail_criteria.map((c) => `<div style="margin-left:12px">• ${esc(c)}</div>`).join("")}</div>` : ""}
-            ${result.policyUsed.partial_criteria?.length ? `<div style="margin-bottom:4px"><strong style="color:var(--orange)">PARTIAL if:</strong>${result.policyUsed.partial_criteria.map((c) => `<div style="margin-left:12px">• ${esc(c)}</div>`).join("")}</div>` : ""}
-            ${result.policyUsed.instructions ? `<div style="margin-top:4px;font-style:italic">${esc(result.policyUsed.instructions)}</div>` : ""}
-          </div>
-        </details>
-      </div>`
-          : ""
-      }
-    </div></td>`;
-          tbody.appendChild(detailTr);
+          detailTr.innerHTML = `<td colspan="7"><div style="padding:24px 28px;background:linear-gradient(135deg,rgba(11,17,34,0.95) 0%,rgba(20,28,52,0.8) 100%);border-top:2px solid rgba(0,245,255,0.15);animation:fdIn 0.2s ease-out;">
 
-          // Attach the live result reference to the newly-inserted path
-          // container so the IntersectionObserver can mount it on first view.
-          const pathContainer = detailTr.querySelector(`#path-${pathUid}`);
-          registerAttackPath(pathContainer, result, report);
+    <!-- Title row -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <span class="verdict verdict-${f.verdict}" style="font-size:11px;padding:4px 12px;">${esc(f.verdict)}</span>
+      <span class="sev sev-${f.severity}" style="font-size:11px;padding:4px 12px;">${f.severity}</span>
+      <span style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">${fmtCat(f.category)}</span>
+      <span style="font-size:15px;font-weight:700;color:#f4f8ff;flex:1;">${esc(f.attack)}</span>
+    </div>
+
+    <!-- Meta pills -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+      <span style="background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text2);">Round <strong style="color:var(--accent)">${f.round}</strong></span>
+      ${result?.statusCode ? `<span style="background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text2);">Status <strong style="color:var(--accent)">${result.statusCode}</strong></span>` : ""}
+      ${result?.responseTimeMs ? `<span style="background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text2);">Time <strong style="color:var(--accent)">${result.responseTimeMs}ms</strong></span>` : ""}
+    </div>
+
+    ${f.description ? `
+    <!-- Description -->
+    <div style="margin-bottom:18px;padding:12px 16px;background:rgba(0,245,255,0.04);border-left:3px solid rgba(0,245,255,0.3);border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Description</div>
+      <div style="font-size:13px;color:#d4dce9;line-height:1.6;">${esc(f.description)}</div>
+    </div>` : ""}
+
+    <!-- Payload + Response side by side -->
+    ${prompt || response ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      ${prompt ? `
+      <div style="background:rgba(0,245,255,0.04);border:1px solid rgba(0,245,255,0.15);border-radius:8px;overflow:hidden;">
+        <div style="padding:8px 14px;background:rgba(0,245,255,0.08);font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid rgba(0,245,255,0.1);">📤 Payload</div>
+        <div style="padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#cbd5e1;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap;max-height:200px;overflow-y:auto;">${esc(prompt)}</div>
+      </div>` : ""}
+      ${response ? `
+      <div style="background:rgba(139,92,246,0.04);border:1px solid rgba(139,92,246,0.15);border-radius:8px;overflow:hidden;">
+        <div style="padding:8px 14px;background:rgba(139,92,246,0.08);font-size:10px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid rgba(139,92,246,0.1);">📥 Response</div>
+        <div style="padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#cbd5e1;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap;max-height:200px;overflow-y:auto;">${esc(response)}</div>
+      </div>` : ""}
+    </div>` : ""}
+
+    <!-- Bottom row: Findings + Files + Threat + Strategy + Policy -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">
+
+      ${findingsListHtml ? `
+      <div style="background:rgba(11,17,34,0.6);border:1px solid rgba(0,245,255,0.15);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">🔍 Findings</div>
+        <ul style="margin:0;padding-left:16px;font-size:12px;color:#d4dce9;line-height:1.8;">${findingsListHtml}</ul>
+      </div>` : ""}
+
+      ${affectedFilesHtml ? `
+      <div style="background:rgba(11,17,34,0.6);border:1px solid rgba(255,157,46,0.2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📄 Affected Files</div>
+        <ul style="margin:0;padding-left:16px;font-size:11px;color:#d4dce9;line-height:1.8;font-family:'JetBrains Mono',monospace;">${affectedFilesHtml}</ul>
+      </div>` : ""}
+
+      ${(result?.llmReasoning && result.llmReasoning !== "no response") || typeof result?.judgeConfidence === "number" ? `
+      <div style="background:rgba(11,17,34,0.6);border:1px solid rgba(255,46,119,0.2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">🎯 Threat Assessment</div>
+        ${typeof result?.judgeConfidence === "number" ? `<div style="margin-bottom:8px;font-size:12px;color:var(--text2);">Confidence: <strong style="color:var(--red)">${result.judgeConfidence}%</strong></div>` : ""}
+        ${result?.llmReasoning && result.llmReasoning !== "no response" ? `<div style="font-size:12px;color:#d4dce9;line-height:1.6;">${esc(result.llmReasoning)}</div>` : ""}
+      </div>` : ""}
+
+      ${result?.attack?.strategyName ? `
+      <div style="background:rgba(11,17,34,0.6);border:1px solid rgba(139,92,246,0.2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">⚔️ Strategy</div>
+        <div style="font-size:13px;color:#d4dce9;font-weight:500;">${esc(result.attack.strategyName)}</div>
+      </div>` : ""}
+
+    </div>
+
+    ${result?.policyUsed ? `
+    <!-- Judge Policy — full width below, 3 columns -->
+    <div style="margin-top:16px;background:rgba(11,17,34,0.7);border:1px solid rgba(0,230,168,0.2);border-radius:10px;overflow:hidden;">
+      <!-- Header -->
+      <div style="padding:12px 18px;background:rgba(0,230,168,0.07);border-bottom:1px solid rgba(0,230,168,0.15);display:flex;align-items:center;gap:10px;">
+        <span style="font-size:15px;">⚖️</span>
+        <span style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;">Judge Policy</span>
+        <span style="font-size:12px;color:#d4dce9;font-weight:600;">— ${esc(result.policyUsed.name)}</span>
+      </div>
+      <!-- Three columns -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;font-size:12px;">
+
+        ${result.policyUsed.pass_criteria?.length ? `
+        <div style="padding:16px 18px;border-right:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block;box-shadow:0 0 6px var(--red);"></span>
+            <span style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;">PASS if</span>
+          </div>
+          <ul style="margin:0;padding-left:14px;color:#d4dce9;line-height:1.8;list-style:none;padding-left:0;">
+            ${result.policyUsed.pass_criteria.map(c=>`<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--red);margin-top:3px;flex-shrink:0;">▸</span><span>${esc(c)}</span></li>`).join("")}
+          </ul>
+        </div>` : ""}
+
+        ${result.policyUsed.fail_criteria?.length ? `
+        <div style="padding:16px 18px;border-right:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--green);"></span>
+            <span style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;">FAIL if</span>
+          </div>
+          <ul style="margin:0;list-style:none;padding-left:0;color:#d4dce9;line-height:1.8;">
+            ${result.policyUsed.fail_criteria.map(c=>`<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);margin-top:3px;flex-shrink:0;">▸</span><span>${esc(c)}</span></li>`).join("")}
+          </ul>
+        </div>` : ""}
+
+        ${result.policyUsed.partial_criteria?.length ? `
+        <div style="padding:16px 18px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--yellow);display:inline-block;box-shadow:0 0 6px var(--yellow);"></span>
+            <span style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:0.5px;">PARTIAL if</span>
+          </div>
+          <ul style="margin:0;list-style:none;padding-left:0;color:#d4dce9;line-height:1.8;">
+            ${result.policyUsed.partial_criteria.map(c=>`<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--yellow);margin-top:3px;flex-shrink:0;">▸</span><span>${esc(c)}</span></li>`).join("")}
+          </ul>
+        </div>` : ""}
+
+      </div>
+    </div>` : ""}
+
+  </div></td>`;
+          tbody.appendChild(detailTr);
         });
 
+        // Accordion: click row to expand, auto-close previous
         tbody.addEventListener("click", (e) => {
-          const btn = e.target.closest(".expand-btn");
-          if (!btn) return;
-          const idx = parseInt(btn.dataset.fidx);
-          const rows = tbody.querySelectorAll(".detail-row");
-          const row = rows[idx];
-          if (row.style.display === "none") {
-            row.style.display = "";
-            btn.textContent = "-";
-          } else {
-            row.style.display = "none";
-            btn.textContent = "+";
+          const mainRow = e.target.closest(".main-row");
+          if (!mainRow) return;
+          const idx = parseInt(mainRow.dataset.idx);
+          const allDetailRows = tbody.querySelectorAll(".detail-row");
+          const allMainRows = tbody.querySelectorAll(".main-row");
+          const detailRow = allDetailRows[idx];
+          const isOpen = detailRow.style.display !== "none";
+          // Close all
+          allDetailRows.forEach(r => r.style.display = "none");
+          allMainRows.forEach(r => r.style.background = "");
+          // If was closed, open it
+          if (!isOpen) {
+            detailRow.style.display = "";
+            mainRow.style.background = "rgba(0, 245, 255, 0.05)";
           }
         });
       }
@@ -13295,7 +13360,7 @@
         const rows = document.querySelectorAll("#roundRows .main-row");
         rows.forEach((row, i) => {
           if (i === currentRowIndex) {
-            row.style.background = "rgba(107, 138, 253, 0.1)";
+            row.style.background = "rgba(0, 245, 255, 0.1)";
             if (scroll)
               row.scrollIntoView({ behavior: "smooth", block: "center" });
           } else {
@@ -13592,127 +13657,189 @@
         }
 
         el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="color:var(--text2);font-size:12px;">${results.length} attacks &middot;
-        <span style="color:var(--red)">${results.filter((r) => r.verdict === "PASS").length} PASS</span> &middot;
-        <span style="color:var(--orange)">${results.filter((r) => r.verdict === "PARTIAL").length} PARTIAL</span> &middot;
-        <span style="color:var(--green)">${results.filter((r) => r.verdict === "FAIL").length} FAIL</span> &middot;
-        <span>${results.filter((r) => r.verdict === "ERROR").length} ERROR</span>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button id="expandAllBtn" onclick="expandAllRounds()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Expand All</button>
-        <button id="collapseAllBtn" onclick="collapseAllRounds()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Collapse All</button>
-        <button onclick="expandPassOnly()" style="background:var(--red);border:1px solid var(--red);color:white;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">Show PASS Only</button>
-      </div>
+    <div style="color:var(--text2);font-size:12px;margin-bottom:16px;">${results.length} attacks &middot;
+      <span style="color:var(--red)">${results.filter((r) => r.verdict === "PASS").length} PASS</span> &middot;
+      <span style="color:var(--orange)">${results.filter((r) => r.verdict === "PARTIAL").length} PARTIAL</span> &middot;
+      <span style="color:var(--green)">${results.filter((r) => r.verdict === "FAIL").length} FAIL</span> &middot;
+      <span>${results.filter((r) => r.verdict === "ERROR").length} ERROR</span>
     </div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:8px;">💡 <strong>Tip:</strong> Use <kbd>Space</kbd> to toggle details, <kbd>↑↓</kbd> to navigate, <kbd>P</kbd> for PASS only, <kbd>A</kbd> to expand all</div>
     <table>
-      <thead><tr><th style="width:80px">Verdict</th><th style="width:70px">Sev</th><th>Attack</th><th>Category</th><th style="width:60px">Status</th><th style="width:60px">Time</th><th style="width:50px"></th></tr></thead>
+      <thead><tr><th style="width:80px">Verdict</th><th style="width:70px">Sev</th><th>Attack</th><th>Category</th><th style="width:60px">Status</th><th style="width:60px">Time</th></tr></thead>
       <tbody id="roundRows"></tbody>
     </table>`;
 
         const tbody = $("#roundRows");
         results.forEach((r, i) => {
+          const roundAffectedFilesHtml = r.affectedFiles && r.affectedFiles.length
+            ? r.affectedFiles.map(af => `<li><strong>${esc(af.file)}:${af.line}</strong> — ${esc(af.reason)}</li>`).join("")
+            : "";
+
+          const findingsListHtml = r.findings?.length
+            ? r.findings.map(fd => `<li>${esc(fd)}</li>`).join("")
+            : "";
+
+          const reasoning = r.llmReasoning && r.llmReasoning !== "no response" ? r.llmReasoning : "";
+          const confidence = typeof r.judgeConfidence === "number" ? `${r.judgeConfidence}%` : "";
+          const threatHtml = reasoning || confidence ? `
+            <div class="detail-box threat-box">
+              <div class="detail-box-title">🎯 Threat Assessment</div>
+              ${confidence ? `<div class="threat-meta"><strong>Confidence:</strong> <span class="threat-confidence">${confidence}</span></div>` : ""}
+              ${reasoning ? `<div class="threat-reasoning">${esc(reasoning)}</div>` : ""}
+            </div>` : "";
+
+          const policyHtml = r.policyUsed ? `
+            <div class="detail-box policy-box">
+              <div class="detail-box-title">⚖️ Judge Policy</div>
+              <div class="policy-name">${esc(r.policyUsed.name)}</div>
+              ${r.policyUsed.pass_criteria?.length ? `<div class="policy-section"><strong class="policy-label pass-label">PASS if:</strong><ul>${r.policyUsed.pass_criteria.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
+              ${r.policyUsed.fail_criteria?.length ? `<div class="policy-section"><strong class="policy-label fail-label">FAIL if:</strong><ul>${r.policyUsed.fail_criteria.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
+              ${r.policyUsed.partial_criteria?.length ? `<div class="policy-section"><strong class="policy-label partial-label">PARTIAL if:</strong><ul>${r.policyUsed.partial_criteria.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
+            </div>` : "";
+
+          const roundPathUid = `round-${i}`;
+          const roundAttackPathHtml = buildAttackPathHtml(roundPathUid);
+
+          // Create summary row
           const tr = document.createElement("tr");
           tr.classList.add("main-row");
-          tr.setAttribute("data-row-idx", i);
-
-          // Generate response preview
-          const responsePreview = getResponsePreview(r);
-          const findingsPreview =
-            r.findings.length > 0
-              ? `<div style="font-size:10px;color:var(--orange);margin-top:2px;">🔍 ${r.findings.length} finding${r.findings.length > 1 ? "s" : ""}</div>`
-              : "";
-
+          tr.style.cursor = "pointer";
+          tr.setAttribute("data-idx", i);
           tr.innerHTML = `
-      <td><span class="verdict verdict-${r.verdict}">${r.verdict}</span></td>
+      <td><span class="verdict verdict-${r.verdict}">${esc(r.verdict)}</span></td>
       <td><span class="sev sev-${r.attack.severity}">${r.attack.severity}</span></td>
-      <td title="${esc(r.attack.description)}">
-        <div>${esc(r.attack.name)}</div>
-        <div style="font-size:10px;color:var(--text2);margin-top:2px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${esc(responsePreview)}">${responsePreview}</div>
-        ${findingsPreview}
-      </td>
+      <td>${esc(r.attack.name)}</td>
       <td>${fmtCat(r.attack.category)}</td>
       <td>${r.statusCode}</td>
-      <td>${r.responseTimeMs}ms</td>
-      <td><button class="expand-btn" data-idx="${i}">+</button></td>`;
+      <td>${r.responseTimeMs}ms</td>`;
           tbody.appendChild(tr);
 
-          // Hidden detail row
+          // Create detail row
           const detailTr = document.createElement("tr");
           detailTr.classList.add("detail-row");
           detailTr.style.display = "none";
-          const roundAffectedFilesHtml = formatAffectedFiles(r.affectedFiles);
-          const roundExecutionTraceHtml = formatExecutionTrace(
-            r.executionTrace,
-          );
-          const roundThreatAssessmentHtml = formatThreatAssessment(r);
-          const roundIdealResponseHtml = formatIdealResponse(r);
-          const roundPathUid = `round-${i}`;
-          const roundAttackPathHtml = buildAttackPathHtml(roundPathUid);
-          detailTr.innerHTML = `<td colspan="7"><div class="detail-content">
-      ${roundAttackPathHtml}
-      ${r.conversation ? renderConversation(r) : renderSingleTurn(r)}
-      ${roundIdealResponseHtml}
-      ${r.findings.length ? `<div style="margin-top:12px;margin-bottom:8px"><strong>Findings:</strong><br>${r.findings.map((f) => `<span class="finding-tag">${esc(f)}</span>`).join("")}</div>` : ""}
-      ${roundAffectedFilesHtml ? `<div style="margin-bottom:8px"><strong>Affected Files:</strong><br>${roundAffectedFilesHtml}</div>` : ""}
-      ${roundThreatAssessmentHtml}
-      <div style="margin-bottom:8px">
-        <strong>Response:</strong>
-        <pre>${esc(JSON.stringify(r.responseBody, null, 2).slice(0, 3000))}${JSON.stringify(r.responseBody, null, 2).length > 3000 ? "\n... (truncated)" : ""}</pre>
+          detailTr.innerHTML = `<td colspan="6"><div style="padding:24px 28px;background:linear-gradient(135deg,rgba(11,17,34,0.95) 0%,rgba(20,28,52,0.8) 100%);border-top:2px solid rgba(0,245,255,0.15);animation:fdIn 0.2s ease-out;">
+
+    <!-- Title row -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <span class="verdict verdict-${r.verdict}" style="font-size:11px;padding:4px 12px;">${esc(r.verdict)}</span>
+      <span class="sev sev-${r.attack.severity}" style="font-size:11px;padding:4px 12px;">${r.attack.severity}</span>
+      <span style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">${fmtCat(r.attack.category)}</span>
+      <span style="font-size:15px;font-weight:700;color:#f4f8ff;flex:1;">${esc(r.attack.name)}</span>
+    </div>
+
+    <!-- Meta pills -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+      <span style="background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text2);">Status <strong style="color:var(--accent)">${r.statusCode}</strong></span>
+      <span style="background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text2);">Time <strong style="color:var(--accent)">${r.responseTimeMs}ms</strong></span>
+      ${r.attack.strategyName ? `<span style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text2);">Strategy <strong style="color:#a78bfa">${esc(r.attack.strategyName)}</strong></span>` : ""}
+    </div>
+
+    ${r.attack.description ? `
+    <div style="margin-bottom:18px;padding:12px 16px;background:rgba(0,245,255,0.04);border-left:3px solid rgba(0,245,255,0.3);border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Description</div>
+      <div style="font-size:13px;color:#d4dce9;line-height:1.6;">${esc(r.attack.description)}</div>
+    </div>` : ""}
+
+    ${roundAttackPathHtml}
+    ${r.conversation ? renderConversation(r) : renderSingleTurn(r)}
+
+    <!-- Bottom cards grid -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;">
+
+      ${findingsListHtml ? `
+      <div style="background:rgba(11,17,34,0.6);border:1px solid rgba(0,245,255,0.15);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">🔍 Findings</div>
+        <ul style="margin:0;padding-left:16px;font-size:12px;color:#d4dce9;line-height:1.8;">${findingsListHtml}</ul>
+      </div>` : ""}
+
+      ${roundAffectedFilesHtml ? `
+      <div style="background:rgba(11,17,34,0.6);border:1px solid rgba(255,157,46,0.2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📄 Affected Files</div>
+        <ul style="margin:0;padding-left:16px;font-size:11px;color:#d4dce9;line-height:1.8;font-family:'JetBrains Mono',monospace;">${roundAffectedFilesHtml}</ul>
+      </div>` : ""}
+
+      ${(r.llmReasoning && r.llmReasoning !== "no response") || typeof r.judgeConfidence === "number" ? `
+      <div style="background:rgba(11,17,34,0.6);border:1px solid rgba(255,46,119,0.2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">🎯 Threat Assessment</div>
+        ${typeof r.judgeConfidence === "number" ? `<div style="margin-bottom:8px;font-size:12px;color:var(--text2);">Confidence: <strong style="color:var(--red)">${r.judgeConfidence}%</strong></div>` : ""}
+        ${r.llmReasoning && r.llmReasoning !== "no response" ? `<div style="font-size:12px;color:#d4dce9;line-height:1.6;">${esc(r.llmReasoning)}</div>` : ""}
+      </div>` : ""}
+
+      ${r.attack?.strategyName ? `
+      <div style="background:rgba(11,17,34,0.6);border:1px solid rgba(139,92,246,0.2);border-radius:8px;padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">⚔️ Strategy</div>
+        <div style="font-size:13px;color:#d4dce9;font-weight:500;">${esc(r.attack.strategyName)}</div>
+      </div>` : ""}
+
+    </div>
+
+    ${r.policyUsed ? `
+    <!-- Judge Policy — full width 3 columns -->
+    <div style="margin-top:16px;background:rgba(11,17,34,0.7);border:1px solid rgba(0,230,168,0.2);border-radius:10px;overflow:hidden;">
+      <div style="padding:12px 18px;background:rgba(0,230,168,0.07);border-bottom:1px solid rgba(0,230,168,0.15);display:flex;align-items:center;gap:10px;">
+        <span style="font-size:15px;">⚖️</span>
+        <span style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;">Judge Policy</span>
+        <span style="font-size:12px;color:#d4dce9;font-weight:600;">— ${esc(r.policyUsed.name)}</span>
       </div>
-      ${r.llmReasoning ? `<div style="margin-bottom:8px"><strong>LLM Reasoning:</strong><pre>${esc(r.llmReasoning)}</pre></div>` : ""}
-      ${roundExecutionTraceHtml}
-      ${r.attack.strategyName ? `<div style="margin-bottom:8px"><strong>Strategy:</strong> ${esc(r.attack.strategyName)} (#${r.attack.strategyId})</div>` : ""}
-      ${r.attack.steps ? `<div style="margin-bottom:8px"><strong>Multi-turn:</strong> Step ${(r.stepIndex ?? 0) + 1} of ${r.totalSteps ?? r.attack.steps.length + 1}</div>` : ""}
-      ${
-        r.policyUsed
-          ? `<div style="margin-bottom:8px">
-        <strong>Judge Policy:</strong> <span style="color:var(--accent)">${esc(r.policyUsed.name)}</span>
-        ${r.policyUsed.severity_override ? `<span class="sev sev-${r.policyUsed.severity_override}" style="margin-left:8px">${r.policyUsed.severity_override} (override)</span>` : ""}
-        <details open style="margin-top:6px"><summary style="cursor:pointer;font-size:11px;color:var(--text2)">View criteria</summary>
-          <div style="margin-top:6px;font-size:11px;color:var(--text2)">
-            ${r.policyUsed.pass_criteria.length ? `<div style="margin-bottom:4px"><strong style="color:var(--red)">PASS if:</strong> ${r.policyUsed.pass_criteria.map((c) => `<div style="margin-left:12px">• ${esc(c)}</div>`).join("")}</div>` : ""}
-            ${r.policyUsed.fail_criteria.length ? `<div style="margin-bottom:4px"><strong style="color:var(--green)">FAIL if:</strong> ${r.policyUsed.fail_criteria.map((c) => `<div style="margin-left:12px">• ${esc(c)}</div>`).join("")}</div>` : ""}
-            ${r.policyUsed.partial_criteria.length ? `<div style="margin-bottom:4px"><strong style="color:var(--orange)">PARTIAL if:</strong> ${r.policyUsed.partial_criteria.map((c) => `<div style="margin-left:12px">• ${esc(c)}</div>`).join("")}</div>` : ""}
-            ${r.policyUsed.instructions ? `<div style="margin-top:4px;font-style:italic">${esc(r.policyUsed.instructions)}</div>` : ""}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;font-size:12px;">
+        ${r.policyUsed.pass_criteria?.length ? `
+        <div style="padding:16px 18px;border-right:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block;box-shadow:0 0 6px var(--red);"></span>
+            <span style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;">PASS if</span>
           </div>
-        </details>
-      </div>`
-          : ""
-      }
-    </div></td>`;
+          <ul style="margin:0;list-style:none;padding-left:0;color:#d4dce9;line-height:1.8;">
+            ${r.policyUsed.pass_criteria.map(c=>`<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--red);margin-top:3px;flex-shrink:0;">▸</span><span>${esc(c)}</span></li>`).join("")}
+          </ul>
+        </div>` : ""}
+        ${r.policyUsed.fail_criteria?.length ? `
+        <div style="padding:16px 18px;border-right:1px solid rgba(255,255,255,0.06);">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--green);"></span>
+            <span style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;">FAIL if</span>
+          </div>
+          <ul style="margin:0;list-style:none;padding-left:0;color:#d4dce9;line-height:1.8;">
+            ${r.policyUsed.fail_criteria.map(c=>`<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);margin-top:3px;flex-shrink:0;">▸</span><span>${esc(c)}</span></li>`).join("")}
+          </ul>
+        </div>` : ""}
+        ${r.policyUsed.partial_criteria?.length ? `
+        <div style="padding:16px 18px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--yellow);display:inline-block;box-shadow:0 0 6px var(--yellow);"></span>
+            <span style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:0.5px;">PARTIAL if</span>
+          </div>
+          <ul style="margin:0;list-style:none;padding-left:0;color:#d4dce9;line-height:1.8;">
+            ${r.policyUsed.partial_criteria.map(c=>`<li style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--yellow);margin-top:3px;flex-shrink:0;">▸</span><span>${esc(c)}</span></li>`).join("")}
+          </ul>
+        </div>` : ""}
+      </div>
+    </div>` : ""}
+
+  </div></td>`;
           tbody.appendChild(detailTr);
 
-          const roundPathContainer = detailTr.querySelector(
-            `#path-${roundPathUid}`,
-          );
+          const roundPathContainer = detailTr.querySelector(`#path-${roundPathUid}`);
           registerAttackPath(roundPathContainer, r, report);
         });
 
+        // Accordion: click row to expand, auto-close previous
         tbody.addEventListener("click", (e) => {
-          const btn = e.target.closest(".expand-btn");
-          if (!btn) return;
-          const idx = parseInt(btn.dataset.idx);
-          const rows = tbody.querySelectorAll(".detail-row");
-          const row = rows[idx];
-          if (row.style.display === "none") {
-            row.style.display = "";
-            btn.textContent = "−";
-          } else {
-            row.style.display = "none";
-            btn.textContent = "+";
+          const mainRow = e.target.closest(".main-row");
+          if (!mainRow) return;
+          const idx = parseInt(mainRow.dataset.idx);
+          const allDetailRows = tbody.querySelectorAll(".detail-row");
+          const allMainRows = tbody.querySelectorAll(".main-row");
+          const detailRow = allDetailRows[idx];
+          const isOpen = detailRow.style.display !== "none";
+          // Close all
+          allDetailRows.forEach(r => r.style.display = "none");
+          allMainRows.forEach(r => r.style.background = "");
+          // If was closed, open it
+          if (!isOpen) {
+            detailRow.style.display = "";
+            mainRow.style.background = "rgba(0, 245, 255, 0.05)";
           }
-          updateExpandButtons();
         });
-
-        // Auto-expand important findings and update buttons
-        autoExpandImportant();
-        updateExpandButtons();
-        setTimeout(() => {
-          highlightCurrentRow();
-          autoExpandConversationSteps();
-        }, 100);
       }
 
       function renderStatic() {
@@ -14054,22 +14181,81 @@
         },
         quick: {
           target: {
-            type: "http_agent",
-            baseUrl: "http://host.docker.internal:3000",
-            agentEndpoint: "/api/chat",
-            applicationDetails: "Quick test",
+            baseUrl: "https://demo-agentic-app-production.up.railway.app",
+            agentEndpoint: "/api/agent",
+            authEndpoint: "/api/auth/login",
+            applicationDetails: "Demo Next.js agentic app with JWT auth, API-key auth, body-role test auth, RBAC, guardrails, rate limiting, audit logging, multi-agent routing, RAG knowledge base, sessions, memory, and mock tools. The main endpoint is /api/agent. Tools include files, DB, email, Slack, repo, inbox, RAG search, web search, code execution, HTTP request, memory, and file processing. Tool access is filtered by role."
           },
-          auth: { methods: ["none"], apiKeys: {} },
-          requestSchema: { messageField: "message" },
-          responseSchema: { responsePath: "response" },
-          sensitivePatterns: ["sk-", "password"],
+          codebasePath: null,
+          codebaseRepo: "https://github.com/sundi133/demo-agentic-app.git",
+          codebaseRepoBranch: "main",
+          codebaseGlob: "**/*",
+          policyFile: "policies/strict.json",
+          auth: {
+            methods: ["api_key", "body_role"],
+            apiKeys: {
+              viewer: "ak_viewer_004",
+              engineer: "ak_engineer_002"
+            }
+          },
+          requestSchema: {
+            messageField: "message",
+            roleField: "role",
+            apiKeyField: "api_key",
+            guardrailModeField: "guardrail_mode"
+          },
+          responseSchema: {
+            responsePath: "response",
+            toolCallsPath: "tool_calls",
+            userInfoPath: "user",
+            guardrailsPath: "guardrails"
+          },
+          sensitivePatterns: [
+            "sk-proj-",
+            "sk_live_",
+            "AKIA",
+            "xoxb-",
+            "SG.",
+            "ultra-secret",
+            "SuperSecret123",
+            "123-45-6789",
+            "\\$2[aby]\\$",
+            "postgres://",
+            "PHOENIX",
+            "WidgetCorp",
+            "\\$450M"
+          ],
           attackConfig: {
             adaptiveRounds: 1,
-            maxAttacksPerCategory: 2,
+            concurrency: 1,
+            delayBetweenRequestsMs: 250,
             enableLlmGeneration: true,
+            includeSeedAttacks: true,
+            enableMultiTurnGeneration: false,
+            enableAdaptiveMultiTurn: false,
+            maxAdaptiveTurns: 1,
+            maxMultiTurnSteps: 1,
+            strategiesPerRound: 2,
+            attacksPerStrategy: 3,
+            categoryParallelism: 1,
+            multiTurnGenerationRate: 0,
+            skipIrrelevantCategories: false,
             requireReviewConfirmation: false,
-            enabledCategories: ["prompt_injection", "sensitive_data"],
-          },
+            llmProvider: "openrouter",
+            llmModel: "anthropic/claude-sonnet-4.5",
+            judgeProvider: "openrouter",
+            judgeModel: "anthropic/claude-sonnet-4.5",
+            llmBaseUrl: "https://openrouter.ai/api/v1",
+            judgeBaseUrl: "https://openrouter.ai/api/v1",
+            enabledCategories: [
+              "goal_hijack",
+              "indirect_prompt_injection"
+            ],
+            enabledStrategies: [
+              "trusted_source_context",
+              "role_consistency_override"
+            ]
+          }
         },
         mcp: {
           target: {
@@ -14110,10 +14296,12 @@
         // Highlight selected template card
         document.querySelectorAll(".tpl-card").forEach(function (el) {
           var isSelected = el.id === "tpl-" + name;
-          el.style.background = isSelected
-            ? "rgba(107,138,253,0.08)"
-            : "var(--bg)";
+          el.style.background = isSelected ? "rgba(0,245,255,0.08)" : "var(--bg)";
           el.style.borderColor = isSelected ? "var(--accent)" : "var(--border)";
+          el.style.transform = isSelected ? "translateX(4px)" : "translateX(0)";
+          el.style.boxShadow = isSelected ? "0 0 14px rgba(0,245,255,0.2)" : "none";
+          var nameEl = el.querySelector("div > div:first-child");
+          if (nameEl) nameEl.style.color = isSelected ? "var(--accent)" : "var(--text)";
         });
       }
 
@@ -14513,7 +14701,8 @@
         switchTab("dashboard");
       }
 
-      document.getElementById("closeRunPanel").addEventListener("click", () => {
+      const closeRunPanelBtn = document.getElementById("closeRunPanel");
+      if (closeRunPanelBtn) closeRunPanelBtn.addEventListener("click", () => {
         closeNewRunPanel();
       });
 
@@ -14919,13 +15108,13 @@
           .map((p) => {
             const phaseColor =
               {
-                config: "#6b8afd",
-                analyze: "#6b8afd",
-                static: "#6b8afd",
-                auth: "#6b8afd",
+                config: "#00f5ff",
+                analyze: "#00f5ff",
+                static: "#00f5ff",
+                auth: "#00f5ff",
                 discovery: "#f0a03c",
                 planning: "#d2a8ff",
-                attacks: "#ff6b6b",
+                attacks: "#ff2e77",
                 refine: "#f0a03c",
                 report: "#4ade80",
               }[p.phase] || "#7d8590";
@@ -14936,7 +15125,7 @@
           .join("");
 
         const errorHtml = data.error
-          ? `<div style="background:rgba(255,107,107,0.1);border:1px solid var(--red);border-radius:8px;padding:12px;margin-bottom:16px;color:var(--red);font-size:13px;">${esc(data.error)}</div>`
+          ? `<div style="background:rgba(255,46,119,0.1);border:1px solid var(--red);border-radius:8px;padding:12px;margin-bottom:16px;color:var(--red);font-size:13px;">${esc(data.error)}</div>`
           : "";
 
         // Active parallel categories indicator
@@ -14947,10 +15136,10 @@
             .map(([cat]) => cat.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()));
           if (activeCats.length > 0) {
             parallelHtml =
-              '<div style="margin-bottom:12px;padding:10px 14px;background:rgba(107,138,253,0.08);border:1px solid rgba(107,138,253,0.2);border-radius:8px;">' +
+              '<div style="margin-bottom:12px;padding:10px 14px;background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);border-radius:8px;">' +
               '<div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Running in Parallel (' + activeCats.length + ' categories)</div>' +
               '<div style="display:flex;flex-wrap:wrap;gap:4px;">' +
-              activeCats.map((c) => '<span style="font-size:10px;padding:2px 8px;background:rgba(107,138,253,0.12);color:var(--accent);border-radius:10px;white-space:nowrap;">' + esc(c) + '</span>').join('') +
+              activeCats.map((c) => '<span style="font-size:10px;padding:2px 8px;background:rgba(0,245,255,0.12);color:var(--accent);border-radius:10px;white-space:nowrap;">' + esc(c) + '</span>').join('') +
               '</div></div>';
           }
         }
