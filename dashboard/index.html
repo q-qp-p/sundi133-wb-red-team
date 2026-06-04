@@ -6,7 +6,7 @@
     <title>Red Team Dashboard</title>
     <style>
       :root {
-        /* ═══ COOL NEON CYAN — deep cyberpunk with blues & teals only ═══ */
+        /* ═══ VIBRANT NEON — traditional severity + cool accents ═══ */
         --bg: #050711;
         --bg2: #0b1020;
         --surface: rgba(11, 17, 34, 0.66);
@@ -14,47 +14,49 @@
         --surface3: rgba(34, 45, 78, 0.62);
         --border: rgba(0, 245, 255, 0.14);
         --border-hover: rgba(0, 245, 255, 0.42);
-        --text: #f4f8ff;
+        --text: #ffffff;
         --text2: #8fa4bd;
         --accent: #00f5ff;
-        --blue: #0088ff;
+        --blue: #00f5ff;
         --cyan: #00f5ff;
-        --red: #0088ff;
-        --orange: #00d9b5;
+        --red: #ff3366;
+        --orange: #ff8c42;
         --green: #00e6a8;
-        --purple: #0055ff;
-        --yellow: #00ffcc;
-        --critical: #0088ff;
-        --high: #00d9b5;
-        --medium: #00ffcc;
+        --purple: #00f5ff;
+        --yellow: #ffd700;
+        --critical: #ff3366;
+        --high: #ff8c42;
+        --medium: #ffd700;
         --low: #8fa4bd;
+        --white: #ffffff;
+        --black: #000000;
 
-        /* Neon gradients — cool palette only */
-        --grad-primary: linear-gradient(135deg, #0055ff 0%, #00f5ff 100%);
-        --grad-brand: linear-gradient(135deg, #00f5ff 0%, #0088ff 50%, #00d9b5 100%);
-        --grad-danger: linear-gradient(135deg, #0088ff 0%, #00d9b5 100%);
+        /* Neon gradients — warm & cool blend */
+        --grad-primary: linear-gradient(135deg, #ff3366 0%, #ff8c42 50%, #00f5ff 100%);
+        --grad-brand: linear-gradient(135deg, #ff3366 0%, #ff8c42 50%, #00f5ff 100%);
+        --grad-danger: linear-gradient(135deg, #ff3366 0%, #ff8c42 100%);
         --grad-success: linear-gradient(135deg, #00e6a8 0%, #00f5ff 100%);
 
-        /* Semantic color backgrounds — cool blues & teals */
-        --red-bg: rgba(0, 136, 255, 0.14);
-        --red-bg-subtle: rgba(0, 136, 255, 0.07);
-        --red-border: rgba(0, 136, 255, 0.36);
+        /* Semantic color backgrounds — traditional severity */
+        --red-bg: rgba(255, 51, 102, 0.14);
+        --red-bg-subtle: rgba(255, 51, 102, 0.07);
+        --red-border: rgba(255, 51, 102, 0.36);
         --green-bg: rgba(0, 230, 168, 0.13);
         --green-bg-subtle: rgba(0, 230, 168, 0.06);
         --green-border: rgba(0, 230, 168, 0.34);
-        --orange-bg: rgba(0, 217, 181, 0.13);
-        --orange-bg-subtle: rgba(0, 217, 181, 0.06);
-        --orange-border: rgba(0, 217, 181, 0.34);
+        --orange-bg: rgba(255, 140, 66, 0.13);
+        --orange-bg-subtle: rgba(255, 140, 66, 0.06);
+        --orange-border: rgba(255, 140, 66, 0.34);
         --accent-bg: rgba(0, 245, 255, 0.13);
         --accent-bg-subtle: rgba(0, 245, 255, 0.07);
         --accent-border: rgba(0, 245, 255, 0.34);
         --cyan-bg: rgba(0, 245, 255, 0.12);
         --cyan-border: rgba(0, 245, 255, 0.32);
-        --purple-bg: rgba(0, 85, 255, 0.15);
-        --purple-bg-subtle: rgba(0, 85, 255, 0.07);
-        --purple-border: rgba(0, 85, 255, 0.36);
-        --pink-bg: rgba(0, 136, 255, 0.14);
-        --pink-border: rgba(0, 136, 255, 0.36);
+        --purple-bg: rgba(0, 245, 255, 0.15);
+        --purple-bg-subtle: rgba(0, 245, 255, 0.07);
+        --purple-border: rgba(0, 245, 255, 0.36);
+        --pink-bg: rgba(255, 51, 102, 0.14);
+        --pink-border: rgba(255, 51, 102, 0.36);
         --text2-bg: rgba(143, 164, 189, 0.12);
         --text2-border: rgba(143, 164, 189, 0.22);
 
@@ -97,13 +99,13 @@
         --shadow-xl:
           0 8px 16px rgba(0, 0, 0, 0.2), 0 16px 48px rgba(0, 0, 0, 0.3);
         --shadow-glow-accent: 0 0 32px rgba(0, 245, 255, 0.34);
-        --shadow-glow-red: 0 0 32px rgba(0, 136, 255, 0.34);
+        --shadow-glow-red: 0 0 32px rgba(255, 51, 102, 0.34);
         --shadow-glow-green: 0 0 32px rgba(0, 230, 168, 0.3);
-        --shadow-glow-purple: 0 0 32px rgba(0, 85, 255, 0.32);
+        --shadow-glow-purple: 0 0 32px rgba(0, 245, 255, 0.32);
         --shadow-glow-cyan: 0 0 32px rgba(0, 245, 255, 0.32);
       }
 
-      /* ═══ LIGHT THEME — clean, professional with cool blues & teals ═══ */
+      /* ═══ LIGHT THEME — clean, professional with warm & cool palette ═══ */
       html[data-theme="light"] {
         --bg: #f5f4f2;
         --surface: #ffffff;
@@ -111,34 +113,34 @@
         --surface3: #edebe7;
         --border: rgba(23, 23, 30, 0.08);
         --border-hover: rgba(23, 23, 30, 0.16);
-        --text: #1b1e23;
+        --text: #000000;
         --text2: #6b7280;
-        --accent: #0078d4;
-        --red: #0088ff;
-        --orange: #00a8a8;
+        --accent: #ff3366;
+        --red: #ff3366;
+        --orange: #ff8c42;
         --green: #16a34a;
-        --purple: #0055ff;
-        --yellow: #00b3b3;
-        --critical: #0088ff;
-        --high: #00a8a8;
-        --medium: #00b3b3;
+        --purple: #00f5ff;
+        --yellow: #ffd700;
+        --critical: #ff3366;
+        --high: #ff8c42;
+        --medium: #ffd700;
         --low: #9ca3af;
 
-        --red-bg: rgba(0, 136, 255, 0.09);
-        --red-bg-subtle: rgba(0, 136, 255, 0.045);
-        --red-border: rgba(0, 136, 255, 0.22);
+        --red-bg: rgba(255, 51, 102, 0.09);
+        --red-bg-subtle: rgba(255, 51, 102, 0.045);
+        --red-border: rgba(255, 51, 102, 0.22);
         --green-bg: rgba(22, 163, 74, 0.09);
         --green-bg-subtle: rgba(22, 163, 74, 0.045);
         --green-border: rgba(22, 163, 74, 0.22);
-        --orange-bg: rgba(0, 168, 168, 0.1);
-        --orange-bg-subtle: rgba(0, 168, 168, 0.05);
-        --orange-border: rgba(0, 168, 168, 0.22);
-        --accent-bg: rgba(0, 120, 212, 0.1);
-        --accent-bg-subtle: rgba(0, 120, 212, 0.05);
-        --accent-border: rgba(0, 120, 212, 0.22);
-        --purple-bg: rgba(0, 85, 255, 0.09);
-        --purple-bg-subtle: rgba(0, 85, 255, 0.045);
-        --purple-border: rgba(0, 85, 255, 0.22);
+        --orange-bg: rgba(255, 140, 66, 0.1);
+        --orange-bg-subtle: rgba(255, 140, 66, 0.05);
+        --orange-border: rgba(255, 140, 66, 0.22);
+        --accent-bg: rgba(255, 51, 102, 0.1);
+        --accent-bg-subtle: rgba(255, 51, 102, 0.05);
+        --accent-border: rgba(255, 51, 102, 0.22);
+        --purple-bg: rgba(0, 245, 255, 0.09);
+        --purple-bg-subtle: rgba(0, 245, 255, 0.045);
+        --purple-border: rgba(0, 245, 255, 0.22);
         --text2-bg: rgba(107, 114, 128, 0.1);
         --text2-border: rgba(107, 114, 128, 0.2);
 
@@ -1361,8 +1363,8 @@
         border-radius: 9px;
         background: linear-gradient(
           135deg,
-          #0088ff 0%,
-          #0055ff 50%,
+          #ff3366 0%,
+          #ff8c42 50%,
           #00f5ff 100%
         );
         display: flex;
@@ -1375,7 +1377,7 @@
         transition:
           transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
           box-shadow 0.3s;
-        box-shadow: 0 2px 8px rgba(0, 136, 255, 0.2);
+        box-shadow: 0 2px 8px rgba(255, 51, 102, 0.2);
       }
       .top-nav-brand:hover .top-nav-brand-icon {
         transform: scale(1.12) rotate(-3deg);
@@ -2727,14 +2729,14 @@
         display: flex;
       }
       .cat-bar-pass {
-        background: linear-gradient(90deg, #0088ff, #0055ff);
-        box-shadow: 0 0 12px rgba(0, 136, 255, 0.5);
+        background: linear-gradient(90deg, #ff3366, #ff8c42);
+        box-shadow: 0 0 12px rgba(255, 51, 102, 0.5);
         height: 100%;
         transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .cat-bar-partial {
-        background: linear-gradient(90deg, #00d9b5, #00ffcc);
-        box-shadow: 0 0 12px rgba(0, 217, 181, 0.45);
+        background: linear-gradient(90deg, #ffd700, #ff8c42);
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.45);
         height: 100%;
         transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       }
@@ -2795,12 +2797,12 @@
         transform: scale(1.06);
       }
       .sev-critical {
-        background: rgba(0, 136, 255, 0.18);
-        color: #0088ff;
-        border-color: rgba(0, 136, 255, 0.4);
+        background: rgba(255, 51, 102, 0.18);
+        color: #ff3366;
+        border-color: rgba(255, 51, 102, 0.4);
         font-weight: 700;
         animation: criticalPulse 2s ease-in-out infinite;
-        box-shadow: 0 0 10px rgba(0, 136, 255, 0.4);
+        box-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
       }
       @keyframes fdIn {
         from { opacity: 0; transform: translateY(-6px); }
@@ -3206,10 +3208,10 @@
         font-size: 11px;
       }
       .threat-box {
-        border-left: 3px solid #0088ff;
+        border-left: 3px solid #ff3366;
       }
       .threat-box .detail-box-title {
-        color: #0088ff;
+        color: #ff3366;
       }
       .threat-meta {
         display: flex;
@@ -3219,7 +3221,7 @@
         color: var(--text2);
       }
       .threat-confidence {
-        background: linear-gradient(135deg, #0088ff, #0055ff);
+        background: linear-gradient(135deg, #ff3366, #ff8c42);
         color: white;
         padding: 2px 8px;
         border-radius: 4px;
@@ -3230,7 +3232,7 @@
         font-size: 13px;
         line-height: 1.6;
         padding: 10px;
-        background: rgba(0, 136, 255, 0.05);
+        background: rgba(255, 51, 102, 0.05);
         border-radius: 6px;
         overflow-wrap: anywhere;
         word-break: break-word;
@@ -3273,10 +3275,10 @@
         color: #00e6a8;
       }
       .policy-label.fail-label {
-        color: #0088ff;
+        color: #ff3366;
       }
       .policy-label.partial-label {
-        color: #00d9b5;
+        color: #ffd700;
       }
       .policy-section ul {
         margin: 0;
@@ -5476,9 +5478,9 @@
       .top-nav-brand-icon {
         background: linear-gradient(
           135deg,
-          #0055ff 0%,
-          #0088ff 50%,
-          #00f5ff 100%
+          #ff3366 0%,
+          #ff8c42 50%,
+          #ffd700 100%
         );
         background-size: 200% 200%;
       }
@@ -7313,12 +7315,12 @@
           "</div>";
 
         const isVuln = mode === "vuln";
-        const accentColor = isVuln ? "#0088ff" : "#00f5ff";
-        const accentBg   = isVuln ? "rgba(0,136,255,0.1)" : "rgba(0,245,255,0.08)";
-        const accentBorder = isVuln ? "rgba(0,136,255,0.3)" : "rgba(0,245,255,0.25)";
+        const accentColor = isVuln ? "#ff3366" : "#00f5ff";
+        const accentBg   = isVuln ? "rgba(255,51,102,0.1)" : "rgba(0,245,255,0.08)";
+        const accentBorder = isVuln ? "rgba(255,51,102,0.3)" : "rgba(0,245,255,0.25)";
         const barGradient = isVuln
-          ? "linear-gradient(90deg,#0088ff,#00d9b5)"
-          : "linear-gradient(90deg,#00f5ff,#0055ff)";
+          ? "linear-gradient(90deg,#ff3366,#ff8c42)"
+          : "linear-gradient(90deg,#00f5ff,#00f5ff)";
 
         // Headline card
         if (isVuln) {
@@ -7365,9 +7367,9 @@
           return html + '<div class="c-empty u-p-5">No attack data available yet</div>';
         }
         const order = [
-          { key: "critical", label: "Critical", color: "#0088ff", glow: "rgba(0,136,255,0.7)", bg: "rgba(0,136,255,0.12)" },
-          { key: "high",     label: "High",     color: "#00d9b5", glow: "rgba(0,217,181,0.7)", bg: "rgba(0,217,181,0.12)" },
-          { key: "medium",   label: "Medium",   color: "#00ffcc", glow: "rgba(0,255,204,0.7)",  bg: "rgba(0,255,204,0.10)" },
+          { key: "critical", label: "Critical", color: "#ff3366", glow: "rgba(255,51,102,0.7)", bg: "rgba(255,51,102,0.12)" },
+          { key: "high",     label: "High",     color: "#ff8c42", glow: "rgba(255,140,66,0.7)", bg: "rgba(255,140,66,0.12)" },
+          { key: "medium",   label: "Medium",   color: "#ffd700", glow: "rgba(255,215,0,0.7)",  bg: "rgba(255,215,0,0.10)" },
           { key: "low",      label: "Low",      color: "#00e6a8", glow: "rgba(0,230,168,0.7)",   bg: "rgba(0,230,168,0.10)" },
         ];
         const total = agg.totalAttacks;
@@ -7405,7 +7407,7 @@
         const r = size / 2 - 7;
         const circ = 2 * Math.PI * r;
         const offset = circ * (1 - p / 100);
-        const color = p >= 50 ? "#0088ff" : p >= 20 ? "#00d9b5" : "#00ffcc";
+        const color = p >= 50 ? "#ff3366" : p >= 20 ? "#ff8c42" : "#ffd700";
         const cx = size / 2;
         return (
           '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + " " + size + '">' +
@@ -8031,13 +8033,13 @@
                 config: "#00f5ff",
                 analyze: "#00f5ff",
                 auth: "#00f5ff",
-                clone: "#0055ff",
-                discovery: "#00d9b5",
-                planning: "#0055ff",
-                attacks: "#0088ff",
-                refine: "#00d9b5",
+                clone: "#ff3366",
+                discovery: "#ff8c42",
+                planning: "#ff3366",
+                attacks: "#ff3366",
+                refine: "#ff8c42",
                 report: "#00e6a8",
-                static: "#00bbff",
+                static: "#ffd700",
               }[p.phase] || "#7d8590";
             html +=
               '<div style="font-size:11px;font-family:monospace;padding:1px 0;"><span style="color:' +
@@ -10046,9 +10048,9 @@
         }
         const passArc = arc(totalPass, totalAll, "#00e6a8", 0);
         const partOffset = (totalPass / totalAll) * circ;
-        const partArc = arc(totalPartial, totalAll, "#00ffcc", partOffset);
+        const partArc = arc(totalPartial, totalAll, "#ffd700", partOffset);
         const failOffset = partOffset + (totalPartial / totalAll) * circ;
-        const failArc = arc(totalFail, totalAll, "#0088ff", failOffset);
+        const failArc = arc(totalFail, totalAll, "#ff3366", failOffset);
 
         const donutSvg = `<svg width="128" height="128" viewBox="0 0 128 128">
           <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="${stroke}"/>
