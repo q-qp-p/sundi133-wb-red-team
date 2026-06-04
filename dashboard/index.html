@@ -16055,6 +16055,83 @@
         return d.innerHTML;
       }
 
+      // Styled alert system
+      function showAlert(message, type = "error", duration = 5000) {
+        let alertId = "alert-" + Date.now();
+        let bgColor = type === "error" ? "rgba(255, 51, 102, 0.1)" : type === "success" ? "rgba(0, 230, 168, 0.1)" : "rgba(0, 245, 255, 0.1)";
+        let borderColor = type === "error" ? "rgba(255, 51, 102, 0.3)" : type === "success" ? "rgba(0, 230, 168, 0.3)" : "rgba(0, 245, 255, 0.3)";
+        let textColor = type === "error" ? "#ff3366" : type === "success" ? "#00e6a8" : "#00f5ff";
+        let icon = type === "error" ? "⚠" : type === "success" ? "✓" : "ℹ";
+
+        let container = document.getElementById("alert-container");
+        if (!container) {
+          container = document.createElement("div");
+          container.id = "alert-container";
+          container.style.cssText = "position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;max-width:400px;";
+          document.body.appendChild(container);
+        }
+
+        let alert = document.createElement("div");
+        alert.id = alertId;
+        alert.style.cssText = `
+          background: ${bgColor};
+          border: 1px solid ${borderColor};
+          border-radius: 8px;
+          padding: 12px 16px;
+          color: var(--text);
+          font-size: 13px;
+          font-weight: 500;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+          animation: slideIn 0.3s ease-out;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        `;
+        alert.innerHTML = `
+          <span style="color: ${textColor}; font-size: 18px; flex-shrink: 0; margin-top: 1px;">${icon}</span>
+          <div style="flex: 1; line-height: 1.5;">
+            <div style="color: ${textColor}; font-weight: 600; margin-bottom: 2px;">${type === "error" ? "Upload Error" : type === "success" ? "Success" : "Info"}</div>
+            <div style="color: var(--text2); font-size: 12px;">${message}</div>
+          </div>
+          <button onclick="document.getElementById('${alertId}').remove()" style="
+            background: none;
+            border: none;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            flex-shrink: 0;
+            transition: color 0.2s;
+          " onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">×</button>
+        `;
+
+        container.appendChild(alert);
+
+        // Add animation styles
+        if (!document.getElementById("alert-animations")) {
+          let style = document.createElement("style");
+          style.id = "alert-animations";
+          style.textContent = `
+            @keyframes slideIn {
+              from { transform: translateX(400px); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+              from { transform: translateX(0); opacity: 1; }
+              to { transform: translateX(400px); opacity: 0; }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+
+        if (duration > 0) {
+          setTimeout(() => {
+            alert.style.animation = "slideOut 0.3s ease-out forwards";
+            setTimeout(() => alert.remove(), 300);
+          }, duration);
+        }
+      }
+
       async function uploadGuardrailReport(input) {
         const file = input.files[0];
         if (!file) return;
@@ -16071,11 +16148,12 @@
             grSelectedFile = result.filename;
             await loadGuardrailReports();
             loadGuardrailReport(result.filename);
+            showAlert(`Report uploaded successfully: ${result.filename || ""}`, "success", 4000);
           } else {
-            alert("Upload failed: " + (result.error || "Unknown error"));
+            showAlert(result.error || "Unknown error", "error", 5000);
           }
         } catch (err) {
-          alert("Invalid JSON file: " + err.message);
+          showAlert("Invalid JSON file: " + err.message, "error", 5000);
         }
         input.value = "";
       }
