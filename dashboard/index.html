@@ -6612,6 +6612,21 @@
           .querySelector(".app-shell")
           ?.classList.remove("nav-mobile-open");
 
+        // Update URL hash when switching tabs
+        const hashMap = {
+          dashboard: "#/dashboard",
+          runs: "#/runs",
+          newscan: "#/newscan",
+          reports: "#/reports",
+          risk: "#/risk",
+          compliance: "#/compliance",
+          audit: "#/audit",
+          guardrails: "#/guardrails",
+        };
+        if (hashMap[tab] && location.hash !== hashMap[tab]) {
+          location.hash = hashMap[tab];
+        }
+
         // Clear guardrails selection when switching away from guardrails tab
         if (tab !== "guardrails") {
           grSelectedFile = null;
