@@ -9,9 +9,9 @@
         /* ═══ LIGHT THEME — clean, professional with warm & cool accents ═══ */
         --bg: #f2f5fa;
         --bg2: #ffffff;
-        --surface: rgba(255, 255, 255, 0.92);
-        --surface2: rgba(240, 244, 250, 0.95);
-        --surface3: rgba(228, 234, 244, 0.95);
+        --surface: #ffffff;
+        --surface2: #f4f6fa;
+        --surface3: #e9eef6;
         --border: rgba(20, 45, 90, 0.14);
         --border-hover: rgba(37, 99, 235, 0.42);
         --text: #1a2433;
@@ -120,40 +120,7 @@
       }
       body {
         background: var(--bg);
-        background-image:
-          /* faint grid */
-          linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px),
-          /* soft ambient tints */
-          radial-gradient(
-            ellipse 70% 55% at 12% -8%,
-            rgba(124, 58, 237, 0.06),
-            transparent 60%
-          ),
-          radial-gradient(
-            ellipse 60% 50% at 88% 0%,
-            rgba(37, 99, 235, 0.05),
-            transparent 55%
-          ),
-          radial-gradient(
-            ellipse 70% 55% at 92% 92%,
-            rgba(219, 39, 119, 0.04),
-            transparent 60%
-          ),
-          radial-gradient(
-            ellipse 80% 60% at 30% 110%,
-            rgba(5, 150, 105, 0.04),
-            transparent 60%
-          ),
-          linear-gradient(180deg, #f7f9fc 0%, #f2f5fa 50%, #ebeff7 100%);
-        background-size:
-          44px 44px,
-          44px 44px,
-          100% 100%,
-          100% 100%,
-          100% 100%,
-          100% 100%,
-          100% 100%;
+        background-image: linear-gradient(180deg, #f7f9fc 0%, #f2f5fa 100%);
         background-attachment: fixed;
         color: var(--text);
         font-family:
@@ -601,46 +568,10 @@
         transform-style: preserve-3d;
         will-change: transform;
       }
-      /* Shine layer that follows mouse */
-      .c-metric-card::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: var(--r-xl);
-        background: radial-gradient(
-          circle at var(--mx, 50%) var(--my, 50%),
-          rgba(15,30,60,0.12) 0%,
-          transparent 60%
-        );
-        pointer-events: none;
-        z-index: 2;
-        transition: opacity 0.3s;
-        opacity: 0;
-      }
-      .c-metric-card:hover::before { opacity: 1; }
-      .c-metric-card::after {
-        content: "";
-        position: absolute;
-        top: -40%;
-        right: -30%;
-        width: 160px;
-        height: 160px;
-        background: radial-gradient(
-          circle,
-          color-mix(in srgb, var(--mc, var(--accent)) 22%, transparent),
-          transparent 70%
-        );
-        opacity: 0.6;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-      }
       .c-metric-card:hover {
         border-color: color-mix(in srgb, var(--mc, var(--accent)) 45%, transparent);
-        box-shadow:
-          0 20px 40px rgba(20,35,60,0.15),
-          0 0 30px color-mix(in srgb, var(--mc, var(--accent)) 28%, transparent);
+        box-shadow: 0 8px 24px rgba(20, 35, 60, 0.08);
       }
-      .c-metric-card:hover::after { opacity: 1; }
 
       .c-metric-icon {
         display: flex;
@@ -1307,34 +1238,9 @@
         --rail-w: 248px;
         width: var(--rail-w);
         flex-shrink: 0;
-        background:
-          linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.92) 0%,
-            rgba(250, 252, 254, 0.95) 55%,
-            rgba(245, 248, 252, 0.97) 100%
-          );
-        background-image:
-          radial-gradient(
-            ellipse 120% 40% at 0% 0%,
-            rgba(124, 58, 237, 0.1),
-            transparent 70%
-          ),
-          radial-gradient(
-            ellipse 120% 30% at 0% 100%,
-            rgba(37, 99, 235, 0.07),
-            transparent 70%
-          ),
-          linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.92) 0%,
-            rgba(250, 252, 254, 0.95) 55%,
-            rgba(245, 248, 252, 0.97) 100%
-          );
-        backdrop-filter: blur(18px) saturate(1.4);
-        -webkit-backdrop-filter: blur(18px) saturate(1.4);
+        background: #fbfcfe;
         border-right: 1px solid var(--border);
-        box-shadow: 1px 0 0 rgba(124, 58, 237, 0.08), 8px 0 40px rgba(20, 35, 60, 0.15);
+        box-shadow: 2px 0 12px rgba(20, 35, 60, 0.04);
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -1371,7 +1277,7 @@
         color: #fff;
         letter-spacing: -0.5px;
         box-shadow:
-          0 4px 16px rgba(124, 58, 237, 0.45),
+          0 2px 8px rgba(124, 58, 237, 0.25),
           inset 0 1px 0 rgba(255, 255, 255, 0.25);
         position: relative;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
@@ -1385,7 +1291,7 @@
       .nav-rail-brand:hover .nav-rail-brand-icon {
         transform: scale(1.08) rotate(-3deg);
         box-shadow:
-          0 6px 26px rgba(124, 58, 237, 0.6),
+          0 3px 12px rgba(124, 58, 237, 0.3),
           inset 0 1px 0 rgba(255, 255, 255, 0.3);
       }
       .nav-rail-brand-text {
@@ -1471,7 +1377,7 @@
           );
         border: 1px solid rgba(124, 58, 237, 0.4);
         box-shadow:
-          0 0 20px rgba(124, 58, 237, 0.28),
+          0 1px 4px rgba(124, 58, 237, 0.15),
           inset 0 1px 0 rgba(15, 30, 60, 0.1);
       }
       .nav-item.active svg {
@@ -4907,12 +4813,10 @@
         letter-spacing: 0.2px;
       }
 
-      /* ── Cards / Sections: glassy surface, glowing top edge, deep lift ── */
+      /* ── Cards / Sections: clean flat surface, soft lift ── */
       .section {
         position: relative;
-        background:
-          linear-gradient(180deg, rgba(15, 30, 60, 0.022), transparent 140px),
-          var(--surface);
+        background: var(--surface);
         border-radius: var(--r-2xl);
         box-shadow: var(--premium-glow);
         transition:
@@ -4954,9 +4858,7 @@
       .stat {
         position: relative;
         overflow: hidden;
-        background:
-          linear-gradient(180deg, rgba(15, 30, 60, 0.025), transparent 60%),
-          var(--surface);
+        background: var(--surface);
         border-radius: var(--r-xl);
         padding: 20px 18px;
         box-shadow: var(--shadow-sm);
@@ -6331,35 +6233,11 @@
 
       // ── 3D floating card effect ──
       (function init3DCards() {
-        const MAX_TILT = 12; // degrees
-
+        // 3D tilt disabled for the clean light theme — cards keep their
+        // CSS hover treatment (border + soft shadow) only.
         function attachCard(card) {
           if (card._3d) return;
           card._3d = true;
-
-          card.addEventListener("mousemove", function (e) {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const cx = rect.width / 2;
-            const cy = rect.height / 2;
-            const rx = ((y - cy) / cy) * -MAX_TILT;
-            const ry = ((x - cx) / cx) * MAX_TILT;
-            card.style.transform = "rotateX(" + rx + "deg) rotateY(" + ry + "deg) translateZ(8px)";
-            card.style.transition = "transform 0.05s linear, border-color 0.08s, box-shadow 0.08s";
-            // Move shine spot
-            card.style.setProperty("--mx", (x / rect.width * 100) + "%");
-            card.style.setProperty("--my", (y / rect.height * 100) + "%");
-          });
-
-          card.addEventListener("mouseleave", function () {
-            card.style.transform = "rotateX(0deg) rotateY(0deg) translateZ(0px)";
-            card.style.transition = "transform 0.4s cubic-bezier(0.4,0,0.2,1), border-color 0.3s, box-shadow 0.3s";
-          });
-
-          card.addEventListener("mouseenter", function () {
-            card.style.transition = "transform 0.05s linear, border-color 0.08s, box-shadow 0.08s";
-          });
         }
 
         // Attach to existing + dynamically added cards
