@@ -31,7 +31,7 @@ This framework is intended for **authorized security testing only**. Users must:
 
 ## Enforcement
 
-Project maintainers may remove, edit, or reject contributions that violate this code. Instances of abusive behavior may be reported to the project maintainers.
+Project maintainers may remove, edit, or reject contributions that violate this code. Instances of abusive behavior may be reported privately to any maintainer listed in [MAINTAINERS.md](MAINTAINERS.md). Reports will be reviewed promptly and kept confidential.
 
 ## Attribution
 

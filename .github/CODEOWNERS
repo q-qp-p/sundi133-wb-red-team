@@ -1,0 +1,10 @@
+# Default owners for everything in the repo.
+# See MAINTAINERS.md for roles. Later rules take precedence.
+*                           @sundi133 @saivarmadpr
+
+# Governance and policy files need lead maintainer review
+/GOVERNANCE.md              @sundi133
+/MAINTAINERS.md             @sundi133
+/SECURITY.md                @sundi133
+/LICENSE                    @sundi133
+/.github/                   @sundi133
