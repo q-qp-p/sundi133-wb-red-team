@@ -11,6 +11,7 @@ import AuditPage from "@/pages/AuditPage";
 import GuardrailsPage from "@/pages/GuardrailsPage";
 import DatasetsPage from "@/pages/DatasetsPage";
 import EvaluationsPage, { EvaluationRunPage } from "@/pages/EvaluationsPage";
+import ScanComparePage from "@/pages/ScanComparePage";
 
 export function App() {
   return (
@@ -22,6 +23,7 @@ export function App() {
             <Route path="/scans" element={<RunsPage />} />
             <Route path="/new-scan" element={<NewScanPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/reports/compare" element={<ScanComparePage />} />
             <Route path="/reports/:filename" element={<ReportsPage />} />
             <Route path="/risk" element={<RiskPage />} />
             <Route path="/compliance" element={<CompliancePage />} />

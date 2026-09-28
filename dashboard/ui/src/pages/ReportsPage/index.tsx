@@ -6,10 +6,10 @@ import { promoteFinding } from "@/api/datasets";
 import {
   diffReports,
   findPreviousReport,
-  type DiffAttack,
   type ReportDiff,
 } from "@/lib/report-diff";
 import { TrendChart, type TrendPoint } from "@/components/shared/TrendChart";
+import { getAttackName, getCategory, reportToAttacks } from "@/lib/report-attacks";
 import type { ReportMeta, FullReport, ReportResult, ReportSummary, ComplianceResult, UsageSummary } from "@/api/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ScoreRing } from "@/components/shared/ScoreRing";
@@ -60,6 +60,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  GitCompareArrows,
   Cpu,
   Coins,
   Hash,
@@ -222,39 +223,12 @@ function getReportStats(report: FullReport) {
   };
 }
 
-/** Get the display name for a result's attack */
-function getAttackName(result: ReportResult): string {
-  const atk = result.attack;
-  if (typeof atk === "object" && atk !== null) return (atk as Record<string, unknown>).name as string ?? "Unknown";
-  if (typeof atk === "string") return atk;
-  return result.attackName ?? "Unknown";
-}
-
-/** Get category from result, falling back to attack object */
-function getCategory(result: ReportResult): string {
-  if (result.category) return result.category;
-  const atk = result.attack;
-  if (typeof atk === "object" && atk !== null) return (atk as Record<string, unknown>).category as string ?? "";
-  return "";
-}
-
 /** Get severity from result, falling back to attack object */
 function getSeverity(result: ReportResult): string {
   if (result.severity) return result.severity;
   const atk = result.attack;
   if (typeof atk === "object" && atk !== null) return (atk as Record<string, unknown>).severity as string ?? "";
   return "";
-}
-
-/** Flatten a report's attacks across all rounds into the diff shape. */
-function reportAttacks(rep: FullReport): DiffAttack[] {
-  return (rep.rounds ?? [])
-    .flatMap((r) => r.results ?? [])
-    .map((res) => ({
-      category: getCategory(res),
-      name: getAttackName(res),
-      verdict: res.verdict,
-    }));
 }
 
 /** Get the round number from a round object */
@@ -357,15 +331,22 @@ function ReportsGrid() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Search */}
-      <div>
+      {/* Search + compare */}
+      <div className="flex items-center gap-3">
         <input
           type="text"
           placeholder="Search reports..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-md px-4 py-2.5 rounded-lg border border-border bg-card text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
+          className="flex-1 max-w-md px-4 py-2.5 rounded-lg border border-border bg-card text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
         />
+        <button
+          onClick={() => navigate("/reports/compare")}
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-muted transition-colors shrink-0"
+        >
+          <GitCompareArrows className="w-4 h-4" />
+          Compare
+        </button>
       </div>
 
       {reports.length === 0 ? (
@@ -1099,7 +1080,7 @@ function ReportDetail({ filename }: { filename: string }) {
         const prevFull = await getReport(prev.filename, false);
         if (cancelled) return;
         setPrevMeta(prev);
-        setDiff(diffReports(reportAttacks(prevFull), reportAttacks(report)));
+        setDiff(diffReports(reportToAttacks(prevFull), reportToAttacks(report)));
       })
       .catch(() => {
         /* comparison is best-effort */
