@@ -9,6 +9,7 @@ import {
   type DiffAttack,
   type ReportDiff,
 } from "@/lib/report-diff";
+import { TrendChart, type TrendPoint } from "@/components/shared/TrendChart";
 import type { ReportMeta, FullReport, ReportResult, ReportSummary, ComplianceResult, UsageSummary } from "@/api/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ScoreRing } from "@/components/shared/ScoreRing";
@@ -1024,6 +1025,8 @@ function ReportDetail({ filename }: { filename: string }) {
   // "vs previous scan" comparison against the last scan of the same target.
   const [diff, setDiff] = useState<ReportDiff | null>(null);
   const [prevMeta, setPrevMeta] = useState<ReportMeta | null>(null);
+  // Score-over-time series for this target (all its scans).
+  const [trend, setTrend] = useState<TrendPoint[]>([]);
   const perPage = 25;
 
   // Fetch the deterministic compliance mapping so each finding can show the
@@ -1048,6 +1051,7 @@ function ReportDetail({ filename }: { filename: string }) {
     setLoading(true);
     setDiff(null);
     setPrevMeta(null);
+    setTrend([]);
     getReport(filename, false)
       .then((r) => {
         if (!cancelled) setReport(r);
@@ -1069,6 +1073,23 @@ function ReportDetail({ filename }: { filename: string }) {
     let cancelled = false;
     getReportsMeta(1, 200)
       .then(async (res) => {
+        const target = (report.targetUrl || "").trim();
+        // Score-over-time series for this target (chronological).
+        const series: TrendPoint[] = res.items
+          .filter((r) => (r.targetUrl || "").trim() === target)
+          .slice()
+          .sort(
+            (a, b) =>
+              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+          )
+          .map((r) => ({
+            date: r.timestamp,
+            score: r.score,
+            vulns: r.passed,
+            total: r.totalAttacks,
+          }));
+        if (!cancelled) setTrend(series);
+
         const prev = findPreviousReport(res.items, {
           filename,
           targetUrl: report.targetUrl,
@@ -1293,6 +1314,24 @@ function ReportDetail({ filename }: { filename: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Score trend for this target ── */}
+      {trend.length >= 2 && (
+        <Card className="no-print">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              Score over time
+              <span className="text-xs font-normal text-muted-foreground">
+                {trend.length} scans of this target
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 overflow-x-auto">
+            <TrendChart data={trend} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Verdict legend ── */}
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
