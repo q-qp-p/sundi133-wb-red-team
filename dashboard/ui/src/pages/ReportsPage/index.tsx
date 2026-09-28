@@ -3,6 +3,12 @@ import { useParams, useNavigate } from "react-router";
 import { getReportsMeta, getReport } from "@/api/reports";
 import { getStaticCompliance } from "@/api/compliance";
 import { promoteFinding } from "@/api/datasets";
+import {
+  diffReports,
+  findPreviousReport,
+  type DiffAttack,
+  type ReportDiff,
+} from "@/lib/report-diff";
 import type { ReportMeta, FullReport, ReportResult, ReportSummary, ComplianceResult, UsageSummary } from "@/api/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ScoreRing } from "@/components/shared/ScoreRing";
@@ -50,6 +56,9 @@ import {
   FileDown,
   Printer,
   Loader2,
+  TrendingUp,
+  TrendingDown,
+  Minus,
   Cpu,
   Coins,
   Hash,
@@ -234,6 +243,17 @@ function getSeverity(result: ReportResult): string {
   const atk = result.attack;
   if (typeof atk === "object" && atk !== null) return (atk as Record<string, unknown>).severity as string ?? "";
   return "";
+}
+
+/** Flatten a report's attacks across all rounds into the diff shape. */
+function reportAttacks(rep: FullReport): DiffAttack[] {
+  return (rep.rounds ?? [])
+    .flatMap((r) => r.results ?? [])
+    .map((res) => ({
+      category: getCategory(res),
+      name: getAttackName(res),
+      verdict: res.verdict,
+    }));
 }
 
 /** Get the round number from a round object */
@@ -1001,6 +1021,9 @@ function ReportDetail({ filename }: { filename: string }) {
   const [complianceByCategory, setComplianceByCategory] = useState<
     Map<string, ComplianceControlRef[]>
   >(new Map());
+  // "vs previous scan" comparison against the last scan of the same target.
+  const [diff, setDiff] = useState<ReportDiff | null>(null);
+  const [prevMeta, setPrevMeta] = useState<ReportMeta | null>(null);
   const perPage = 25;
 
   // Fetch the deterministic compliance mapping so each finding can show the
@@ -1023,6 +1046,8 @@ function ReportDetail({ filename }: { filename: string }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setDiff(null);
+    setPrevMeta(null);
     getReport(filename, false)
       .then((r) => {
         if (!cancelled) setReport(r);
@@ -1037,6 +1062,31 @@ function ReportDetail({ filename }: { filename: string }) {
       cancelled = true;
     };
   }, [filename]);
+
+  // Compare against the previous scan of the same target (non-blocking).
+  useEffect(() => {
+    if (!report) return;
+    let cancelled = false;
+    getReportsMeta(1, 200)
+      .then(async (res) => {
+        const prev = findPreviousReport(res.items, {
+          filename,
+          targetUrl: report.targetUrl,
+          timestamp: report.timestamp,
+        });
+        if (!prev || cancelled) return;
+        const prevFull = await getReport(prev.filename, false);
+        if (cancelled) return;
+        setPrevMeta(prev);
+        setDiff(diffReports(reportAttacks(prevFull), reportAttacks(report)));
+      })
+      .catch(() => {
+        /* comparison is best-effort */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filename, report]);
 
   if (loading) {
     return (
@@ -1164,6 +1214,51 @@ function ReportDetail({ filename }: { filename: string }) {
         <h1 className="text-lg font-bold text-foreground">{report.targetUrl}</h1>
         <p className="text-xs text-muted-foreground mt-0.5">{fmtDate(report.timestamp)}</p>
       </div>
+
+      {/* ── vs previous scan ── */}
+      {diff && prevMeta && (() => {
+        const scoreDelta = stats.score - prevMeta.score;
+        const DeltaIcon = scoreDelta > 0 ? TrendingUp : scoreDelta < 0 ? TrendingDown : Minus;
+        const deltaTone =
+          scoreDelta > 0
+            ? "text-emerald-600 dark:text-emerald-400"
+            : scoreDelta < 0
+              ? "text-red-600 dark:text-red-400"
+              : "text-muted-foreground";
+        return (
+          <div className="rounded-xl border border-border bg-card px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-2 no-print">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              vs previous scan
+            </span>
+            <span className={`inline-flex items-center gap-1 text-sm font-semibold ${deltaTone}`}>
+              <DeltaIcon className="w-4 h-4" />
+              {scoreDelta > 0 ? "+" : ""}
+              {scoreDelta} score
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-sm">
+              <span className={`font-semibold tabular-nums ${diff.regressions.length > 0 ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>
+                {diff.regressions.length}
+              </span>
+              <span className="text-muted-foreground">regressed</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-sm">
+              <span className={`font-semibold tabular-nums ${diff.fixes.length > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
+                {diff.fixes.length}
+              </span>
+              <span className="text-muted-foreground">fixed</span>
+            </span>
+            {diff.added.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                <span className="font-semibold tabular-nums text-foreground">{diff.added.length}</span>
+                new test{diff.added.length === 1 ? "" : "s"}
+              </span>
+            )}
+            <span className="ml-auto text-[11px] text-muted-foreground">
+              baseline: {fmtDate(prevMeta.timestamp)}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* ── Score + Stats row ── */}
       <Card>

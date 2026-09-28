@@ -41,12 +41,12 @@ export function TopBar() {
     : "?";
 
   return (
-    <header className="h-14 shrink-0 flex items-center gap-4 px-5 border-b border-border bg-white/85">
+    <header className="h-14 shrink-0 flex items-center gap-3 px-5 border-b border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/70 sticky top-0 z-20">
       <button
         onClick={toggleNav}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
-        <Menu className="w-[18px] h-[18px] text-muted-foreground" />
+        <Menu className="w-[18px] h-[18px]" />
       </button>
 
       <h1 className="text-base font-semibold text-foreground tracking-tight">
