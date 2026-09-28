@@ -6,9 +6,11 @@ import { promoteFinding } from "@/api/datasets";
 import {
   diffReports,
   findPreviousReport,
-  type DiffAttack,
   type ReportDiff,
 } from "@/lib/report-diff";
+import { TrendChart, type TrendPoint } from "@/components/shared/TrendChart";
+import { getAttackName, getCategory, reportToAttacks } from "@/lib/report-attacks";
+import { buildDeveloperReport } from "@/lib/report-export";
 import type { ReportMeta, FullReport, ReportResult, ReportSummary, ComplianceResult, UsageSummary } from "@/api/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ScoreRing } from "@/components/shared/ScoreRing";
@@ -59,6 +61,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  GitCompareArrows,
   Cpu,
   Coins,
   Hash,
@@ -221,39 +224,12 @@ function getReportStats(report: FullReport) {
   };
 }
 
-/** Get the display name for a result's attack */
-function getAttackName(result: ReportResult): string {
-  const atk = result.attack;
-  if (typeof atk === "object" && atk !== null) return (atk as Record<string, unknown>).name as string ?? "Unknown";
-  if (typeof atk === "string") return atk;
-  return result.attackName ?? "Unknown";
-}
-
-/** Get category from result, falling back to attack object */
-function getCategory(result: ReportResult): string {
-  if (result.category) return result.category;
-  const atk = result.attack;
-  if (typeof atk === "object" && atk !== null) return (atk as Record<string, unknown>).category as string ?? "";
-  return "";
-}
-
 /** Get severity from result, falling back to attack object */
 function getSeverity(result: ReportResult): string {
   if (result.severity) return result.severity;
   const atk = result.attack;
   if (typeof atk === "object" && atk !== null) return (atk as Record<string, unknown>).severity as string ?? "";
   return "";
-}
-
-/** Flatten a report's attacks across all rounds into the diff shape. */
-function reportAttacks(rep: FullReport): DiffAttack[] {
-  return (rep.rounds ?? [])
-    .flatMap((r) => r.results ?? [])
-    .map((res) => ({
-      category: getCategory(res),
-      name: getAttackName(res),
-      verdict: res.verdict,
-    }));
 }
 
 /** Get the round number from a round object */
@@ -356,15 +332,22 @@ function ReportsGrid() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Search */}
-      <div>
+      {/* Search + compare */}
+      <div className="flex items-center gap-3">
         <input
           type="text"
           placeholder="Search reports..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-md px-4 py-2.5 rounded-lg border border-border bg-card text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
+          className="flex-1 max-w-md px-4 py-2.5 rounded-lg border border-border bg-card text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
         />
+        <button
+          onClick={() => navigate("/reports/compare")}
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-muted transition-colors shrink-0"
+        >
+          <GitCompareArrows className="w-4 h-4" />
+          Compare
+        </button>
       </div>
 
       {reports.length === 0 ? (
@@ -1008,6 +991,262 @@ function UsageTable({
   );
 }
 
+/* ─── Executive summary (one-page, non-technical) ─── */
+
+function sevRank(s: string): number {
+  switch ((s || "").toLowerCase()) {
+    case "critical": return 4;
+    case "high": return 3;
+    case "medium": return 2;
+    case "low": return 1;
+    default: return 0;
+  }
+}
+function prettyLabel(s: string): string {
+  return (s || "").replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+function postureVerdict(score: number): { label: string; tone: string } {
+  if (score >= 80) return { label: "Strong", tone: "text-emerald-600 dark:text-emerald-400" };
+  if (score >= 60) return { label: "Moderate", tone: "text-amber-600 dark:text-amber-400" };
+  if (score >= 40) return { label: "Weak", tone: "text-orange-600 dark:text-orange-400" };
+  return { label: "Critical", tone: "text-red-600 dark:text-red-400" };
+}
+
+function ExecutiveSummary({
+  report,
+  score,
+  results,
+  compliance,
+  complianceByCategory,
+  diff,
+  prevMeta,
+}: {
+  report: FullReport;
+  score: number;
+  results: ReportResult[];
+  compliance: ComplianceResult[];
+  complianceByCategory: Map<string, ComplianceControlRef[]>;
+  diff: ReportDiff | null;
+  prevMeta: ReportMeta | null;
+}) {
+  const vulns = results.filter((r) => (r.verdict || "").toUpperCase() === "PASS");
+  const verdict = postureVerdict(score);
+
+  // Severity distribution of the vulnerabilities.
+  const sevOrder = ["critical", "high", "medium", "low"] as const;
+  const sevCounts: Record<string, number> = {};
+  for (const v of vulns) {
+    const s = (getSeverity(v) || "unknown").toLowerCase();
+    sevCounts[s] = (sevCounts[s] ?? 0) + 1;
+  }
+  const sevTone: Record<string, string> = {
+    critical: "text-red-600 dark:text-red-400",
+    high: "text-red-600 dark:text-red-400",
+    medium: "text-amber-600 dark:text-amber-400",
+    low: "text-muted-foreground",
+  };
+
+  // Compliance scorecard — per framework, how many controls are vulnerable.
+  const fwMap = new Map<string, { vulnerable: number; atRisk: number; total: number }>();
+  for (const c of compliance) {
+    const e = fwMap.get(c.framework) ?? { vulnerable: 0, atRisk: 0, total: 0 };
+    e.total++;
+    if (c.status === "vulnerable") e.vulnerable++;
+    else if (c.status === "at_risk") e.atRisk++;
+    fwMap.set(c.framework, e);
+  }
+  const frameworks = [...fwMap.entries()]
+    .map(([framework, v]) => ({ framework, ...v }))
+    .sort((a, b) => b.vulnerable - a.vulnerable || b.atRisk - a.atRisk);
+
+  // Top risks — worst vulnerabilities first.
+  const topRisks = [...vulns]
+    .sort((a, b) => sevRank(getSeverity(b)) - sevRank(getSeverity(a)))
+    .slice(0, 5);
+
+  // Program recommendations — the most-affected categories.
+  const catCounts = new Map<string, number>();
+  for (const v of vulns) {
+    const c = getCategory(v) || "uncategorized";
+    catCounts.set(c, (catCounts.get(c) ?? 0) + 1);
+  }
+  const topCats = [...catCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+  return (
+    <div className="space-y-5">
+      {/* Posture */}
+      <Card>
+        <CardContent className="py-5 flex items-center gap-6 flex-wrap">
+          <div className="flex flex-col items-center">
+            <ScoreRing score={score} size={84} />
+            <span className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-1">
+              Security Score
+              <MethodologyInfo topic="both" label="How the score is calculated" />
+            </span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-2">
+              <span className={`text-xl font-bold ${verdict.tone}`}>{verdict.label} posture</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+              Of {results.length} adversarial tests run against{" "}
+              <span className="text-foreground font-medium">{report.targetUrl}</span>,{" "}
+              <span className="text-red-600 dark:text-red-400 font-semibold">{vulns.length}</span>{" "}
+              succeeded (the target was compromised). {frameworks.filter((f) => f.vulnerable > 0).length}{" "}
+              of {frameworks.length} mapped compliance frameworks have at least one vulnerable control.
+            </p>
+            {diff && prevMeta ? (
+              <p className="text-xs text-muted-foreground mt-2">
+                Since the last scan ({fmtDate(prevMeta.timestamp)}): score{" "}
+                <span className={score - prevMeta.score >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+                  {score - prevMeta.score >= 0 ? "+" : ""}{score - prevMeta.score}
+                </span>
+                , {diff.regressions.length} regressed, {diff.fixes.length} fixed.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-2">First scan of this target — no prior baseline.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* Risk distribution */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Risk distribution</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {vulns.length === 0 ? (
+              <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                No successful attacks — the target defended every test.
+              </p>
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {sevOrder.map((s) => (
+                  <div key={s} className="text-center">
+                    <div className={`text-2xl font-bold tabular-nums ${sevTone[s]}`}>
+                      {sevCounts[s] ?? 0}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
+                      {s}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Compliance scorecard */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Compliance exposure</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {frameworks.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Compliance mapping unavailable.</p>
+            ) : (
+              <div className="divide-y divide-border max-h-56 overflow-y-auto">
+                {frameworks.map((f) => (
+                  <div key={f.framework} className="flex items-center gap-2 py-1.5 text-sm">
+                    <span className="flex-1 min-w-0 truncate text-foreground/90" title={f.framework}>
+                      {f.framework}
+                    </span>
+                    {f.vulnerable > 0 ? (
+                      <span className="text-red-600 dark:text-red-400 font-medium tabular-nums shrink-0">
+                        {f.vulnerable} vulnerable
+                      </span>
+                    ) : f.atRisk > 0 ? (
+                      <span className="text-amber-600 dark:text-amber-400 tabular-nums shrink-0">
+                        {f.atRisk} at risk
+                      </span>
+                    ) : (
+                      <span className="text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">
+                        clear
+                      </span>
+                    )}
+                    <span className="text-[11px] text-muted-foreground tabular-nums shrink-0 w-16 text-right">
+                      of {f.total}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top risks */}
+      {topRisks.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Top risks</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 divide-y divide-border">
+            {topRisks.map((r, i) => {
+              const ctrls = complianceByCategory.get(getCategory(r)) ?? [];
+              const sev = getSeverity(r);
+              return (
+                <div key={i} className="flex items-start gap-3 py-2.5">
+                  <span className="text-xs font-bold tabular-nums text-muted-foreground mt-0.5 w-4">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-foreground/90">{getAttackName(r)}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-center rounded-md border border-border bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {prettyLabel(getCategory(r))}
+                      </span>
+                      {ctrls.slice(0, 3).map((c, j) => (
+                        <span
+                          key={j}
+                          className="inline-flex items-center rounded-md border border-border bg-muted/50 px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                          title={`${c.framework} — ${c.title}`}
+                        >
+                          {c.code}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {sev && (
+                    <span className={`text-[11px] font-semibold uppercase shrink-0 ${sevTone[sev.toLowerCase()] ?? "text-muted-foreground"}`}>
+                      {sev}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recommendations */}
+      {topCats.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Recommended focus</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ul className="space-y-2">
+              {topCats.map(([cat, n]) => (
+                <li key={cat} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="text-primary mt-0.5">→</span>
+                  <span>
+                    Prioritize <span className="font-medium text-foreground">{prettyLabel(cat)}</span> —{" "}
+                    {n} successful attack{n === 1 ? "" : "s"}; add guardrails, input validation, and
+                    authorization checks for this class, then re-scan to confirm the fix.
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 function ReportDetail({ filename }: { filename: string }) {
   const navigate = useNavigate();
   const [report, setReport] = useState<FullReport | null>(null);
@@ -1021,9 +1260,14 @@ function ReportDetail({ filename }: { filename: string }) {
   const [complianceByCategory, setComplianceByCategory] = useState<
     Map<string, ComplianceControlRef[]>
   >(new Map());
+  const [complianceResults, setComplianceResults] = useState<ComplianceResult[]>([]);
   // "vs previous scan" comparison against the last scan of the same target.
   const [diff, setDiff] = useState<ReportDiff | null>(null);
   const [prevMeta, setPrevMeta] = useState<ReportMeta | null>(null);
+  // Score-over-time series for this target (all its scans).
+  const [trend, setTrend] = useState<TrendPoint[]>([]);
+  // Audience view: the full technical report vs a one-page executive summary.
+  const [view, setView] = useState<"detailed" | "executive">("detailed");
   const perPage = 25;
 
   // Fetch the deterministic compliance mapping so each finding can show the
@@ -1033,10 +1277,16 @@ function ReportDetail({ filename }: { filename: string }) {
     let cancelled = false;
     getStaticCompliance(filename)
       .then((res) => {
-        if (!cancelled) setComplianceByCategory(buildComplianceByCategory(res.results));
+        if (!cancelled) {
+          setComplianceByCategory(buildComplianceByCategory(res.results));
+          setComplianceResults(res.results);
+        }
       })
       .catch(() => {
-        if (!cancelled) setComplianceByCategory(new Map());
+        if (!cancelled) {
+          setComplianceByCategory(new Map());
+          setComplianceResults([]);
+        }
       });
     return () => {
       cancelled = true;
@@ -1048,6 +1298,7 @@ function ReportDetail({ filename }: { filename: string }) {
     setLoading(true);
     setDiff(null);
     setPrevMeta(null);
+    setTrend([]);
     getReport(filename, false)
       .then((r) => {
         if (!cancelled) setReport(r);
@@ -1069,6 +1320,23 @@ function ReportDetail({ filename }: { filename: string }) {
     let cancelled = false;
     getReportsMeta(1, 200)
       .then(async (res) => {
+        const target = (report.targetUrl || "").trim();
+        // Score-over-time series for this target (chronological).
+        const series: TrendPoint[] = res.items
+          .filter((r) => (r.targetUrl || "").trim() === target)
+          .slice()
+          .sort(
+            (a, b) =>
+              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+          )
+          .map((r) => ({
+            date: r.timestamp,
+            score: r.score,
+            vulns: r.passed,
+            total: r.totalAttacks,
+          }));
+        if (!cancelled) setTrend(series);
+
         const prev = findPreviousReport(res.items, {
           filename,
           targetUrl: report.targetUrl,
@@ -1078,7 +1346,7 @@ function ReportDetail({ filename }: { filename: string }) {
         const prevFull = await getReport(prev.filename, false);
         if (cancelled) return;
         setPrevMeta(prev);
-        setDiff(diffReports(reportAttacks(prevFull), reportAttacks(report)));
+        setDiff(diffReports(reportToAttacks(prevFull), reportToAttacks(report)));
       })
       .catch(() => {
         /* comparison is best-effort */
@@ -1152,8 +1420,38 @@ function ReportDetail({ filename }: { filename: string }) {
   // Partial count
   const partialCount = allResults.filter((r) => r.verdict === "PARTIAL").length;
 
+  // Structured, machine-readable developer report (findings + mapped controls).
+  const downloadDevReport = () => {
+    const dev = buildDeveloperReport({
+      target: report.targetUrl,
+      timestamp: report.timestamp,
+      score: stats.score,
+      findings: allResults.map((r) => ({
+        attack: getAttackName(r),
+        category: getCategory(r),
+        severity: getSeverity(r),
+        verdict: r.verdict,
+        controls: (complianceByCategory.get(getCategory(r)) ?? []).map((c) => ({
+          framework: c.framework,
+          code: c.code,
+          title: c.title,
+        })),
+        evidence: (r.llmReasoning || r.reasoning || r.findings?.[0] || "").slice(0, 500),
+      })),
+    });
+    const blob = new Blob([JSON.stringify(dev, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dev-report-${filename.replace(/\.json$/i, "")}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto space-y-5">
+    <div className="max-w-7xl mx-auto space-y-5" data-report-view={view}>
       {/* Back + Header */}
       <div className="flex items-center justify-between">
         <button
@@ -1181,10 +1479,20 @@ function ReportDetail({ filename }: { filename: string }) {
             CSV
           </a>
           <button
+            onClick={downloadDevReport}
+            title="Structured developer report: findings + mapped compliance controls (JSON)"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Dev report
+          </button>
+          <button
             disabled={preparingPdf}
             onClick={() => {
               setPreparingPdf(true);
-              // Give browser time to render the full table before opening print
+              // Give browser time to render before opening print. The print
+              // output follows the current view (executive vs detailed) via the
+              // data-report-view scoping in theme.css.
               requestAnimationFrame(() => {
                 setTimeout(() => {
                   window.print();
@@ -1202,7 +1510,7 @@ function ReportDetail({ filename }: { filename: string }) {
             ) : (
               <>
                 <Printer className="w-3.5 h-3.5" />
-                PDF
+                {view === "executive" ? "Executive PDF" : "PDF"}
               </>
             )}
           </button>
@@ -1294,6 +1602,56 @@ function ReportDetail({ filename }: { filename: string }) {
         </CardContent>
       </Card>
 
+      {/* ── Score trend for this target ── */}
+      {trend.length >= 2 && (
+        <Card className="no-print">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              Score over time
+              <span className="text-xs font-normal text-muted-foreground">
+                {trend.length} scans of this target
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 overflow-x-auto">
+            <TrendChart data={trend} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Audience view toggle ── */}
+      <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1 w-fit no-print">
+        {(["detailed", "executive"] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setView(v)}
+            className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              view === v
+                ? "bg-background text-foreground shadow-sm ring-1 ring-border"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {v === "detailed" ? "Detailed" : "Executive"}
+          </button>
+        ))}
+      </div>
+
+      {view === "executive" && (
+        <ExecutiveSummary
+          report={report}
+          score={stats.score}
+          results={allResults}
+          compliance={complianceResults}
+          complianceByCategory={complianceByCategory}
+          diff={diff}
+          prevMeta={prevMeta}
+        />
+      )}
+
+      {view === "detailed" && (
+      <>
       {/* ── Verdict legend ── */}
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
@@ -1559,6 +1917,9 @@ function ReportDetail({ filename }: { filename: string }) {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      </>
       )}
 
       {/* ── Print-only: ALL attacks from all rounds (hidden on screen, visible in print) ── */}
