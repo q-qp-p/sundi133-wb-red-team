@@ -10,6 +10,7 @@ import {
 } from "@/lib/report-diff";
 import { TrendChart, type TrendPoint } from "@/components/shared/TrendChart";
 import { getAttackName, getCategory, reportToAttacks } from "@/lib/report-attacks";
+import { buildDeveloperReport } from "@/lib/report-export";
 import type { ReportMeta, FullReport, ReportResult, ReportSummary, ComplianceResult, UsageSummary } from "@/api/types";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ScoreRing } from "@/components/shared/ScoreRing";
@@ -1419,8 +1420,38 @@ function ReportDetail({ filename }: { filename: string }) {
   // Partial count
   const partialCount = allResults.filter((r) => r.verdict === "PARTIAL").length;
 
+  // Structured, machine-readable developer report (findings + mapped controls).
+  const downloadDevReport = () => {
+    const dev = buildDeveloperReport({
+      target: report.targetUrl,
+      timestamp: report.timestamp,
+      score: stats.score,
+      findings: allResults.map((r) => ({
+        attack: getAttackName(r),
+        category: getCategory(r),
+        severity: getSeverity(r),
+        verdict: r.verdict,
+        controls: (complianceByCategory.get(getCategory(r)) ?? []).map((c) => ({
+          framework: c.framework,
+          code: c.code,
+          title: c.title,
+        })),
+        evidence: (r.llmReasoning || r.reasoning || r.findings?.[0] || "").slice(0, 500),
+      })),
+    });
+    const blob = new Blob([JSON.stringify(dev, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dev-report-${filename.replace(/\.json$/i, "")}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto space-y-5">
+    <div className="max-w-7xl mx-auto space-y-5" data-report-view={view}>
       {/* Back + Header */}
       <div className="flex items-center justify-between">
         <button
@@ -1448,10 +1479,20 @@ function ReportDetail({ filename }: { filename: string }) {
             CSV
           </a>
           <button
+            onClick={downloadDevReport}
+            title="Structured developer report: findings + mapped compliance controls (JSON)"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Dev report
+          </button>
+          <button
             disabled={preparingPdf}
             onClick={() => {
               setPreparingPdf(true);
-              // Give browser time to render the full table before opening print
+              // Give browser time to render before opening print. The print
+              // output follows the current view (executive vs detailed) via the
+              // data-report-view scoping in theme.css.
               requestAnimationFrame(() => {
                 setTimeout(() => {
                   window.print();
@@ -1469,7 +1510,7 @@ function ReportDetail({ filename }: { filename: string }) {
             ) : (
               <>
                 <Printer className="w-3.5 h-3.5" />
-                PDF
+                {view === "executive" ? "Executive PDF" : "PDF"}
               </>
             )}
           </button>

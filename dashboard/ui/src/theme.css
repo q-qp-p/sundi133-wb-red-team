@@ -147,6 +147,11 @@
   .print-only {
     display: block !important;
   }
+  /* Executive view: print just the one-page summary, not the full findings
+     table (the on-screen executive cards print instead). */
+  [data-report-view="executive"] #print-full-report {
+    display: none !important;
+  }
   /* Full width content */
   main, [data-slot="main-content"] {
     margin: 0 !important;
