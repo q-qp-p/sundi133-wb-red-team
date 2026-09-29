@@ -43,3 +43,8 @@ coverage/
 # OpenShift deploy with real secrets
 openshift/deploy-no-db.yaml
 openshift/deploy.yaml
+
+# Local-only eval/measurement scaffolding (gold set, judge baselines, review sheets)
+eval/
+docs/generator-upgrade-plan.md
+*.bak
