@@ -104,6 +104,7 @@ import { loadConfig } from "./lib/config-loader.js";
 import { describeTarget, getTargetAdapter } from "./lib/target-adapter.js";
 import { analyzeCodebase } from "./lib/codebase-analyzer.js";
 import { planAttacks, refinePartialAttacks } from "./lib/attack-planner.js";
+import { runPairLoopOverSeeds } from "./lib/pair-loop.js";
 import {
   estimatePreRun,
   estimateRun,
@@ -1045,6 +1046,16 @@ async function main() {
 
     // Execute categories with concurrency pool
     await runWithConcurrency(categoryTasks, categoryParallelism);
+
+    // ── Phase 2: adaptive PAIR inner loop (shared with the in-process runner) ──
+    await runPairLoopOverSeeds({
+      config,
+      round,
+      roundResults,
+      appContext,
+      defenseProfiles,
+      onLog: (message) => console.log(`  ${message}`),
+    });
 
     // ── Refinement pass: convert PARTIALs from this round ──
     const roundPartials = roundResults.filter((r) => r.verdict === "PARTIAL");

@@ -629,6 +629,17 @@ export interface Config {
     strategiesPerRound?: number;
     /** Max PARTIAL results to refine per category per round (default: 10). */
     maxRefinementsPerCategory?: number;
+    /** Phase 2 — adaptive PAIR inner loop. When a seed attack FAILs or is PARTIAL,
+     *  feed the target's actual response + judge verdict + observed defense back
+     *  into the SAME attacker conversation and retry, up to maxAdaptiveQueriesPerSeed
+     *  target queries or until PASS. Off by default so it can be A/B'd. */
+    enablePairLoop?: boolean;
+    /** PAIR loop budget: max target queries per seed, including the seed's own
+     *  first execution. Default: 8. */
+    maxAdaptiveQueriesPerSeed?: number;
+    /** PAIR loop cost bound: max non-PASS seeds per category that enter the loop
+     *  each round. Default: 4. */
+    pairLoopMaxSeedsPerCategory?: number;
     /** Minimum LLM judge confidence (0-100) required to keep a PASS verdict. Below this, PASS is downgraded to PARTIAL. Default: 70. */
     judgeConfidenceThreshold?: number;
     /** Skip attack categories whose surface area is not found in the target codebase. Default: true. */
