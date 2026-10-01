@@ -16,8 +16,8 @@ permalink: /
 [View on GitHub](https://github.com/sundi133/wb-red-team){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 <div class="stat-grid">
-  <div><div class="stat-num">141</div><div class="stat-label">Attack Categories</div></div>
-  <div><div class="stat-num">155</div><div class="stat-label">Attack Strategies</div></div>
+  <div><div class="stat-num">167</div><div class="stat-label">Attack Categories</div></div>
+  <div><div class="stat-num">170</div><div class="stat-label">Attack Strategies</div></div>
   <div><div class="stat-num">11</div><div class="stat-label">Compliance Frameworks</div></div>
   <div><div class="stat-num">15</div><div class="stat-label">Max Conversation Turns</div></div>
 </div>
@@ -33,7 +33,7 @@ permalink: /
   <div class="feature-card">
     <span class="feature-icon">🧠</span>
     <h3>LLM-driven planning</h3>
-    <p>Combines 141 categories with 155 strategies and prioritizes the attacks your codebase suggests will actually work.</p>
+    <p>Combines 167 categories with 170 strategies, prioritizes the attacks your codebase suggests will actually work, and re-attacks refused seeds with the adaptive PAIR loop.</p>
   </div>
   <div class="feature-card">
     <span class="feature-icon">🔁</span>
@@ -85,9 +85,9 @@ Three real findings from running against [`demo-agentic-app`](https://github.com
 └─────────────────┘     └─────────────────┘     └─────────────────┘
        │                       │                        │
    discovers:              produces:               executes:
-   • tools                 • attacks tailored      • 141 categories × 155 strategies
-   • roles                   to discovered code    • adaptive re-targeting
-   • guardrails            • policy-aware            on partial successes
+   • tools                 • attacks tailored      • 167 categories × 170 strategies
+   • roles                   to discovered code    • PAIR loop: refused seeds revised
+   • guardrails            • policy-aware            from the target's own reply
    • secrets                 verdicts              • multi-turn escalation
    • call graph                                    • crescendo attacks
                                                           │
@@ -106,9 +106,9 @@ Three real findings from running against [`demo-agentic-app`](https://github.com
 ```
 
 1. **Static analysis** — scans your codebase for tools, roles, guardrails, auth methods, sensitive literals. ~10 seconds for a typical Next.js app.
-2. **Attack planning** — combines 141 attack categories with 155 strategies (encoding, persona, multi-turn, crescendo, authority impersonation, etc.). Prioritizes attacks the codebase suggests will work.
-3. **Adaptive execution** — runs over multiple rounds. Round N+1 doubles down on near-misses from round N. Multi-turn attacks use crescendo escalation with up to 15 conversation turns.
-4. **Policy-driven judging** — every response evaluated by an LLM judge against configurable policy. Categories with high false-positive rates have per-category overrides.
+2. **Attack planning** — combines 167 attack categories with 170 strategies (encoding, persona, multi-turn, crescendo, authority impersonation, agentic tool/guardrail exploitation, etc.). Prioritizes attacks the codebase suggests will work.
+3. **Adaptive execution** — runs over multiple rounds. Round N+1 doubles down on near-misses from round N. Inside each round, the **PAIR loop** re-attacks refused seeds in a single attacker conversation — target reply + judge verdict + observed defense in, one revised attack out — until it lands or the per-seed budget is spent (`enablePairLoop`; see [Configuration]({{ site.baseurl }}/configuration/#adaptive-pair-loop)). Multi-turn attacks use crescendo escalation with up to 15 conversation turns.
+4. **Policy-driven judging** — every response is evaluated by an LLM judge against a configurable policy. Evidence gates are applied by *regime*: leak, credential, access-control, disclosure and inference families must quote the offending output verbatim; behavioural families trust the rubric-guided verdict with a refusal backstop. Measured on a 157-row hand-labelled gold set: precision 0.87, recall 0.77 (strict).
 
 ## Verdicts
 

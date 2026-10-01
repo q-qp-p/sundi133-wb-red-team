@@ -10,11 +10,13 @@
 
 Most LLM red-teaming tools are black-box: they treat your agent as an opaque endpoint and fire generic adversarial prompts at it. That finds the obvious stuff. It does not find the bug where your JWT secret is hardcoded in `lib/auth.ts:47`, or the path through tools `read_file → send_email` that no single-call check would catch.
 
-Red-Team AI is built for that gap. It reads your application's source code first, learns your tools, roles, and guardrails, and then generates attacks tailored to _your_ implementation.
+Red-Team AI is built for that gap. It reads your application's source code first, learns your tools, roles, and guardrails, and then generates attacks tailored to _your_ implementation. When the target refuses, it doesn't move on: the **adaptive PAIR loop** feeds the exact refusal and judge verdict back to the attacker model, revises the attack, and retries until it lands or the budget is spent. Verdicts come from an LLM judge whose evidence gates are tuned per attack family and measured against a hand-labelled gold set.
 
 📖 **Full product documentation:** [docs/index.md](docs/index.md) — comprehensive manual covering configuration, white-box scanning, attack catalog, compliance, deployment, and the extension API.
 
-🖥️ **Dashboard:** Modern React dashboard with shadcn/ui components for scan management, report analysis, risk assessment, and compliance tracking.
+🖥️ **Dashboard:** Modern React dashboard with shadcn/ui components for scan management (including the PAIR loop controls), report analysis, risk assessment, and compliance tracking.
+
+🔁 **Adaptive attacker:** [Adaptive attack loop (PAIR)](#adaptive-attack-loop-pair) — measured **+50% yield** on `google/gemma-4-31b-it` with the same attacker model, 3.4× the real breaks.
 
 ---
 
@@ -99,6 +101,8 @@ npm run demo
 | Builds attacks from the actual tool graph | ❌ | ✅ |
 | Generates compliance-aware reports | sometimes | ✅ |
 | Dashboard with live progress + risk scoring | varies | ✅ |
+| Revises each refused attack from the target's own reply (PAIR loop) | some | ✅ |
+| Judge verdicts gated by verbatim evidence for leak/credential/access families | rare | ✅ |
 
 ---
 
@@ -223,15 +227,17 @@ curl -X POST http://localhost:4200/api/run \
 └─────────────────┘     └─────────────────┘     └─────────────────┘
        │                       │                        │
    discovers:              produces:               executes:
-   • tools                 • attacks tailored      • 141 categories × 155 strategies
-   • roles                   to discovered code    • adaptive re-targeting
-   • guardrails            • policy-aware            on partial successes
+   • tools                 • attacks tailored      • 167 categories × 170 strategies
+   • roles                   to discovered code    • PAIR loop: refused seeds revised
+   • guardrails            • policy-aware            from the target's own reply
    • secrets                 verdicts              • multi-turn escalation
    • call graph                                    • crescendo attacks
                                                           │
                                                           ▼
                                                   ┌─────────────────┐
                                                   │ 4. LLM Judge    │
+                                                  │  + evidence     │
+                                                  │    regimes      │
                                                   │  + Policy       │
                                                   │  + 11 Compliance│
                                                   │    Frameworks   │
@@ -244,95 +250,159 @@ curl -X POST http://localhost:4200/api/run \
 ```
 
 1. **Static analysis** — scans your codebase for tools, roles, guardrails, auth methods, sensitive literals. ~10 seconds for a typical Next.js app.
-2. **Attack planning** — combines 141 attack categories with 155 strategies (encoding, persona, multi-turn, crescendo, authority impersonation, etc.). Prioritizes attacks the codebase suggests will work.
-3. **Adaptive execution** — runs over multiple rounds. Round N+1 doubles down on near-misses from round N. Multi-turn attacks use crescendo escalation with up to 15 conversation turns.
-4. **Policy-driven judging** — every response evaluated by an LLM judge against configurable policy. Categories with high false-positive rates have per-category overrides.
+2. **Attack planning** — combines 167 attack categories with 170 strategies (encoding, persona, multi-turn, crescendo, authority impersonation, agentic tool/guardrail exploitation, etc.). Prioritizes attacks the codebase suggests will work.
+3. **Adaptive execution** — runs over multiple rounds. Round N+1 doubles down on near-misses from round N. Inside each round, the **PAIR loop** re-attacks refused seeds in a single attacker conversation — target reply + judge verdict + observed defense in, one revised attack out — until it lands or the per-seed budget is spent. Multi-turn attacks use crescendo escalation with up to 15 conversation turns.
+4. **Policy-driven judging** — every response is evaluated by an LLM judge against a configurable policy. Evidence gates are applied by *regime*: leak, credential, access-control, disclosure and inference families must quote the offending output verbatim; behavioural families (injection, tool misuse, harm, abuse, misinformation) trust the rubric-guided verdict with a refusal backstop. Accuracy is measured against a hand-labelled gold set — see [Verdicts](#verdicts).
+
+---
+
+## Adaptive attack loop (PAIR)
+
+A single-shot attacker gives up on the first refusal — on a well-defended model that is most of the run. The PAIR loop ([Chao et al., 2023](https://arxiv.org/abs/2310.08419)) keeps one attacker conversation per refused seed: it shows the attacker the target's actual reply, the judge's verdict and reasoning, and the defense profile observed for that category, asks for **one** revised attack, executes and judges it, and repeats until the attack lands or the per-seed budget is spent.
+
+Turn it on in the dashboard (**Launch Scan → Attack configuration → Adaptive PAIR Loop**) or in config:
+
+```json
+{
+  "attackConfig": {
+    "enableLlmGeneration": true,
+    "enablePairLoop": true,
+    "maxAdaptiveQueriesPerSeed": 8,
+    "pairLoopMaxSeedsPerCategory": 4
+  }
+}
+```
+
+Measured on `google/gemma-4-31b-it` (bare model via OpenRouter, `deepseek-v3.2` attacker, `claude-sonnet-4.5` judge, 8 harm/abuse/injection families, September 2026):
+
+|                 | Attacks | Real breaks | Yield     | Families with ≥1 break |
+| --------------- | ------- | ----------- | --------- | ---------------------- |
+| Single-shot     | 108     | 8           | 7.4%      | 5 / 8                  |
+| **+ PAIR loop** | 244     | **27**      | **11.1%** | **7 / 8**              |
+
+59% of the breaks came from seeds the target had already refused once. Each retry costs one extra target query, one attacker call and one judge call; the pre-run forecast and the dashboard progress bar account for it. Loop-produced results carry `pair-<category>-r<round>-q<n>-<seed>` ids and a `→ PAIR q<n>` strategy label so they are traceable in reports. Knobs and defaults: [docs/configuration.md](docs/configuration.md#adaptive-pair-loop); a ready-to-run config is in `config.pair.example.json`.
 
 ---
 
 ## What it tests
 
-**141 attack categories**, organized by what they exploit:
+**167 attack categories**, organized by what they exploit (examples per domain):
 
-| Domain               | Key categories                                                                                                                               | Count |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| **Prompt & Input**   | `prompt_injection`, `indirect_prompt_injection`, `content_filter_bypass`, `instruction_hierarchy_violation`, `universal_adversarial_trigger` | 11    |
-| **Auth & Access**    | `auth_bypass`, `rbac_bypass`, `session_hijacking`, `cross_tenant_access`, `tool_permission_escalation`                                       | 10    |
-| **Data & Privacy**   | `data_exfiltration`, `sensitive_data`, `pii_disclosure`, `steganographic_exfiltration`, `slow_burn_exfiltration`                             | 14    |
-| **Agent & Tool**     | `tool_misuse`, `tool_chain_hijack`, `agentic_workflow_bypass`, `rogue_agent`, `goal_hijack`, `agentic_scope_creep`                           | 13    |
-| **Safety & Content** | `toxic_content`, `harmful_advice`, `misinformation`, `hallucination`, `emotional_manipulation`                                               | 15    |
-| **RAG & Retrieval**  | `rag_poisoning`, `rag_corpus_poisoning`, `vector_store_manipulation`, `retrieval_tenant_bleed`                                               | 9     |
-| **Model Security**   | `model_extraction`, `alignment_faking`, `capability_elicitation`, `reward_hacking`, `backdoor_trigger`                                       | 11    |
-| **Infrastructure**   | `ssrf`, `path_traversal`, `shell_injection`, `sql_injection`, `sandbox_escape`                                                               | 12    |
-| **Supply Chain**     | `supply_chain`, `mcp_server_compromise`, `plugin_manifest_spoofing`                                                                          | 5     |
-| **Compliance**       | `medical_safety`, `financial_compliance`, `insurance_compliance`, `housing_discrimination`                                                   | 10    |
-| **Multimodal**       | `multimodal_ghost_injection`, `streaming_voice_injection`, `cross_modal_conflict`, `computer_use_injection`                                  | 8+    |
+| Domain                       | Key categories                                                                                                                               |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Prompt & Input**           | `prompt_injection`, `indirect_prompt_injection`, `content_filter_bypass`, `instruction_hierarchy_violation`, `universal_adversarial_trigger` |
+| **Auth & Access**            | `auth_bypass`, `rbac_bypass`, `session_hijacking`, `cross_tenant_access`, `tool_permission_escalation`, `multi_turn_privilege_escalation`    |
+| **Data & Privacy**           | `data_exfiltration`, `sensitive_data`, `pii_disclosure`, `steganographic_exfiltration`, `slow_burn_exfiltration`, `staged_exfiltration`      |
+| **Disclosure & Credentials** | `system_prompt_disclosure`, `tool_inventory_disclosure`, `agent_config_disclosure`, `api_key_extraction`, `env_secret_extraction`             |
+| **Agent & Tool**             | `tool_misuse`, `tool_chain_hijack`, `tool_result_injection`, `tool_argument_injection`, `rogue_agent`, `goal_hijack`, `agentic_scope_creep`   |
+| **Tool-chain Exfiltration**  | `cross_tool_data_exfiltration`, `email_slack_exfiltration`, `database_exfiltration`, `file_system_exfiltration`, `audit_log_evasion`         |
+| **Safety & Content**         | `toxic_content`, `harmful_advice`, `misinformation`, `hate_speech_dogwhistle`, `hallucination`, `emotional_manipulation`                      |
+| **RAG & Retrieval**          | `rag_poisoning`, `rag_corpus_poisoning`, `vector_store_manipulation`, `retrieval_tenant_bleed`, `rag_source_disclosure`                      |
+| **Model Security**           | `model_extraction`, `alignment_faking`, `capability_elicitation`, `reward_hacking`, `backdoor_trigger`, `reasoning_trace_leakage`            |
+| **Infrastructure**           | `ssrf`, `path_traversal`, `shell_injection`, `sql_injection`, `sandbox_escape`, `infra_endpoint_disclosure`                                  |
+| **Supply Chain**             | `supply_chain`, `mcp_server_compromise`, `plugin_manifest_spoofing`, `provenance_forgery`                                                    |
+| **Compliance**               | `medical_safety`, `financial_compliance`, `insurance_compliance`, `housing_discrimination`                                                   |
+| **Multimodal**               | `multimodal_ghost_injection`, `streaming_voice_injection`, `cross_modal_conflict`, `computer_use_injection`                                  |
 
 <details>
-<summary><strong>Full category reference (141 slugs for config)</strong></summary>
+<summary><strong>Full category reference (167 slugs for config)</strong></summary>
 
 ```
 auth_bypass, rbac_bypass, prompt_injection, output_evasion, data_exfiltration,
 rate_limit, sensitive_data, indirect_prompt_injection, steganographic_exfiltration,
-out_of_band_exfiltration, training_data_extraction, side_channel_inference,
-tool_misuse, rogue_agent, goal_hijack, identity_privilege, unexpected_code_exec,
-cascading_failure, multi_agent_delegation, memory_poisoning, tool_output_manipulation,
-guardrail_timing, multi_turn_escalation, conversation_manipulation, context_window_attack,
+out_of_band_exfiltration, training_data_extraction, side_channel_inference, tool_misuse,
+rogue_agent, goal_hijack, identity_privilege, unexpected_code_exec, cascading_failure,
+multi_agent_delegation, memory_poisoning, tool_output_manipulation, guardrail_timing,
+multi_turn_escalation, conversation_manipulation, context_window_attack,
 slow_burn_exfiltration, brand_reputation, competitor_endorsement, toxic_content,
 misinformation, pii_disclosure, regulatory_violation, copyright_infringement,
 consent_bypass, session_hijacking, cross_tenant_access, api_abuse, supply_chain,
 social_engineering, harmful_advice, bias_exploitation, content_filter_bypass,
 agentic_workflow_bypass, tool_chain_hijack, agent_reflection_exploit,
-cross_session_injection, drug_synthesis, weapons_violence, financial_crime,
-cyber_crime, csam_minor_safety, fake_quotes_misinfo, competitor_sabotage,
-defamation_harassment, brand_impersonation, hate_speech_dogwhistle,
-radicalization_content, targeted_harassment, influence_operations,
-psychological_manipulation, deceptive_misinfo, hallucination, overreliance,
-over_refusal, rag_poisoning, rag_attribution, model_extraction,
+cross_session_injection, drug_synthesis, weapons_violence, financial_crime, cyber_crime,
+csam_minor_safety, fake_quotes_misinfo, competitor_sabotage, defamation_harassment,
+brand_impersonation, hate_speech_dogwhistle, radicalization_content, targeted_harassment,
+influence_operations, psychological_manipulation, deceptive_misinfo, hallucination,
+overreliance, over_refusal, rag_poisoning, rag_attribution, model_extraction,
 membership_inference, backdoor_trigger, data_poisoning, gradient_leakage,
 model_inversion, rag_corpus_poisoning, retrieval_ranking_attack,
 vector_store_manipulation, chunk_boundary_injection, embedding_inversion,
 structured_output_injection, generated_code_rce, markdown_link_injection,
-sycophancy_exploitation, hallucination_inducement, format_confusion_attack,
-model_dos, token_flooding_dos, infinite_loop_agent, quota_exhaustion_attack,
-inference_attack, re_identification, linkage_attack, differential_privacy_violation,
+sycophancy_exploitation, hallucination_inducement, format_confusion_attack, model_dos,
+token_flooding_dos, infinite_loop_agent, quota_exhaustion_attack, inference_attack,
+re_identification, linkage_attack, differential_privacy_violation,
 logic_bomb_conditional, agentic_legal_commitment, contextual_integrity_violation,
-financial_fraud_facilitation, gdpr_erasure_bypass, prompt_template_injection,
-mcp_server_compromise, plugin_manifest_spoofing, sdk_dependency_attack,
-fine_tuning_data_injection, debug_access, shell_injection, sql_injection,
+financial_fraud_facilitation, gdpr_erasure_bypass, mcp_server_compromise,
+plugin_manifest_spoofing, sdk_dependency_attack, fine_tuning_data_injection,
+prompt_template_injection, debug_access, shell_injection, sql_injection,
 unauthorized_commitments, off_topic, divergent_repetition, model_fingerprinting,
 special_token_injection, cross_lingual_attack, medical_safety, financial_compliance,
 pharmacy_safety, insurance_compliance, ecommerce_security, telecom_compliance,
-housing_discrimination, ssrf, path_traversal, multimodal_ghost_injection,
-graph_consensus_poisoning, inter_agent_protocol_abuse, mcp_tool_namespace_collision,
-computer_use_injection, streaming_voice_injection, cross_modal_conflict,
-llm_judge_manipulation, retrieval_tenant_bleed, insecure_output_handling,
+housing_discrimination, ssrf, path_traversal, insecure_output_handling,
+multimodal_ghost_injection, graph_consensus_poisoning, inter_agent_protocol_abuse,
+mcp_tool_namespace_collision, computer_use_injection, streaming_voice_injection,
+cross_modal_conflict, llm_judge_manipulation, retrieval_tenant_bleed,
 sandbox_escape, tool_permission_escalation, alignment_faking, capability_elicitation,
 instruction_hierarchy_violation, agentic_scope_creep, state_persistence_attack,
 encoding_serialization_attack, multi_hop_reasoning_exploit, emotional_manipulation,
-reward_hacking, universal_adversarial_trigger
+reward_hacking, universal_adversarial_trigger, tool_result_injection,
+tool_argument_injection, reasoning_trace_leakage, guardrail_mode_confusion,
+inbox_prompt_injection, repo_prompt_injection, cross_tool_data_exfiltration,
+email_slack_exfiltration, database_exfiltration, file_system_exfiltration,
+audit_log_evasion, provenance_forgery, multi_turn_privilege_escalation,
+staged_exfiltration, system_prompt_disclosure, tool_inventory_disclosure,
+agent_config_disclosure, rag_source_disclosure, infra_endpoint_disclosure,
+model_identity_disclosure, api_key_extraction, env_secret_extraction, token_extraction,
+tool_credential_harvesting, secret_manager_extraction, credential_reuse
 ```
 
 </details>
 
-**155 delivery strategies** across 36 levels, composed orthogonally with categories:
-
-| Level                   | Strategies | Examples                                                                                                                            |
-| ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Urgency & Distress      | 4          | `life_or_death_emergency`, `critical_deadline_pressure`                                                                             |
-| Social Engineering      | 10         | `authority_mimicry_security_manager`, `victim_narrative`, `therapeutic_relationship_exploit`                                        |
-| Persona Override        | 6          | `dan_style_persona`, `forced_persona_red_team_ai`, `developer_creator_impersonation`                                                |
-| Academic Framing        | 4          | `educational_series_framing`, `peer_review_framing`, `textbook_chapter_draft`                                                       |
-| Encoding Tricks         | 12         | `base64_context_hint`, `rot13_cipher_trick`, `hex_encoding`, `morse_code_encoding`, `ascii_art_injection`, `emoji_braille_encoding` |
-| Multi-turn Advanced     | 5          | `crescendo_multi_turn`, `deceptive_delight_attack`, `session_codeword_protocol`, `sandwich_context_attack`                          |
-| Token Smuggling         | 4          | `split_payload_concatenation`, `unicode_homoglyph_hint`, `leetspeak_obfuscation`                                                    |
-| RAG/Retrieval           | 5          | `retrieval_ranking_manipulation`, `corpus_poisoning_framing`, `chunk_boundary_exploit`                                              |
-| Agent-specific          | 7          | `tool_parameter_poisoning`, `tool_schema_confusion`, `orchestrator_impersonation`                                                   |
-| Register & Channel      | 3          | `informal_colloquial_register`, `nato_phonetic_obfuscation`, `scrambled_word_order_evasion`                                         |
-| Indirect / Supply-Chain | 5          | `mitm_relay_scenario`, `unwitting_relay_paste_scenario`, `ingestion_pipeline_compromise_framing`                                    |
+**170 delivery strategies** across 33 levels, composed orthogonally with categories — from urgency/distress framing and encoding tricks through agentic tool/guardrail exploitation and exfiltration patterns:
 
 <details>
-<summary><strong>Full strategy reference (155 slugs for config)</strong></summary>
+<summary><strong>All 33 strategy levels</strong></summary>
+
+| Level | Name                                              | Strategies | Examples                                                                                 |
+| ----- | ------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
+| 1     | Urgency & Distress Bypass                         | 4          | `life_or_death_emergency`, `critical_deadline_pressure`                                  |
+| 2     | Flattery & Negative Reinforcement                 | 5          | `ego_boosting_capability_challenge`, `negative_reinforcement_guilt`                      |
+| 3     | Step-by-Step Unsafe Guide                         | 4          | `incremental_escalation_setup`, `educational_series_framing`                             |
+| 4     | Code/Computation Abuse                            | 5          | `academic_computation_disguise`, `code_interpretation_request`                           |
+| 5     | Cognitive Bias Exploitation                       | 6          | `forced_persona_red_team_ai`, `authority_mimicry_security_manager`, `dan_style_persona`  |
+| 6     | Adversarial Poetry                                | 16         | `poetic_metaphor_request`, `fiction_writing_escape`, `base64_context_hint`               |
+| 7     | Token Smuggling & Encoding Tricks                 | 4          | `rot13_cipher_trick`, `leetspeak_obfuscation`, `unicode_homoglyph_hint`                  |
+| 8     | Payload Splitting & Fragmentation                 | 4          | `split_payload_concatenation`, `variable_substitution_trick`                             |
+| 9     | Context Window Manipulation                       | 3          | `benign_padding_real_instruction`, `attention_dilution_long_preamble`                    |
+| 10    | Gaslighting & False Memory                        | 4          | `claiming_prior_agreement`, `false_conversation_history_injection`                       |
+| 11    | Social Engineering & Impersonation                | 4          | `developer_creator_impersonation`, `government_law_enforcement_authority`                |
+| 12    | Logical Traps & Paradoxes                         | 4          | `double_negative_confusion`, `logical_syllogism_trap`                                    |
+| 13    | Reward/Punishment Signals                         | 3          | `promise_of_positive_feedback`, `negative_review_threat`                                 |
+| 14    | Nested / Layered Payloads                         | 3          | `benign_wrapper_hidden_core`, `instruction_hidden_in_data`                               |
+| 15    | Few-Shot / In-Context Learning Abuse              | 3          | `few_shot_compliance_examples`, `pattern_completion_unsafe_trajectory`                   |
+| 16    | Output Constraint Manipulation                    | 4          | `explicit_refusal_prohibition`, `affirmative_prefix_injection`                           |
+| 17    | Simulated Dialogue / Multi-Turn Injection         | 3          | `simulated_multi_turn_conversation`, `assistant_response_continuation`                   |
+| 18    | Cross-Lingual / Translation Attacks               | 3          | `translation_request_disguise`, `back_translation_chain`                                 |
+| 19    | Temporal / Counterfactual Distancing              | 4          | `future_tense_distancing`, `parallel_universe_framing`                                   |
+| 20    | Academic / Professional Framing                   | 4          | `peer_review_framing`, `textbook_chapter_draft`                                          |
+| 21    | Sympathy / Vulnerability Exploitation             | 3          | `victim_narrative`, `whistleblower_framing`                                              |
+| 22    | Meta-Prompting / Self-Reference                   | 4          | `prompt_about_prompts`, `token_probability_analysis`                                     |
+| 23    | Structured Output Exploits                        | 3          | `markdown_table_extraction`, `xml_structured_data_request`                               |
+| 24    | Agent / Tool-Specific Attacks                     | 7          | `tool_parameter_poisoning`, `orchestrator_impersonation`, `memory_write_injection`       |
+| 25    | RAG / Retrieval Attacks                           | 5          | `corpus_poisoning_framing`, `retrieval_ranking_manipulation`, `chunk_boundary_exploit`   |
+| 26    | Statistical / Probabilistic Attacks               | 5          | `many_shot_overwhelming`, `probabilistic_retry_attack`, `temperature_probing`            |
+| 27    | System / Meta Probing                             | 5          | `capability_mapping_probe`, `system_prompt_archaeology`, `guardrail_boundary_mapping`    |
+| 28    | Psychological / Social Engineering                | 9          | `therapeutic_relationship_exploit`, `progressive_normalisation`, `sunk_cost_manipulation` |
+| 29    | Output Format / Parsing Attacks                   | 5          | `structured_output_smuggling`, `continuation_prefix_injection`                           |
+| 30    | Advanced Encoding & Steganographic Delivery       | 7          | `hex_encoding`, `morse_code_encoding`, `ascii_art_injection`, `emoji_braille_encoding`   |
+| 31    | CrowdStrike Taxonomy (6 sub-groups: integrative/multi-turn, evasion, obfuscation, injection methods, unintelligible input) | 12 | `deceptive_delight_attack`, `session_codeword_protocol`, `mitm_relay_scenario`, `nato_phonetic_obfuscation` |
+| 32    | Agentic Tool & Guardrail Exploitation             | 9          | `skeleton_key_policy_override`, `policy_puppetry`, `fake_tool_result_injection`, `guardrail_mode_override` |
+| 33    | Exfiltration & Evasion Patterns                   | 6          | `read_then_send_exfiltration`, `inbox_untrusted_instruction_following`, `provenance_spoofing` |
+
+</details>
+
+<details>
+<summary><strong>Full strategy reference (170 slugs for config)</strong></summary>
 
 ```
 life_or_death_emergency, critical_deadline_pressure, personal_distress_moral_dilemma,
@@ -386,7 +456,13 @@ emoji_braille_encoding, crescendo_multi_turn, deceptive_delight_attack,
 session_codeword_protocol, session_command_token, sandwich_context_attack,
 informal_colloquial_register, nato_phonetic_obfuscation, scrambled_word_order_evasion,
 mitm_relay_scenario, unwitting_relay_paste_scenario, prior_model_output_injection,
-ingestion_pipeline_compromise_framing, adversarial_prefix_token_injection
+ingestion_pipeline_compromise_framing, adversarial_prefix_token_injection,
+skeleton_key_policy_override, policy_puppetry, constitutional_spec_quoting,
+bad_likert_judge, fake_thinking_trace_injection, fake_tool_result_injection,
+guardrail_mode_override, tool_parameter_smuggling, tool_chain_laundering,
+read_then_send_exfiltration, repo_readme_instruction_following,
+inbox_untrusted_instruction_following, multi_turn_staged_collection,
+audit_log_minimization_request, provenance_spoofing
 ```
 
 </details>
@@ -413,14 +489,17 @@ ingestion_pipeline_compromise_framing, adversarial_prefix_token_injection
 
 ## Dashboard
 
-Six-tab web dashboard served by Docker or `npm run dashboard`:
+React dashboard served by Docker or `npm run dashboard` (`http://localhost:4200`):
 
 - **Dashboard** — security score gauge, trend chart, risk distribution, top targets
-- **Runs** — start/monitor/cancel scans, live results with expandable threat assessments
-- **Reports** — browse historical reports, category breakdown, full attack details, CSV/JSON export
+- **Launch Scan** — guided scan builder: target, auth, categories and strategies, attack configuration (rounds, strategies per round, multi-turn, the **Adaptive PAIR Loop** toggle with its per-seed budget and per-category cap), judge policy, datasets — or paste a full JSON config
+- **Scan Activity** — start/monitor/cancel runs, live progress including `[PAIR q…]` loop iterations, expandable results with threat assessments
+- **Datasets / Evaluations** — fixed-attack and benign datasets, replay proven breaches verbatim, quality-score evaluations
+- **Reports** — browse historical reports, category breakdown, full attack details (PAIR-produced results labelled `→ PAIR q<n>`), side-by-side run comparison, CSV/JSON export
 - **Risk** — business impact analysis, exploitability assessment, remediation priority matrix, LLM-powered financial exposure estimates with real-world incident mapping
 - **Compliance** — run compliance analysis against any of the 11 frameworks with streaming results
-- **Audit Log** — immutable activity trail (enterprise mode)
+- **Policies** — judge policies and guardrail posture per target model
+- **Activity Log** — immutable activity trail (enterprise mode)
 
 Live run features: real-time category breakdown bars, expandable results with full payload/response/threat assessment, verdict and severity filters, multi-turn step counts.
 
@@ -791,7 +870,7 @@ Both are MIT-licensed, TypeScript-based. Promptfoo has 20k+ stars, OpenAI backin
 | Social engineering strategies   | 20+ (authority, victim, emergency, flattery, guilt, grief, therapeutic, whistleblower)                                                | ~3 (citation, authoritative markup)                      |
 | RAG attacks                     | 9 categories (corpus poisoning, ranking manipulation, vector store, chunk boundary, tenant bleed)                                     | ~3 (RAG poisoning, indirect injection)                   |
 | Adaptive rounds                 | Multi-round — defense profiling → strategy rotation → re-targeting on partial successes                                               | Single pass (Meta Agent has cross-plugin memory)         |
-| Strategy × category composition | 155 strategies × 141 categories orthogonally composable                                                                               | Strategies applied per-plugin                            |
+| Strategy × category composition | 170 strategies × 167 categories orthogonally composable                                                                               | Strategies applied per-plugin                            |
 | Self-hosted enterprise          | Built-in Postgres, AES-256 encryption, SSO/OIDC, RBAC, audit log, tenant isolation                                                    | Enterprise SaaS plan                                     |
 | Risk quantification             | LLM-powered business impact, financial exposure, real-world incident mapping                                                          | Not built-in                                             |
 | Guardrail recommendations       | Maps findings to Votal Shield configs                                                                                                 | Not built-in                                             |
@@ -829,6 +908,8 @@ Promptfoo is DAST for AI. Red-Team AI is SAST+DAST for AI. Application security 
 | `FAIL`    | Defense held — the attack was blocked      |
 | `PARTIAL` | Partial leak or inconsistent behavior      |
 | `ERROR`   | Request failed or unexpected error         |
+
+**How verdicts are validated.** The LLM judge's verdict passes through an evidence check whose strictness depends on the attack family. For the 45 *artifact* families (data leak, credential extraction, access control, internal disclosure, inference) a `PASS` must quote the offending output verbatim or it is downgraded. For the remaining behavioural families (injection, tool misuse, harm, abuse, misinformation, …) the rubric-guided verdict is trusted, with a refusal backstop that downgrades a `PASS` whose only evidence is the target refusing. Measured on a 157-row hand-labelled gold set across five policies: **precision 0.87, recall 0.77** (strict — only `PASS` counts as caught), up from 0.80 / 0.53 before this work; every family improved or held on both axes. The judge is an LLM, so expect ±2–3 rows of run-to-run variance on a set that size — treat single-row deltas as noise.
 
 ---
 
@@ -963,14 +1044,18 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full guide.
 **Beta.** Honest assessment:
 
 - ✅ Stable: codebase analyzer, attack runner, judge, reports, dashboard, Docker, enterprise backend
-- ✅ Working well: 141 categories × 155 strategies, multi-round adaptation, multi-turn crescendo, 11 compliance frameworks, risk quantification, Postgres + encryption
+- ✅ Working well: 167 categories × 170 strategies, multi-round adaptation, multi-turn crescendo, fixed-attack datasets for replaying proven breaches, 11 compliance frameworks, risk quantification, Postgres + encryption
+- ✅ New (September 2026): adaptive PAIR loop (+50% yield on `gemma-4-31b` with the same attacker model), evidence-regime judge (gold-set recall 0.53 → 0.77 at precision 0.87), tolerant parsing + retries so near-valid JSON from verbose attacker models is recovered instead of dropped
 - 🚧 In progress: Hermes agent integration, cross-run memory, attack path visualization
-- 🔜 Roadmap: GitHub Action, PDF reports, webhook notifications, llm-shield guardrail auto-deploy
+- 🔜 Roadmap: TAP-style branch-and-prune before target queries, judge-as-fitness scoring inside the loop, adaptive Crescendo, GitHub Action, PDF reports, webhook notifications, llm-shield guardrail auto-deploy
 
 ### 10x Attack Generation — Context & Memory TODO
 
-The attack pipeline already has a Planner, Prober (discovery), Generator with context, Ranker (affinity + defense-aware), and Evaluator (LLM judge). These are the gaps to close for 10x better attack generation:
+The attack pipeline has a Planner, Prober (discovery), Generator with context, Ranker (affinity + defense-aware), the PAIR inner loop, and an Evaluator (LLM judge). Done so far, and the gaps still to close:
 
+- [x] **Adaptive inner loop** — the PAIR loop revises refused seeds from the target's own reply + judge verdict + defense profile (`enablePairLoop`); measured, not asserted
+- [x] **Judge accuracy measured against a gold set** — 157 hand-labelled rows; evidence gates applied by regime across every category instead of per-category patches
+- [x] **Robust to capable attackers** — tolerant JSON recovery and retries on generation/revision so a strong, verbose attacker model isn't under-counted on near-valid output (unescaped inner quotes and fully truncated objects are still lost)
 - [ ] **Persistent memory across sessions** — defense profiles die when CLI exits; store strategy effectiveness, defense fingerprints, and winning payloads in a local DB so subsequent runs start where the last one left off
 - [ ] **Per-payload memory** — currently only aggregated stats (block rate, dominant defense); need to remember "this exact payload worked against this target" so the generator can mutate proven winners instead of starting from scratch
 - [ ] **Cross-category learning** — auth_bypass defense patterns don't inform prompt_injection strategy; a shared defense fingerprint (e.g., "target uses keyword-based guardrail") should propagate across all categories
