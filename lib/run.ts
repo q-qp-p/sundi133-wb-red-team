@@ -6,6 +6,7 @@ import { loadConfigFromObject } from "./config-loader.js";
 import { describeTarget, getTargetAdapter } from "./target-adapter.js";
 import { analyzeCodebase } from "./codebase-analyzer.js";
 import { planAttacks, refinePartialAttacks } from "./attack-planner.js";
+import { runPairLoopOverSeeds } from "./pair-loop.js";
 import {
   estimatePreRun,
   estimateRun,
@@ -1457,6 +1458,17 @@ async function runRedTeamImpl(
       );
       await Promise.all(workers);
     }
+
+    // ── Phase 2: adaptive PAIR inner loop (shared with the CLI path) ──
+    await runPairLoopOverSeeds({
+      config,
+      round,
+      roundResults,
+      appContext,
+      defenseProfiles,
+      onLog: (message) => log("pair", message, { round }),
+      checkAbort,
+    });
 
     // Refinement pass
     const roundPartials = roundResults.filter((r) => r.verdict === "PARTIAL");
