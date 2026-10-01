@@ -136,6 +136,9 @@ function validateAndNormalizeConfig(config: Config): Config {
     multiTurnGenerationRate: 0.4,
     enableAdaptiveMultiTurn: true,
     maxAdaptiveTurns: 15,
+    enablePairLoop: false,
+    maxAdaptiveQueriesPerSeed: 8,
+    pairLoopMaxSeedsPerCategory: 4,
     appTailoredCustomPromptCount: 0,
   };
   config.attackConfig = { ...defaults, ...config.attackConfig };

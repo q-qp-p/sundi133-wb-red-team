@@ -358,6 +358,11 @@ export default function NewScanPage() {
   const [enableMultiTurn, setEnableMultiTurn] = useState(true);
   const [enableAdaptiveMultiTurn, setEnableAdaptiveMultiTurn] = useState(true);
   const [maxMultiTurnSteps, setMaxMultiTurnSteps] = useState(8);
+  // Adaptive PAIR loop: re-attack refused seeds with the attacker model reading
+  // the target's refusal + judge verdict. Off by default (matches the CLI).
+  const [enablePairLoop, setEnablePairLoop] = useState(false);
+  const [maxAdaptiveQueriesPerSeed, setMaxAdaptiveQueriesPerSeed] = useState(8);
+  const [pairLoopMaxSeedsPerCategory, setPairLoopMaxSeedsPerCategory] = useState(4);
   const [enableDiscovery, setEnableDiscovery] = useState(false);
   const [skipIrrelevant, setSkipIrrelevant] = useState(true);
   const [requireReview, setRequireReview] = useState(false);
@@ -517,6 +522,9 @@ export default function NewScanPage() {
     if (atk?.enableMultiTurnGeneration !== undefined) setEnableMultiTurn(!!atk.enableMultiTurnGeneration);
     if (atk?.enableAdaptiveMultiTurn !== undefined) setEnableAdaptiveMultiTurn(!!atk.enableAdaptiveMultiTurn);
     if (atk?.maxMultiTurnSteps) setMaxMultiTurnSteps(Number(atk.maxMultiTurnSteps));
+    if (atk?.enablePairLoop !== undefined) setEnablePairLoop(!!atk.enablePairLoop);
+    if (atk?.maxAdaptiveQueriesPerSeed) setMaxAdaptiveQueriesPerSeed(Number(atk.maxAdaptiveQueriesPerSeed));
+    if (atk?.pairLoopMaxSeedsPerCategory) setPairLoopMaxSeedsPerCategory(Number(atk.pairLoopMaxSeedsPerCategory));
     if (atk?.enableDiscovery !== undefined) setEnableDiscovery(!!atk.enableDiscovery);
     if (atk?.skipIrrelevantCategories !== undefined) setSkipIrrelevant(!!atk.skipIrrelevantCategories);
     if (atk?.requireReviewConfirmation !== undefined) setRequireReview(!!atk.requireReviewConfirmation);
@@ -696,6 +704,8 @@ export default function NewScanPage() {
         enableMultiTurnGeneration: enableMultiTurn,
         enableAdaptiveMultiTurn,
         maxMultiTurnSteps,
+        enablePairLoop,
+        ...(enablePairLoop ? { maxAdaptiveQueriesPerSeed, pairLoopMaxSeedsPerCategory } : {}),
         enableDiscovery,
         skipIrrelevantCategories: skipIrrelevant,
         requireReviewConfirmation: requireReview,
@@ -1624,7 +1634,7 @@ export default function NewScanPage() {
           icon={Gauge}
           open={openSteps[5]}
           onToggle={() => toggleStep(5)}
-          summary={`${attackMode} · ${adaptiveRounds} rounds · ${maxAttacksPerCategory}/category`}
+          summary={`${attackMode} · ${adaptiveRounds} rounds · ${maxAttacksPerCategory}/category${enablePairLoop ? " · PAIR loop" : ""}`}
         >
           <Card>
             <CardContent className="pt-5 space-y-5">
@@ -1724,6 +1734,7 @@ export default function NewScanPage() {
                   { label: "Seed Attacks", value: includeSeedAttacks, set: setIncludeSeedAttacks },
                   { label: "Multi-turn", value: enableMultiTurn, set: setEnableMultiTurn },
                   { label: "Adaptive Multi-turn", value: enableAdaptiveMultiTurn, set: setEnableAdaptiveMultiTurn },
+                  { label: "Adaptive PAIR Loop", value: enablePairLoop, set: setEnablePairLoop },
                   { label: "Discovery Round", value: enableDiscovery, set: setEnableDiscovery },
                   { label: "Skip Irrelevant", value: skipIrrelevant, set: setSkipIrrelevant },
                 ].map((toggle) => (
@@ -1764,6 +1775,44 @@ export default function NewScanPage() {
                     className={`${inputCls} max-w-[200px]`}
                   />
                 </FieldRow>
+              )}
+
+              {enablePairLoop && (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Seeds the target refuses are fed back to the attacker model with the exact
+                    refusal and judge verdict, revised, and retried until they land or the
+                    per-seed budget is spent. Each retry is one extra target query.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FieldRow label="PAIR: Queries per Seed" hint="Budget per refused seed (incl. its first attempt)">
+                      <input
+                        type="number"
+                        min={2}
+                        max={20}
+                        value={maxAdaptiveQueriesPerSeed}
+                        onChange={(e) => setMaxAdaptiveQueriesPerSeed(Number(e.target.value))}
+                        className={inputCls}
+                      />
+                    </FieldRow>
+                    <FieldRow label="PAIR: Seeds per Category" hint="Refused seeds revised per category">
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={pairLoopMaxSeedsPerCategory}
+                        onChange={(e) => setPairLoopMaxSeedsPerCategory(Number(e.target.value))}
+                        className={inputCls}
+                      />
+                    </FieldRow>
+                  </div>
+                  {!enableLlmGeneration && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      The PAIR loop needs LLM Generation enabled — it revises attacks with the
+                      attacker model, so it will be skipped in this run.
+                    </p>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

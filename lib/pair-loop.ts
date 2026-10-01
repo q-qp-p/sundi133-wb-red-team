@@ -116,14 +116,20 @@ export async function runPairLoopOverSeeds(args: {
       )?.message;
       if (!revised.attack || !revisedMessage) return;
 
+      // Deterministic id + a strategy label that names the loop: the attacker
+      // picks its own ids/names, which made PAIR results indistinguishable from
+      // first-pass attacks in reports and the dashboard. strategyId stays the
+      // seed's (it keys effectiveness stats); strategyName is display-only.
+      const baseStrategyName =
+        revised.attack.strategyName ?? seed.attack.strategyName ?? "adaptive";
       const nextAttack: Attack = {
         ...revised.attack,
         category: seed.attack.category,
         isLlmGenerated: true,
         refinedFrom: seed.attack.id,
-        id:
-          revised.attack.id ||
-          `pair-${seed.attack.category}-r${round}-q${q}-${seed.attack.id}`,
+        id: `pair-${seed.attack.category}-r${round}-q${q}-${seed.attack.id}`,
+        strategyId: revised.attack.strategyId ?? seed.attack.strategyId,
+        strategyName: `${baseStrategyName} → PAIR q${q}`,
       };
 
       const { statusCode, body, timeMs, executionTrace } = await executeAttack(
