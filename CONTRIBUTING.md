@@ -92,8 +92,35 @@ The runner stops early if any step gets a `PASS` verdict.
 1. Create a feature branch from `main`
 2. Make your changes
 3. Ensure `npm run typecheck` and `npm test` pass
-4. Open a PR with a clear description of what and why
+4. Sign off every commit (see below)
+5. Open a PR with a clear description of what and why
+
+## Developer Certificate of Origin (DCO)
+
+This project is part of the Linux Foundation and requires every commit to be signed off under the [Developer Certificate of Origin](https://developercertificate.org/). By signing off, you certify that you wrote the change or otherwise have the right to submit it under the project's license.
+
+Add the sign-off with `-s`:
+
+```bash
+git commit -s -m "Add my attack module"
+```
+
+This appends a line like the following, which must match your commit author:
+
+```
+Signed-off-by: Your Name <your.email@example.com>
+```
+
+To sign off commits you already made on your branch:
+
+```bash
+git rebase --signoff main
+```
+
+## Governance
+
+See [GOVERNANCE.md](GOVERNANCE.md) for roles and decision making, and [MAINTAINERS.md](MAINTAINERS.md) for the current maintainers.
 
 ## Reporting Issues
 
-Use [GitHub Issues](https://github.com/sundi133/wb-red-team/issues). For security vulnerabilities in this framework itself, please email directly rather than opening a public issue.
+Use [GitHub Issues](https://github.com/votal-ai-hq/ai-red-teaming/issues). For security vulnerabilities in this framework itself, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
