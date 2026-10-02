@@ -972,8 +972,20 @@ function enqueueJob(config: Config, ctx?: RequestContext | null): Job {
   const attacksPerCat = ac.maxAttacksPerCategory || 5;
   const rounds = ac.adaptiveRounds || 2;
   const seedsPerCat = 3; // approximate
+  // PAIR loop: up to pairLoopMaxSeedsPerCategory refused seeds per category per
+  // round get revised; ~4 extra queries each in practice (budget caps at 8).
+  const pairEnabled =
+    ac.enablePairLoop === true && ac.enableLlmGeneration === true;
+  const pairExtra = pairEnabled
+    ? numCategories *
+      Math.min(ac.pairLoopMaxSeedsPerCategory ?? 4, attacksPerCat + seedsPerCat) *
+      rounds *
+      Math.min(Math.max(1, (ac.maxAdaptiveQueriesPerSeed ?? 8) - 1), 4)
+    : 0;
   const estimatedTotal =
-    numCategories * attacksPerCat * rounds + numCategories * seedsPerCat;
+    numCategories * attacksPerCat * rounds +
+    numCategories * seedsPerCat +
+    pairExtra;
 
   const job: Job = {
     id: randomUUID(),

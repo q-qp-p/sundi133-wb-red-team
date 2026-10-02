@@ -27,6 +27,12 @@ const ADAPTIVE_AVG_TURNS = 4;
 const ADAPTIVE_MIN_TURNS = 1;
 const ADAPTIVE_MAX_TURNS_CAP = 8; // most runs cap practically here even when config allows 15
 
+// PAIR loop: refused seeds are revised + retried until PASS or the per-seed
+// budget. Observed ~4-5 retries/seed at budget 8 (deepseek vs gemma-4-31b);
+// verbose attackers that parse-fail more land nearer 1-2. 4 is the expectation.
+const PAIR_AVG_ITERS = 4;
+const PAIR_MIN_ITERS = 1;
+
 // Uncertainty bands applied to the expected estimate.
 const MIN_FACTOR = 0.6;
 const MAX_FACTOR = 1.6;
@@ -48,6 +54,8 @@ export interface RunEstimate {
   };
   wallTimeSec: { min: number; expected: number; max: number };
   isPreRun: boolean;
+  /** Adaptive PAIR loop share. Absent when the loop is off or has no seeds. */
+  pair?: { seeds: number; itersExpected: number; itersMax: number };
   /** Mode + math breakdown. Populated only for pre-run estimates. */
   mode?: {
     isFullPool: boolean;
@@ -64,6 +72,15 @@ export interface RunEstimate {
 
 const SEEDS_PER_CATEGORY = 3; // approximate seed count from each AttackModule.getSeedAttacks
 const FULL_POOL_THRESHOLD = 100;
+
+// Same gate as lib/pair-loop.ts: the loop needs the attacker model to revise.
+function pairLoopEnabled(ac: Config["attackConfig"]): boolean {
+  return !!ac.enablePairLoop && !!ac.enableLlmGeneration;
+}
+
+function pairSeedCap(ac: Config["attackConfig"]): number {
+  return Math.max(1, ac.pairLoopMaxSeedsPerCategory ?? 4);
+}
 
 /**
  * Estimate run size BEFORE planning starts. Uses only the config + counts of
@@ -117,9 +134,17 @@ export function estimatePreRun(
   const adaptiveMt = adaptiveEnabled ? remaining : 0;
   const singleTurn = adaptiveEnabled ? 0 : remaining;
 
+  // PAIR runs after each round over that round's non-PASS results, capped per
+  // category — nearly every first-pass attack is a candidate, so the cap binds.
+  const pairSeeds = pairLoopEnabled(ac)
+    ? numCategories *
+      (Math.min(pairSeedCap(ac), perCatRound1) +
+        (adaptiveRounds - 1) * Math.min(pairSeedCap(ac), perCatLater))
+    : 0;
+
   const est = buildEstimate(
     config,
-    { singleTurn, predefinedMt, adaptiveMt },
+    { singleTurn, predefinedMt, adaptiveMt, pairSeeds },
     plannedAttacks,
     true,
   );
@@ -159,9 +184,19 @@ export function estimateRun(attacks: Attack[], config: Config): RunEstimate {
     }
   }
 
+  let pairSeeds = 0;
+  if (pairLoopEnabled(config.attackConfig)) {
+    const cap = pairSeedCap(config.attackConfig);
+    const perCategory = new Map<string, number>();
+    for (const a of attacks) {
+      perCategory.set(a.category, (perCategory.get(a.category) ?? 0) + 1);
+    }
+    for (const n of perCategory.values()) pairSeeds += Math.min(cap, n);
+  }
+
   return buildEstimate(
     config,
-    { singleTurn, predefinedMt, adaptiveMt, predefinedHttp },
+    { singleTurn, predefinedMt, adaptiveMt, predefinedHttp, pairSeeds },
     attacks.length,
     false,
   );
@@ -174,6 +209,7 @@ function buildEstimate(
     predefinedMt: number;
     adaptiveMt: number;
     predefinedHttp?: number;
+    pairSeeds?: number;
   },
   plannedAttacks: number,
   isPreRun: boolean,
@@ -192,10 +228,23 @@ function buildEstimate(
   const predefinedHttp =
     shape.predefinedHttp ?? predefinedMt * Math.min(3, maxMultiTurnSteps);
 
-  const httpMin = singleTurn + predefinedHttp + adaptiveMt * ADAPTIVE_MIN_TURNS;
+  // Each PAIR iteration is one target query + one judge call + one attacker
+  // revision call, and lands in the results as its own attack.
+  const pairSeeds = shape.pairSeeds ?? 0;
+  const pairBudget = Math.max(
+    2,
+    config.attackConfig.maxAdaptiveQueriesPerSeed ?? 8,
+  );
+  const pairMin = pairSeeds * PAIR_MIN_ITERS;
+  const pairExpected = pairSeeds * Math.min(pairBudget - 1, PAIR_AVG_ITERS);
+  const pairMax = pairSeeds * (pairBudget - 1);
+
+  const httpMin =
+    singleTurn + predefinedHttp + adaptiveMt * ADAPTIVE_MIN_TURNS + pairMin;
   const httpExpected =
-    singleTurn + predefinedHttp + adaptiveMt * ADAPTIVE_AVG_TURNS;
-  const httpMax = singleTurn + predefinedHttp + adaptiveMt * adaptiveCap;
+    singleTurn + predefinedHttp + adaptiveMt * ADAPTIVE_AVG_TURNS + pairExpected;
+  const httpMax =
+    singleTurn + predefinedHttp + adaptiveMt * adaptiveCap + pairMax;
 
   // Refinement adds ~REFINEMENT_PARTIAL_RATE × REFINED_PER_PARTIAL extra attacks.
   // These are nearly always adaptive multi-turn, so cost is similar to adaptiveMt.
@@ -210,9 +259,10 @@ function buildEstimate(
   const judgeTime = totalHttpExpected * AVG_JUDGE_SEC;
   const adaptiveGenTime =
     (adaptiveMt + refinedExpected) *
-    (ADAPTIVE_AVG_TURNS - 1) *
-    AVG_ADAPTIVE_GEN_SEC;
-  const totalAttacks = plannedAttacks + refinedExpected;
+      (ADAPTIVE_AVG_TURNS - 1) *
+      AVG_ADAPTIVE_GEN_SEC +
+    pairExpected * AVG_ADAPTIVE_GEN_SEC;
+  const totalAttacks = plannedAttacks + refinedExpected + pairExpected;
   const idealTime = totalAttacks * IDEAL_RATE * AVG_IDEAL_SEC;
   const delayTime = totalHttpExpected * delaySec;
 
@@ -240,6 +290,9 @@ function buildEstimate(
       max: Math.round(wallExpected * MAX_FACTOR),
     },
     isPreRun,
+    ...(pairSeeds > 0
+      ? { pair: { seeds: pairSeeds, itersExpected: pairExpected, itersMax: pairMax } }
+      : {}),
   };
 }
 
@@ -325,6 +378,14 @@ export function formatEstimate(
       ? `${tilde}${est.plannedAttacks} attacks  +  ~${est.refinedExpected} refined  =  ~${est.totalAttacksExpected} total`
       : `${tilde}${est.plannedAttacks} attacks`;
   lines.push(row(est.isPreRun ? "Attacks" : "Planned", attacksLine));
+  if (est.pair && est.pair.seeds > 0) {
+    lines.push(
+      row(
+        "PAIR loop",
+        `~${est.pair.seeds} refused seeds retried  →  ~${est.pair.itersExpected} extra attacks (max ${est.pair.itersMax})`,
+      ),
+    );
+  }
 
   // ── Type mix ─────────────────────────────────────────
   const breakdown: string[] = [];

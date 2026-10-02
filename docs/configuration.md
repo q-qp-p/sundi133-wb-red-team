@@ -67,6 +67,34 @@ Define regex patterns that the judge should flag as data exposure:
 }
 ```
 
+## Adaptive PAIR loop
+
+Seeds the target refuses are fed back to the attacker model together with the
+target's exact reply, the judge verdict, and the observed defense profile; the
+attacker revises one element and retries, until the attack lands or the per-seed
+query budget is spent. Measured on `google/gemma-4-31b-it` with a deepseek
+attacker: yield 7.4% → 11.1% (+50%), real breaks 8 → 27. Requires
+`enableLlmGeneration`.
+
+```json
+{
+  "attackConfig": {
+    "enablePairLoop": true,
+    "maxAdaptiveQueriesPerSeed": 8,
+    "pairLoopMaxSeedsPerCategory": 4
+  }
+}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enablePairLoop` | `false` | Turn the loop on. Also exposed as the **Adaptive PAIR Loop** toggle in the dashboard's attack configuration step. |
+| `maxAdaptiveQueriesPerSeed` | `8` | Query budget per refused seed, including its first attempt. Each retry is one extra target query + one attacker call + one judge call. |
+| `pairLoopMaxSeedsPerCategory` | `4` | How many refused seeds per category enter the loop (per round). Caps run time and cost. |
+
+PAIR-produced results carry ids of the form `pair-<category>-r<round>-q<n>-<seed id>`
+and a strategy label suffixed `→ PAIR q<n>`, so they are traceable in reports.
+
 ## Speed vs thoroughness presets
 
 **Fast iteration (development):**
